@@ -202,7 +202,7 @@ body::before {
   <div class="page-header">
     <div class="topic-pill">Malária</div>
     <div class="page-title">Painel de Avaliação</div>
-    <div class="page-subtitle">Malária &nbsp;·&nbsp; 7 formulários &nbsp;·&nbsp; 19 intervenções</div>
+    <div class="page-subtitle">Malária &nbsp;·&nbsp; 3 formulários &nbsp;·&nbsp; 19 intervenções</div>
   </div>
 
   
@@ -210,7 +210,7 @@ body::before {
   <div class="progress-wrap">
     <div class="progress-label">
       <span>Progresso</span>
-      <span id="progressText">0 de 7 formulários submetidos</span>
+      <span id="progressText">0 de 3 formulários submetidos</span>
     </div>
     <div class="progress-bar-bg">
       <div class="progress-bar-fill" id="progressFill"></div>
@@ -233,79 +233,47 @@ body::before {
 <script>
 const GROUPS = [
   {
-    "slug": "manejo_de_casos_1",
-    "label": "Manejo de casos (1)",
-    "count": 5,
+    "slug": "malaria_1",
+    "label": "Malária (1)",
+    "count": 7,
     "codes": [
       "mal_01",
       "mal_02",
       "mal_03",
       "mal_04",
-      "mal_05"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/qdjTvmar?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=manejo_de_casos_1&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
-  },
-  {
-    "slug": "manejo_de_casos_2",
-    "label": "Manejo de casos (2)",
-    "count": 2,
-    "codes": [
+      "mal_05",
       "mal_06",
       "mal_07"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/GpoHzQd7?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=manejo_de_casos_2&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
+    "url": "https://ee-eu.kobotoolbox.org/single/CiI5Sefw?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=malaria_1&dest=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Fmaster.html"
   },
   {
-    "slug": "prevencao_1",
-    "label": "Prevenção (1)",
-    "count": 5,
+    "slug": "malaria_2",
+    "label": "Malária (2)",
+    "count": 7,
     "codes": [
       "mal_08",
       "mal_09",
       "mal_10",
       "mal_11",
-      "mal_12"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/FrqkD8RQ?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=prevencao_1&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
-  },
-  {
-    "slug": "prevencao_2",
-    "label": "Prevenção (2)",
-    "count": 4,
-    "codes": [
+      "mal_12",
       "mal_13",
-      "mal_14",
+      "mal_14"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/SMRFSzQj?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=malaria_2&dest=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Fmaster.html"
+  },
+  {
+    "slug": "malaria_3",
+    "label": "Malária (3)",
+    "count": 5,
+    "codes": [
       "mal_15",
-      "mal_16"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/5LVjaY2H?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=prevencao_2&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
-  },
-  {
-    "slug": "mudanca_social_e_de_comportamento",
-    "label": "Mudança Social e de Comportamento",
-    "count": 1,
-    "codes": [
-      "mal_17"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/ZNdxYFbI?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=mudanca_social_e_de_comportamento&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
-  },
-  {
-    "slug": "vigilancia_monitoria_e_avaliacao",
-    "label": "Vigilância, Monitoria e Avaliação",
-    "count": 1,
-    "codes": [
-      "mal_18"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/mfHACaM6?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=vigilancia_monitoria_e_avaliacao&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
-  },
-  {
-    "slug": "gestao_programatica",
-    "label": "Gestão programática",
-    "count": 1,
-    "codes": [
+      "mal_16",
+      "mal_17",
+      "mal_18",
       "mal_19"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/oLuFpvzV?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=gestao_programatica&dest=https://kaiserso.github.io/INS_delphi/malaria/master.html"
+    "url": "https://ee-eu.kobotoolbox.org/single/zccWbgZU?return_url=https://kaiserso.github.io/INS_delphi/malaria/relay.html?slug=malaria_3&dest=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Fmaster.html"
   }
 ];
 const STORAGE_KEY = 'delphi_malaria_completed';
