@@ -340,8 +340,7 @@ function showDebug() {
     '── raw value:',
     localStorage.getItem(STORAGE_KEY) || '(not set)',
   ];
-  panel.textContent = lines.join('
-');
+  panel.textContent = lines.join('\n');
   panel.style.display = 'block';
 }
 
@@ -370,7 +369,7 @@ function showDebug() {
 })();
 
 // ── Render cards ─────────────────────────────────────────────
-function render() {
+function renderCards() {
   const done = getCompleted();
   const doneCount = GROUPS.filter(g => done.includes(g.slug)).length;
   const pct = TOTAL > 0 ? Math.round(doneCount / TOTAL * 100) : 0;
@@ -420,7 +419,7 @@ function render() {
   });
 }
 
-render();
+renderCards();
 </script>
 </body>
 </html>
