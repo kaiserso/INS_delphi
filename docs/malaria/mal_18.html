@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notificação e seguimento de casos de malária nos distritos de baixa transmissão na Província de Maputo — Catálogo Delphi | Malária</title>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #f5f7fa;
+    padding: 0;
+}
+.page-wrap {
+    max-width: 860px;
+    margin: 32px auto;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    overflow: hidden;
+}
+.page-header {
+    background: #1F4E79;
+    color: #fff;
+    padding: 28px 36px 22px 36px;
+}
+.page-header .topic-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #90CAF9;
+    margin-bottom: 8px;
+}
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+.page-header .objective {
+    font-size: 14px;
+    color: #BBDEFB;
+    line-height: 1.6;
+    border-left: 3px solid #42A5F5;
+    padding-left: 12px;
+    margin-top: 10px;
+}
+.code-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 11px;
+    font-family: monospace;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+.body-content { padding: 28px 36px 36px 36px; }
+.section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #1F4E79;
+    border-bottom: 2px solid #BBDEFB;
+    padding-bottom: 5px;
+    margin: 24px 0 14px 0;
+}
+.field-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.field-grid .field-row:nth-child(odd)  { background: #f8fbff; }
+.field-grid .field-row:nth-child(even) { background: #ffffff; }
+.field-row {
+    display: contents;
+}
+.field-label {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #37474F;
+    border-bottom: 1px solid #e8e8e8;
+    border-right: 1px solid #e0e0e0;
+    background: inherit;
+}
+.field-value {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #212121;
+    line-height: 1.6;
+    border-bottom: 1px solid #e8e8e8;
+    background: inherit;
+}
+.ineff-box {
+    background: #FFF8E1;
+    border-left: 4px solid #FFB300;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+.ineff-box .ineff-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #E65100;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.ineff-box .ineff-text {
+    font-size: 13px;
+    color: #4E342E;
+    line-height: 1.6;
+}
+.causes-box {
+    background: #FBE9E7;
+    border-left: 4px solid #E64A19;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+.causes-box .causes-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #BF360C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.causes-box .causes-text {
+    font-size: 13px;
+    color: #4E342E;
+    line-height: 1.6;
+}
+.nav-bar {
+    background: #E3F2FD;
+    padding: 12px 36px;
+    font-size: 12px;
+    color: #1565C0;
+    border-top: 1px solid #BBDEFB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.nav-bar a {
+    color: #1565C0;
+    text-decoration: none;
+    font-weight: 600;
+}
+.nav-bar a:hover { text-decoration: underline; }
+.stub-notice {
+    background: #EDE7F6;
+    border: 1px dashed #9575CD;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #4527A0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.footer {
+    background: #ECEFF1;
+    padding: 12px 36px;
+    font-size: 11px;
+    color: #90A4AE;
+    text-align: center;
+    border-top: 1px solid #CFD8DC;
+}
+@media print {
+    body { background: #fff; }
+    .page-wrap { box-shadow: none; margin: 0; border-radius: 0; }
+    .stub-notice { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="page-header">
+    <div class="topic-tag">Malária &rsaquo; Vigilância, Monitoria e Avaliação &rsaquo; Vigilância reactiva &nbsp;·&nbsp; Intervenção 18 de 19</div>
+    <div class="code-badge">mal_18</div>
+    <h1>Notificação e seguimento de casos de malária nos distritos de baixa transmissão na Província de Maputo</h1>
+    <div class="objective">Garantir a notificação atempada de todos os casos confirmados de malária; Assegurar o seguimento completo dos casos (investigação e resposta); Identificar casos importados vs. locais; Detectar e responder rapidamente a focos de transmissãi, prevenir surtos e reintrodução da malária.</div>
+  </div>
+
+  <div class="body-content">
+    
+
+    <div class="section-title">Identificação e Âmbito</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">Nível de Implementação</div>
+        <div class="field-value">Primario/Comunitario</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Alcance Geográfico</div>
+        <div class="field-value">Distritos de baixa transmissão na Província de Maputo (estratégia orientada para eliminação)</div>
+      </div>
+    </div>
+
+    <div class="section-title">Descrição</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">O que inclui</div>
+        <div class="field-value">Nos distritos de baixa transmissão de malária da Província de Maputo, a notificação e o seguimento rigoroso de casos constituem uma estratégia central para prevenir reintrodução, detectar focos residuais de transmissão e avançar para a eliminação local da doença.</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Recursos Necessários</div>
+        <div class="field-value">Sistema de notificação imediata; equipa distrital de resposta rápida; transporte para investigação de casos; formulários padronizados; integração com SIIM/DHIS2</div>
+      </div>
+    </div>
+
+    <div class="section-title">Implementação</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">Etapas Chave</div>
+        <div class="field-value">Notificação em 24h → Investigação do caso (origem/importado vs autóctone) → Testagem de contactos → Resposta focal (testar e tratar ou controlo vectorial focal) → Relatório</div>
+      </div>
+    </div>
+
+    <div class="section-title">Riscos, Limitações e Causas</div>
+    <div class="ineff-box">
+      <div class="ineff-title">Riscos e Limitações</div>
+      <div class="ineff-text">Atraso na notificação; classificação incorreta do caso; falha na investigação completa</div>
+    </div>
+    <div class="causes-box">
+      <div class="causes-title">Possíveis Factores Associados</div>
+      <div class="causes-text">Fraca conectividade; carga de trabalho nas US; mobilidade populacional transfronteiriça; falhas na supervisão distrital</div>
+    </div>
+
+    <div class="section-title">Financiamento e Cobertura</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">Ano de Início</div>
+        <div class="field-value">2024</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Gastos em 2024 (MZN)</div>
+        <div class="field-value">10465000</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Fonte(s) de Financiamento</div>
+        <div class="field-value">FG</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Pop. Elegível</div>
+        <div class="field-value">2</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Número Alcançado</div>
+        <div class="field-value">2</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Cobertura</div>
+        <div class="field-value">1</div>
+      </div>
+      
+    </div>
+
+    <div class='section-title'>Notas</div><div class='field-grid'>
+      <div class="field-row">
+        <div class="field-label">Notas</div>
+        <div class="field-value">Refere-se ao numero de  distritos</div>
+      </div></div>
+
+  </div>
+
+  <div class="nav-bar">
+    <a href="mal_17.html">← Anterior</a>
+    <a href="index.html">↑ Índice</a>
+    <a href="mal_19.html">Próxima →</a>
+  </div>
+  
+
+  <div class="footer">
+    Delphi de Optimização de Intervenções &nbsp;·&nbsp; Malária
+    &nbsp;·&nbsp; Gerado em 06/03/2026
+  </div>
+
+</div>
+</body>
+</html>

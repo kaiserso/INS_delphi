@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Avaliação — Malária</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:    #0f1923;
+  --muted:  #5a6a7a;
+  --faint:  #e8edf2;
+  --accent: #1a5c8a;
+  --green:  #2e7d52;
+  --amber:  #b45309;
+  --surface:#f7f9fb;
+  --white:  #ffffff;
+}
+html, body {
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 15%, rgba(26,92,138,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 70% at 90% 85%, rgba(46,125,82,.05)  0%, transparent 60%);
+  pointer-events: none;
+}
+.page {
+  position: relative;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+/* ── Header ── */
+.page-header {
+  background: var(--accent);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -30px;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+}
+.topic-pill {
+  display: inline-block;
+  background: rgba(255,255,255,.18);
+  color: rgba(255,255,255,.9);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 12px;
+}
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 300; font-size: 24px;
+  color: #fff; line-height: 1.3;
+  margin-bottom: 6px;
+}
+.page-subtitle { font-size: 13px; color: rgba(255,255,255,.65); }
+/* ── Progress bar ── */
+.progress-wrap {
+  margin-bottom: 28px;
+}
+.progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted);
+  margin-bottom: 8px;
+}
+.progress-bar-bg {
+  height: 6px; background: var(--faint);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--green);
+  border-radius: 3px;
+  transition: width .4s ease;
+  width: 0%;
+}
+/* ── Sub-form cards ── */
+.subform-card {
+  background: var(--white);
+  border: 1.5px solid var(--faint);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: box-shadow .2s, border-color .2s;
+}
+.subform-card.done {
+  border-color: #b7dfcc;
+  background: #f6fdf9;
+}
+.subform-card.locked {
+  opacity: .55;
+  cursor: not-allowed;
+}
+.status-icon {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  background: var(--faint);
+  color: var(--muted);
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+}
+.subform-card.done .status-icon {
+  background: #d1f0e2; color: var(--green);
+}
+.card-body { flex: 1; min-width: 0; }
+.card-label {
+  font-weight: 500; font-size: 15px;
+  color: var(--ink); margin-bottom: 3px;
+}
+.card-meta {
+  font-size: 12px; color: var(--muted);
+}
+.card-action { flex-shrink: 0; }
+.open-btn {
+  padding: 9px 18px;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  border: none; border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background .2s;
+}
+.open-btn:hover { background: #174e78; }
+.open-btn.done-btn {
+  background: transparent;
+  border: 1.5px solid #b7dfcc;
+  color: var(--green);
+  cursor: default;
+}
+.open-btn.no-url {
+  background: var(--faint);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+/* ── Catalogue link ── */
+.catalogue-link {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.catalogue-link a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.catalogue-link a:hover { text-decoration: underline; }
+/* ── Footer ── */
+.page-footer {
+  text-align: center;
+  font-size: 11px; color: #b0bec5;
+  margin-top: 40px;
+}
+/* ── Auth logout link ── */
+.signout {
+  text-align: right;
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+.signout a { color: #b0bec5; text-decoration: none; }
+.signout a:hover { color: var(--muted); }
+.stub-notice {
+  background: #EDE7F6;
+  border: 1px dashed #9575CD;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 12px; color: #4527A0;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+
+  <div class="page-header">
+    <div class="topic-pill">Malária</div>
+    <div class="page-title">Painel de Avaliação</div>
+    <div class="page-subtitle">Malária &nbsp;·&nbsp; 7 formulários &nbsp;·&nbsp; 19 intervenções</div>
+  </div>
+
+  
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progresso</span>
+      <span id="progressText">0 de 7 formulários submetidos</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="cardList"></div>
+
+  <div class="catalogue-link">
+    <a href="index.html">↗ Catálogo de fichas de intervenção</a>
+  </div>
+
+  <div class="page-footer">
+    Delphi de Optimização &nbsp;·&nbsp; Malária
+    &nbsp;·&nbsp; Gerado em 06/03/2026
+  </div>
+
+</div>
+
+<script>
+const GROUPS = [
+  {
+    "slug": "manejo_de_casos_1",
+    "label": "Manejo de casos (1)",
+    "count": 5,
+    "codes": [
+      "mal_01",
+      "mal_02",
+      "mal_03",
+      "mal_04",
+      "mal_05"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/qdjTvmar?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=manejo_de_casos_1"
+  },
+  {
+    "slug": "manejo_de_casos_2",
+    "label": "Manejo de casos (2)",
+    "count": 2,
+    "codes": [
+      "mal_06",
+      "mal_07"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/GpoHzQd7?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=manejo_de_casos_2"
+  },
+  {
+    "slug": "prevencao_1",
+    "label": "Prevenção (1)",
+    "count": 5,
+    "codes": [
+      "mal_08",
+      "mal_09",
+      "mal_10",
+      "mal_11",
+      "mal_12"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/FrqkD8RQ?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=prevencao_1"
+  },
+  {
+    "slug": "prevencao_2",
+    "label": "Prevenção (2)",
+    "count": 4,
+    "codes": [
+      "mal_13",
+      "mal_14",
+      "mal_15",
+      "mal_16"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/5LVjaY2H?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=prevencao_2"
+  },
+  {
+    "slug": "mudanca_social_e_de_comportamento",
+    "label": "Mudança Social e de Comportamento",
+    "count": 1,
+    "codes": [
+      "mal_17"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/ZNdxYFbI?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=mudanca_social_e_de_comportamento"
+  },
+  {
+    "slug": "vigilancia_monitoria_e_avaliacao",
+    "label": "Vigilância, Monitoria e Avaliação",
+    "count": 1,
+    "codes": [
+      "mal_18"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/mfHACaM6?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=vigilancia_monitoria_e_avaliacao"
+  },
+  {
+    "slug": "gestao_programatica",
+    "label": "Gestão programática",
+    "count": 1,
+    "codes": [
+      "mal_19"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/oLuFpvzV?return_url=https://kaiserso.github.io/INS_Delphi/malaria/master.html?completed=gestao_programatica"
+  }
+];
+const STORAGE_KEY = 'delphi_malaria_completed';
+const TOTAL = GROUPS.length;
+
+// ── Persistence helpers ──────────────────────────────────────
+function getCompleted() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function markCompleted(slug) {
+  const done = getCompleted();
+  if (!done.includes(slug)) { done.push(slug); }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+}
+
+// ── Check ?completed=<slug> on page load ─────────────────────
+(function handleReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('completed');
+  if (slug) {
+    markCompleted(slug);
+    // Clean up URL
+    history.replaceState(null, '', window.location.pathname);
+  }
+})();
+
+// ── Render cards ─────────────────────────────────────────────
+function render() {
+  const done = getCompleted();
+  const doneCount = GROUPS.filter(g => done.includes(g.slug)).length;
+  const pct = TOTAL > 0 ? Math.round(doneCount / TOTAL * 100) : 0;
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent =
+    doneCount + ' de ' + TOTAL + ' formulários submetidos';
+
+  const list = document.getElementById('cardList');
+  list.innerHTML = '';
+
+  GROUPS.forEach(function(g, idx) {
+    const isDone  = done.includes(g.slug);
+    const hasUrl  = !!g.url;
+    const card    = document.createElement('div');
+    card.className = 'subform-card' + (isDone ? ' done' : '');
+
+    // Status icon: checkmark if done, number if pending
+    const icon = isDone ? '✓' : String(idx + 1);
+    const iconBadge = '<div class="status-icon">' + icon + '</div>';
+
+    // Meta: intervention count + codes
+    const codesSnippet = g.codes.slice(0, 4).join(', ')
+                       + (g.codes.length > 4 ? ', …' : '');
+    const meta = g.count + ' intervenção' + (g.count !== 1 ? 'ões' : '')
+               + ' &nbsp;·&nbsp; ' + codesSnippet;
+
+    // Action button
+    let btn = '';
+    if (isDone) {
+      btn = '<span class="open-btn done-btn">✓ Submetido</span>';
+    } else if (!hasUrl) {
+      btn = '<span class="open-btn no-url" title="URL não configurado">Em breve</span>';
+    } else {
+      btn = '<a class="open-btn" href="' + g.url + '">Iniciar →</a>';
+    }
+
+    card.innerHTML =
+      iconBadge +
+      '<div class="card-body">' +
+        '<div class="card-label">' + g.label + '</div>' +
+        '<div class="card-meta">' + meta + '</div>' +
+      '</div>' +
+      '<div class="card-action">' + btn + '</div>';
+
+    list.appendChild(card);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
