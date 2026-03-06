@@ -243,7 +243,7 @@ const GROUPS = [
       "mal_04",
       "mal_05"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/qdjTvmar?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=manejo_de_casos_1"
+    "url": "https://ee-eu.kobotoolbox.org/single/qdjTvmar?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=manejo_de_casos_1"
   },
   {
     "slug": "manejo_de_casos_2",
@@ -253,7 +253,7 @@ const GROUPS = [
       "mal_06",
       "mal_07"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/GpoHzQd7?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=manejo_de_casos_2"
+    "url": "https://ee-eu.kobotoolbox.org/single/GpoHzQd7?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=manejo_de_casos_2"
   },
   {
     "slug": "prevencao_1",
@@ -266,7 +266,7 @@ const GROUPS = [
       "mal_11",
       "mal_12"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/FrqkD8RQ?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=prevencao_1"
+    "url": "https://ee-eu.kobotoolbox.org/single/FrqkD8RQ?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=prevencao_1"
   },
   {
     "slug": "prevencao_2",
@@ -278,7 +278,7 @@ const GROUPS = [
       "mal_15",
       "mal_16"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/5LVjaY2H?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=prevencao_2"
+    "url": "https://ee-eu.kobotoolbox.org/single/5LVjaY2H?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=prevencao_2"
   },
   {
     "slug": "mudanca_social_e_de_comportamento",
@@ -287,7 +287,7 @@ const GROUPS = [
     "codes": [
       "mal_17"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/ZNdxYFbI?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=mudanca_social_e_de_comportamento"
+    "url": "https://ee-eu.kobotoolbox.org/single/ZNdxYFbI?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=mudanca_social_e_de_comportamento"
   },
   {
     "slug": "vigilancia_monitoria_e_avaliacao",
@@ -296,7 +296,7 @@ const GROUPS = [
     "codes": [
       "mal_18"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/mfHACaM6?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=vigilancia_monitoria_e_avaliacao"
+    "url": "https://ee-eu.kobotoolbox.org/single/mfHACaM6?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=vigilancia_monitoria_e_avaliacao"
   },
   {
     "slug": "gestao_programatica",
@@ -305,7 +305,7 @@ const GROUPS = [
     "codes": [
       "mal_19"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/oLuFpvzV?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html?completed=gestao_programatica"
+    "url": "https://ee-eu.kobotoolbox.org/single/oLuFpvzV?return_url=https://kaiserso.github.io/INS_delphi/malaria/master.html#completed=gestao_programatica"
   }
 ];
 const STORAGE_KEY = 'delphi_malaria_completed';
@@ -322,15 +322,28 @@ function markCompleted(slug) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
 }
 
-// ── Check ?completed=<slug> on page load ─────────────────────
+// ── Check for completed=<slug> on page load ──────────────────
+// Uses URL hash (#completed=slug) instead of query string so that
+// GitHub Pages normalisation redirects don't strip the parameter.
+// Also supports legacy ?completed=slug query string as fallback.
 (function handleReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get('completed');
-  if (slug) {
-    markCompleted(slug);
-    // Clean up URL
+  let slug = null;
+
+  // Hash-based: master.html#completed=manejo_de_casos_1
+  const hash = window.location.hash.slice(1); // strip leading #
+  if (hash.startsWith('completed=')) {
+    slug = decodeURIComponent(hash.slice('completed='.length));
     history.replaceState(null, '', window.location.pathname);
   }
+
+  // Query string fallback: master.html?completed=manejo_de_casos_1
+  if (!slug) {
+    const params = new URLSearchParams(window.location.search);
+    slug = params.get('completed');
+    if (slug) history.replaceState(null, '', window.location.pathname);
+  }
+
+  if (slug) markCompleted(slug);
 })();
 
 // ── Render cards ─────────────────────────────────────────────
