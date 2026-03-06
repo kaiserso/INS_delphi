@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tratamento de casos (Artesunato injectavel) — Catálogo Delphi | Malária</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #f5f7fa;
+    padding: 0;
+}
+.page-wrap {
+    max-width: 860px;
+    margin: 32px auto;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    overflow: hidden;
+}
+.page-header {
+    background: #1F4E79;
+    color: #fff;
+    padding: 28px 36px 22px 36px;
+}
+.page-header .topic-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #90CAF9;
+    margin-bottom: 8px;
+}
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+.page-header .objective {
+    font-size: 14px;
+    color: #BBDEFB;
+    line-height: 1.6;
+    border-left: 3px solid #42A5F5;
+    padding-left: 12px;
+    margin-top: 10px;
+}
+.code-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 11px;
+    font-family: monospace;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+.body-content { padding: 28px 36px 36px 36px; }
+.section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #1F4E79;
+    border-bottom: 2px solid #BBDEFB;
+    padding-bottom: 5px;
+    margin: 24px 0 14px 0;
+}
+.field-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.field-grid .field-row:nth-child(odd)  { background: #f8fbff; }
+.field-grid .field-row:nth-child(even) { background: #ffffff; }
+.field-row {
+    display: contents;
+}
+.field-label {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #37474F;
+    border-bottom: 1px solid #e8e8e8;
+    border-right: 1px solid #e0e0e0;
+    background: inherit;
+}
+.field-value {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #212121;
+    line-height: 1.6;
+    border-bottom: 1px solid #e8e8e8;
+    background: inherit;
+}
+.ineff-box {
+    background: #FFF8E1;
+    border-left: 4px solid #FFB300;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+.ineff-box .ineff-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #E65100;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.ineff-box .ineff-text {
+    font-size: 13px;
+    color: #4E342E;
+    line-height: 1.6;
+}
+.causes-box {
+    background: #FBE9E7;
+    border-left: 4px solid #E64A19;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+.causes-box .causes-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #BF360C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.causes-box .causes-text {
+    font-size: 13px;
+    color: #4E342E;
+    line-height: 1.6;
+}
+.nav-bar {
+    background: #E3F2FD;
+    padding: 12px 36px;
+    font-size: 12px;
+    color: #1565C0;
+    border-top: 1px solid #BBDEFB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.nav-bar a {
+    color: #1565C0;
+    text-decoration: none;
+    font-weight: 600;
+}
+.nav-bar a:hover { text-decoration: underline; }
+.stub-notice {
+    background: #EDE7F6;
+    border: 1px dashed #9575CD;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #4527A0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.footer {
+    background: #ECEFF1;
+    padding: 12px 36px;
+    font-size: 11px;
+    color: #90A4AE;
+    text-align: center;
+    border-top: 1px solid #CFD8DC;
+}
+@media print {
+    body { background: #fff; }
+    .page-wrap { box-shadow: none; margin: 0; border-radius: 0; }
+    .stub-notice { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="page-header">
+    <div class="topic-tag">Malária &rsaquo; Manejo de casos &rsaquo; Tratamento &nbsp;·&nbsp; Intervenção 4 de 19</div>
+    <div class="code-badge">mal_04</div>
+    <h1>Tratamento de casos (Artesunato injectavel)</h1>
+    <div class="objective"></div>
+  </div>
+
+  <div class="body-content">
+    <div class="stub-notice">&#9888; Página de demonstração — URL provisório: <code>https://delphi-catalogo.example.org/malaria/mal_04.html</code>. Actualize BASE_URL no script quando as páginas forem publicadas.</div>
+
+    <div class="section-title">Identificação e Âmbito</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">Nível de Implementação</div>
+        <div class="field-value">Primaria</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Alcance Geográfico</div>
+        <div class="field-value">Nacional, implementado em Hospitais Provinciais, Hospitais Distritais e Unidades Sanitárias com capacidade de internamento e manejo de casos graves</div>
+      </div>
+    </div>
+
+    <div class="section-title">Descrição</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">O que inclui</div>
+        <div class="field-value">Para a malária severa, o artesunato injectável é o medicamento de eleição usado no pais.</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Recursos Necessários</div>
+        <div class="field-value">Artesunato injectável (ampolas); diluentes e material para reconstituição; seringas e material de infusão; protocolos clínicos atualizados; profissionais de saúde treinados em manejo de malária grave; capacidade de internamento; monitorização clínica (sinais vitais, glicemia); sistema de referência e contra-referência; AL para completar tratamento oral</div>
+      </div>
+    </div>
+
+    <div class="section-title">Implementação</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">Etapas Chave</div>
+        <div class="field-value">Identificação precoce de sinais de malária grave → Confirmação diagnóstica (TDR ou microscopia) → Administração imediata da primeira dose de artesunato IV/IM → Monitorização clínica contínua → Administração de doses subsequentes (0h, 12h, 24h e depois diária) → Transição para tratamento oral completo com AL → Registo e notificação do caso</div>
+      </div>
+    </div>
+
+    <div class="section-title">Riscos, Limitações e Causas</div>
+    <div class="ineff-box">
+      <div class="ineff-title">Riscos e Limitações</div>
+      <div class="ineff-text">Atraso na identificação de casos graves; ruptura de artesunato; erros na reconstituição/dosagem; falhas na monitorização; atraso na referência de casos complicados; mortalidade elevada associada à procura tardia de cuidados</div>
+    </div>
+    <div class="causes-box">
+      <div class="causes-title">Possíveis Factores Associados</div>
+      <div class="causes-text">Formação clínica insuficiente; rotatividade de pessoal; falhas na cadeia logística; fraca capacidade laboratorial; demora na procura de cuidados pela comunidade; sobrecarga dos serviços de urgência</div>
+    </div>
+
+    <div class="section-title">Financiamento e Cobertura</div>
+    <div class="field-grid">
+      
+      <div class="field-row">
+        <div class="field-label">Ano de Início</div>
+        <div class="field-value">2011/2014</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Gastos em 2024 (MZN)</div>
+        <div class="field-value">66057285.92</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Fonte(s) de Financiamento</div>
+        <div class="field-value">FG/ USAID</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Pop. Elegível</div>
+        <div class="field-value">1128822</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Número Alcançado</div>
+        <div class="field-value">1130650</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Cobertura</div>
+        <div class="field-value">100.2%</div>
+      </div>
+      
+      <div class="field-row">
+        <div class="field-label">Custo por Unidade</div>
+        <div class="field-value">Artesunate 60mg powder for solution for injection, vial, pack of 1 vial (1.35  USD por ampola)</div>
+      </div>
+    </div>
+
+    <div class='section-title'>Notas</div><div class='field-grid'>
+      <div class="field-row">
+        <div class="field-label">Notas</div>
+        <div class="field-value">A esses custos deve ser adicionado 20% de custos operacionais até a Unidade Sanitária</div>
+      </div></div>
+
+  </div>
+
+  <div class="nav-bar">
+    <a href="mal_03.html">← Anterior</a>
+    <a href="index.html">↑ Índice</a>
+    <a href="mal_05.html">Próxima →</a>
+  </div>
+
+  <div class="footer">
+    Delphi de Optimização de Intervenções &nbsp;·&nbsp; Malária
+    &nbsp;·&nbsp; Gerado em 06/03/2026
+  </div>
+
+</div>
+</body>
+</html>
