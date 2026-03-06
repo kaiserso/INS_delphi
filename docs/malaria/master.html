@@ -227,7 +227,28 @@ body::before {
   <div class="page-footer">
     Delphi de Optimização &nbsp;·&nbsp; Malária
     &nbsp;·&nbsp; Gerado em 06/03/2026
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <button onclick="resetProgress()"
+      style="background:none;border:1px solid #B0BEC5;border-radius:4px;
+             padding:2px 10px;font-size:11px;color:#78909C;cursor:pointer;
+             font-family:inherit"
+      title="Apagar progresso guardado localmente e recomeçar">
+      ↺ Reiniciar progresso
+    </button>
+    &nbsp;
+    <button onclick="showDebug()"
+      style="background:none;border:1px solid #B0BEC5;border-radius:4px;
+             padding:2px 10px;font-size:11px;color:#78909C;cursor:pointer;
+             font-family:inherit"
+      title="Mostrar estado de progresso guardado neste dispositivo">
+      🔍 Debug
+    </button>
   </div>
+
+  <div id="debugPanel" style="display:none;margin:12px auto;max-width:680px;
+       background:#263238;color:#80CBC4;border-radius:6px;
+       padding:14px 18px;font-size:11px;font-family:monospace;
+       white-space:pre-wrap;text-align:left;"></div>
 
 </div>
 
@@ -289,6 +310,39 @@ function markCompleted(slug) {
   const done = getCompleted();
   if (!done.includes(slug)) { done.push(slug); }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+}
+function resetProgress() {
+  if (confirm('Apagar todo o progresso guardado neste dispositivo e recomeçar?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderCards();
+    const panel = document.getElementById('debugPanel');
+    if (panel && panel.style.display !== 'none') showDebug();
+  }
+}
+
+function showDebug() {
+  const panel = document.getElementById('debugPanel');
+  if (!panel) return;
+  if (panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    return;
+  }
+  const completed = getCompleted();
+  const allSlugs = GROUPS.map(g => g.slug);
+  const pending = allSlugs.filter(s => !completed.includes(s));
+  const lines = [
+    '── localStorage key: ' + STORAGE_KEY,
+    '── completed (' + completed.length + '/' + allSlugs.length + '): ' +
+      (completed.length ? completed.join(', ') : '(none)'),
+    '── pending (' + pending.length + '): ' +
+      (pending.length ? pending.join(', ') : '(none)'),
+    '',
+    '── raw value:',
+    localStorage.getItem(STORAGE_KEY) || '(not set)',
+  ];
+  panel.textContent = lines.join('
+');
+  panel.style.display = 'block';
 }
 
 // ── Check for completed=<slug> on page load ──────────────────
