@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 13:18",
+  GENERATED_AT:   "2026-03-07 22:29",
 };
 </script>
 
@@ -436,24 +436,18 @@ function markCompleted(slug) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
 }
 
-// Handle #completed=<slug> return from Enketo
-// Uses hash fragment so GitHub Pages redirects don't strip the parameter.
 (function() {
   let slug = null;
-
   const hash = window.location.hash.slice(1);
   if (hash.startsWith('completed=')) {
     slug = decodeURIComponent(hash.slice('completed='.length));
     history.replaceState(null, '', window.location.pathname);
   }
-
-  // Query string fallback
   if (!slug) {
     const params = new URLSearchParams(window.location.search);
     slug = params.get('completed');
     if (slug) history.replaceState(null, '', window.location.pathname);
   }
-
   if (slug) markCompleted(slug);
 })();
 
@@ -493,9 +487,9 @@ function renderChecklist() {
                + (codes ? ' · ' + codes : '');
 
     let btn;
-    if (isDone)     btn = '<span class="sf-btn done">✓ Submetido</span>';
+    if (isDone)       btn = '<span class="sf-btn done">✓ Submetido</span>';
     else if (!hasUrl) btn = '<span class="sf-btn soon">Em breve</span>';
-    else            btn = '<a class="sf-btn go" href="' + fullUrl + '">Iniciar →</a>';
+    else              btn = '<a class="sf-btn go" href="' + fullUrl + '">Iniciar →</a>';
 
     const card = document.createElement('div');
     card.className = 'sf-card' + (isDone ? ' done' : '');
@@ -540,18 +534,17 @@ else {
   }
 
   async function revealChecklist() {
-    // If an allowlist is configured, verify the authenticated email
-    if (CONFIG.REQUIRE_AUTH && CONFIG.ALLOWED_HASHES && CONFIG.ALLOWED_HASHES.length > 0) {
+    if (CONFIG.ALLOWED_HASHES && CONFIG.ALLOWED_HASHES.length > 0) {
       try {
-        const meta  = await magic.user.getMetadata();
-        const email = (meta.email || '').toLowerCase().trim();
-        const msgBuf = new TextEncoder().encode(email);
+        const meta    = await magic.user.getMetadata();
+        const email   = (meta.email || '').toLowerCase().trim();
+        const msgBuf  = new TextEncoder().encode(email);
         const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
         const hashHex = Array.from(new Uint8Array(hashBuf))
           .map(b => b.toString(16).padStart(2, '0')).join('');
         if (!CONFIG.ALLOWED_HASHES.includes(hashHex)) {
           await magic.user.logout();
-          showError('Este endereço de email não está autorizado a participar neste exercício. Por favor contacte o administrador.');
+          showError('Este endereço de email não está autorizado. Por favor contacte o administrador.');
           return;
         }
       } catch(err) {
@@ -559,12 +552,9 @@ else {
         return;
       }
     }
-    // Auth passed — show brief success message then redirect to master
     showSubpanel('panelVerifying');
     document.querySelector('#panelVerifying .spinner-label').textContent = 'Acesso confirmado. A redirecionar…';
-    setTimeout(() => {
-      window.location.replace(CONFIG.MASTER_URL);
-    }, 1200);
+    setTimeout(() => window.location.replace(CONFIG.MASTER_URL), 1200);
   }
 
   window.handleSignout = async function() {
@@ -587,10 +577,8 @@ else {
       setTimeout(() => emailInput.style.borderColor = '', 1500);
       return;
     }
-
-    // Guard: SDK must be ready
     if (!window.magic) {
-      showError('A autenticação ainda está a carregar. Por favor aguarde um momento e tente novamente.');
+      showError('A autenticação ainda está a carregar. Por favor aguarde e tente novamente.');
       return;
     }
 
@@ -598,20 +586,18 @@ else {
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
 
-    // Show sent panel immediately then fire the magic link request.
-    // When the user clicks the link they are redirected back with ?magic_credential=...
-    // which the waitForMagic callback handles to complete auth.
     document.getElementById('sentEmailLabel').textContent = email;
     showSubpanel('panelSent');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Enviar link de acesso';
 
+    // Fire magic link — user clicks link in email, returns here with ?magic_credential=
     magic.auth.loginWithMagicLink({
       email,
       redirectURI: window.location.href.split('?')[0].split('#')[0],
       showUI: false,
     }).catch(function(err) {
-      if (!err.message || !err.message.includes('Modal is closed')) {
+      if (err.message && !err.message.includes('Modal is closed')) {
         showError(err.message || 'Erro ao enviar o link. Tente novamente.');
       }
     });
@@ -624,16 +610,15 @@ else {
     document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
   };
 
-  // Wait for Magic SDK (injected asynchronously)
   function waitForMagic(cb) {
     let _attempts = 0;
     function _poll() {
       if (typeof Magic !== 'undefined') { cb(); return; }
       _attempts++;
-      if (_attempts > 160) { // 8 seconds
+      if (_attempts > 160) {
         document.getElementById('submitBtn').disabled = false;
         document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
-        showError('Não foi possível carregar o serviço de autenticação. Verifique a sua ligação à internet e recarregue a página.');
+        showError('Não foi possível carregar o serviço de autenticação. Verifique a sua ligação à internet.');
         return;
       }
       setTimeout(_poll, 50);
@@ -641,7 +626,6 @@ else {
     _poll();
   }
 
-  // Disable submit button until SDK is ready
   document.getElementById('submitBtn').disabled = true;
   document.getElementById('submitBtn').textContent = 'A carregar…';
 
@@ -651,13 +635,12 @@ else {
     document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
 
     (async function() {
-      // Check if returning from a magic link click (magic_credential in URL)
-      const params = new URLSearchParams(window.location.search);
-      const credential = params.get('magic_credential');
-      if (credential) {
+      // Returning from magic link click
+      const _cred = new URLSearchParams(window.location.search).get('magic_credential');
+      if (_cred) {
         showSubpanel('panelVerifying');
         try {
-          await magic.auth.loginWithCredential(credential);
+          await magic.auth.loginWithCredential(_cred);
           revealChecklist();
         } catch(err) {
           showError(err.message || 'Não foi possível completar a verificação.');
@@ -669,10 +652,7 @@ else {
         revealChecklist();
         return;
       }
-      // Not logged in — show login form
       showSubpanel('panelLogin');
-      document.getElementById('submitBtn').disabled = false;
-      document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
     })();
   });
 
