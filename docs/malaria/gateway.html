@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 22:56",
+  GENERATED_AT:   "2026-03-07 23:03",
 };
 </script>
 
@@ -335,14 +335,14 @@ body::before {
           <div class="subpanel-title">Verifique o seu email</div>
           <p class="subpanel-body">
             Enviámos um código de 6 dígitos para<br>
-            <span class="sent-email" id="sentEmailLabel"></span><br><br>
+            <strong id="sentEmailLabel"></strong><br><br>
             Pode introduzir o código neste dispositivo ou em qualquer outro.
           </p>
           <label class="field-label" for="otpInput">Código de acesso</label>
           <input type="text" id="otpInput" class="email-input"
             placeholder="000000" maxlength="6"
             autocomplete="one-time-code" inputmode="numeric"
-            style="letter-spacing:8px; font-size:24px; text-align:center; padding:14px">
+            style="letter-spacing:8px;font-size:26px;text-align:center;padding:14px">
           <button class="submit-btn" id="otpBtn" onclick="handleOTP()">
             Verificar código
           </button>
@@ -354,7 +354,6 @@ body::before {
             O código expira em 10 minutos · <strong>no-reply@magic.link</strong>
           </p>
         </div>
-
 
         <div class="subpanel" id="panelVerifying">
           <div class="spinner-wrap">
@@ -439,7 +438,6 @@ function getCompleted() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch(e) { return []; }
 }
-
 function markCompleted(slug) {
   const done = getCompleted();
   if (!done.includes(slug)) done.push(slug);
@@ -466,20 +464,15 @@ function renderChecklist() {
   const total = CONFIG.GROUPS.length;
   const doneCount = CONFIG.GROUPS.filter(g => done.includes(g.slug)).length;
   const pct = total > 0 ? Math.round(doneCount / total * 100) : 0;
-
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressText').textContent =
     doneCount + ' de ' + total + ' formulários submetidos';
-
   const list = document.getElementById('cardList');
   list.innerHTML = '';
-
   if (total === 0) {
-    list.innerHTML = '<div class="empty-state">Nenhum formulário configurado ainda.<br>'
-      + '<small>Adicione entradas ao array GROUPS no bloco CONFIG.</small></div>';
+    list.innerHTML = '<div class="empty-state">Nenhum formulário configurado ainda.</div>';
     return;
   }
-
   CONFIG.GROUPS.forEach(function(g, idx) {
     const isDone = done.includes(g.slug);
     const hasUrl = !!g.url;
@@ -515,7 +508,7 @@ function showChecklist() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Open mode — no auth required
+// Open mode
 // ═══════════════════════════════════════════════════════════════
 if (!CONFIG.REQUIRE_AUTH) {
   showChecklist();
@@ -570,14 +563,15 @@ else {
   };
 
   let pendingEmail = null;
-  let otpInstance  = null;  // holds the loginWithEmailOTP PromiEvent
+  let otpInstance  = null;
 
   window.handleLogin = async function() {
     const emailInput = document.getElementById('emailInput');
     const submitBtn  = document.getElementById('submitBtn');
     const email      = emailInput.value.trim().toLowerCase();
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRe.test(email)) {
       emailInput.style.borderColor = '#e05a3a';
       emailInput.focus();
       setTimeout(() => emailInput.style.borderColor = '', 1500);
@@ -593,32 +587,27 @@ else {
     pendingEmail = email;
 
     try {
-      // Start OTP flow — Magic sends the code email.
-      // showUI:false means we handle the OTP input ourselves.
-      // The PromiEvent emits 'email-otp-form-open' when ready for the code,
-      // then resolves when we call emit('verify-email-otp', otp).
-      otpInstance = magic.auth.loginWithEmailOTP({ email, showUI: false });
-
-      // Fallback: show OTP panel after 3s if event doesn't fire
-      const _otpTimeout = setTimeout(function() {
-        document.getElementById('sentEmailLabel').textContent = email;
-        document.getElementById('otpInput').value = '';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar código de acesso';
-        showSubpanel('panelSent');
-        setTimeout(() => document.getElementById('otpInput').focus(), 100);
-      }, 3000);
+      otpInstance = magic.auth.loginWithEmailOTP({ email: email, showUI: false });
 
       otpInstance
-        .on('email-otp-form-open', function() {
-          clearTimeout(_otpTimeout);
-          // Code sent — show our OTP input panel
+        .on('email-otp-sent', function() {
           document.getElementById('sentEmailLabel').textContent = email;
           document.getElementById('otpInput').value = '';
           submitBtn.disabled = false;
           submitBtn.textContent = 'Enviar código de acesso';
           showSubpanel('panelSent');
           setTimeout(() => document.getElementById('otpInput').focus(), 100);
+        })
+        .on('invalid-email-otp', function() {
+          const btn = document.getElementById('otpBtn');
+          btn.disabled = false;
+          btn.textContent = 'Verificar código';
+          const inp = document.getElementById('otpInput');
+          inp.style.borderColor = '#e05a3a';
+          inp.value = '';
+          inp.placeholder = 'Código inválido — tente novamente';
+          inp.focus();
+          setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = '000000'; }, 3000);
         })
         .on('done', function() {
           revealChecklist();
@@ -640,7 +629,7 @@ else {
   };
 
   window.handleOTP = function() {
-    const otp = (document.getElementById('otpInput').value || '').trim();
+    const otp = (document.getElementById('otpInput').value || '').replace(/\s/g, '');
     if (!/^\d{6}$/.test(otp)) {
       const inp = document.getElementById('otpInput');
       inp.style.borderColor = '#e05a3a';
@@ -655,19 +644,20 @@ else {
     const btn = document.getElementById('otpBtn');
     btn.disabled = true;
     btn.textContent = 'A verificar…';
-    // Submit the OTP back to the Magic SDK
     otpInstance.emit('verify-email-otp', otp);
   };
 
-  // Allow OTP input submission with Enter key
   document.getElementById('otpInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') window.handleOTP();
   });
 
   window.handleResend = function() {
-    otpInstance = null;
+    if (otpInstance) {
+      try { otpInstance.emit('cancel'); } catch(e) {}
+      otpInstance = null;
+    }
+    pendingEmail = null;
     showSubpanel('panelLogin');
-    document.getElementById('emailInput').value = pendingEmail || '';
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
   };
