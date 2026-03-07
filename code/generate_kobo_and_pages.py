@@ -27,11 +27,18 @@ import pathlib
 def load_config(path="config.env"):
     """Parse a simple key=value config file. Returns a dict of strings."""
     cfg = {}
-    config_path = pathlib.Path(__file__).parent / path
-    if not config_path.exists():
+    # Look in script directory first, then current working directory
+    script_dir = pathlib.Path(__file__).parent / path
+    cwd_path   = pathlib.Path.cwd() / path
+    if script_dir.exists():
+        config_path = script_dir
+    elif cwd_path.exists():
+        config_path = cwd_path
+    else:
         raise FileNotFoundError(
-            f"Config file not found: {config_path}\n"
-            f"Create config.env next to the script. See config.env.example."
+            f"Config file not found in script directory ({script_dir})\n"
+            f"or current directory ({cwd_path}).\n"
+            f"Create config.env in either location."
         )
     with open(config_path, encoding="utf-8") as f:
         for line in f:

@@ -39,8 +39,23 @@ from openpyxl.utils import get_column_letter
 # ═══════════════════════════════════════════════════════════════
 def load_config(path="config.env"):
     cfg = {}
-    if not os.path.exists(path):
+    import pathlib
+    script_dir = pathlib.Path(__file__).parent / path
+    cwd_path   = pathlib.Path.cwd() / path
+    if script_dir.exists():
+        config_path = script_dir
+    elif cwd_path.exists():
+        config_path = cwd_path
+    else:
         return cfg
+    with open(config_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            cfg[k.strip()] = v.strip()
+    return cfg
     with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -248,6 +263,16 @@ def fetch_submissions(asset_uid, asset_name):
     df = pd.json_normalize(rows)
     df = normalise_columns(df)
 
+    # Normalise submission timestamp into a consistent _submitted_at column
+    for ts_col in ("_submission_time", "end", "start"):
+        if ts_col in df.columns:
+            df["_submitted_at"] = pd.to_datetime(
+                df[ts_col], errors="coerce", utc=True
+            ).dt.strftime("%Y-%m-%d %H:%M:%S")
+            break
+    else:
+        df["_submitted_at"] = ""
+
     # Derive group slug from asset name or id_string
     slug = re.sub(rf"^delphi_w1_{TOPIC}_", "",
                   asset_name.lower().replace(" ", "_").replace("|","_"))
@@ -363,6 +388,15 @@ def load_csvs(csv_files):
 
         df = normalise_columns(df)
         slug = detect_group_slug(f, df)
+        # Normalise submission timestamp
+        for ts_col in ("_submission_time", "end", "start"):
+            if ts_col in df.columns:
+                df["_submitted_at"] = pd.to_datetime(
+                    df[ts_col], errors="coerce", utc=True
+                ).dt.strftime("%Y-%m-%d %H:%M:%S")
+                break
+        else:
+            df["_submitted_at"] = ""
         df["_group"] = slug
         df["_source_file"] = os.path.basename(f)
         frames.append(df)
@@ -393,12 +427,14 @@ def build_wide(raw):
         source   = str(submission.get("_source_file","")).strip()
         codes    = detect_intervention_codes(submission.to_frame().T)
 
+        submitted_at = str(submission.get("_submitted_at", "")).strip()
         for code in codes:
             row = {
                 "expert_code":      expert,
                 "modality":         modality,
                 "group":            group,
                 "intervention":     code,
+                "_submitted_at":    submitted_at,
                 "_source_file":     source,
             }
             for suffix in INTV_FIELDS:
@@ -414,6 +450,34 @@ def build_wide(raw):
     # Sort for readability
     wide = wide.sort_values(["expert_code", "intervention"]).reset_index(drop=True)
     return wide
+
+def keep_last_only(raw):
+    """
+    For each (expert_code, _group) pair, keep only the submission with the
+    latest _submitted_at timestamp. Rows with no timestamp sort last and are
+    kept only if no timestamped submission exists for that expert+group.
+    Returns filtered DataFrame and a summary of how many were dropped.
+    """
+    if raw.empty or "_submitted_at" not in raw.columns:
+        return raw, 0
+
+    df = raw.copy()
+    # Treat empty/missing timestamps as very old so they lose ties
+    df["_sort_ts"] = pd.to_datetime(df["_submitted_at"], errors="coerce", utc=True)
+    df["_sort_ts"] = df["_sort_ts"].fillna(pd.Timestamp.min.replace(tzinfo=None))
+
+    before = len(df)
+    df = (df.sort_values("_sort_ts")
+            .groupby(["expert_code", "_group"], sort=False)
+            .tail(1)
+            .reset_index(drop=True))
+    df = df.drop(columns=["_sort_ts"])
+    dropped = before - len(df)
+    if dropped:
+        print(f"  --last-only: dropped {dropped} earlier submission(s), "
+              f"kept {len(df)} (one per expert per group)")
+    return df, dropped
+
 
 # ═══════════════════════════════════════════════════════════════
 # Step 3 — QC checks
@@ -695,7 +759,11 @@ def write_sheet_df(wb, name, df, header_bg="1A5C8A", freeze="A2"):
                  CLR["fail"] if s == "FAIL" else
                  CLR["warn"] if s == "WARN" else bg)
         for ci, col in enumerate(cols, 1):
-            cell = ws.cell(row=ri, column=ci, value=row[col])
+            v = row[col]
+            # openpyxl cannot write lists/dicts — flatten to string
+            if isinstance(v, (list, dict)):
+                v = ", ".join(str(x) for x in v) if isinstance(v, list) else str(v)
+            cell = ws.cell(row=ri, column=ci, value=v)
             cell.font = Font(name="Arial", size=10)
             cell.fill = PatternFill("solid", start_color=bg)
             cell.alignment = Alignment(wrap_text=(col in ("Description","Detail")),
@@ -717,11 +785,11 @@ def write_xlsx(out_path, raw, wide, summary, details, coverage):
     wb.remove(wb.active)  # remove default sheet
 
     # Raw
-    write_sheet_df(wb, "Raw", raw.drop(columns=["_source_file"], errors="ignore"),
+    write_sheet_df(wb, "Submissions", raw.drop(columns=["_source_file"], errors="ignore"),
                    header_bg=CLR["header_dark"], freeze="C2")
 
     # Wide
-    write_sheet_df(wb, "Wide", wide.drop(columns=["_source_file"], errors="ignore"),
+    write_sheet_df(wb, "Responses", wide.drop(columns=["_source_file"], errors="ignore"),
                    header_bg=CLR["header_mid"], freeze="D2")
 
     # QC Summary
@@ -783,8 +851,8 @@ def main():
 
     if args.qc_only and os.path.exists(args.output):
         print(f"Loading existing output for QC re-run: {args.output}")
-        raw  = pd.read_excel(args.output, sheet_name="Raw",  dtype=str).fillna("")
-        wide = pd.read_excel(args.output, sheet_name="Wide", dtype=str).fillna("")
+        raw  = pd.read_excel(args.output, sheet_name="Submissions", dtype=str).fillna("")
+        wide = pd.read_excel(args.output, sheet_name="Responses",  dtype=str).fillna("")
 
     elif args.fetch:
         try:
@@ -839,6 +907,23 @@ def main():
     print(f"\nWriting output…")
     write_xlsx(args.output, raw, wide,
                summary, details, coverage)
+    print(f"  ✓ Full output: {args.output}")
+
+    # Always also produce a last-only version (one submission per expert per group)
+    if not raw.empty:
+        raw_last, dropped = keep_last_only(raw)
+        if dropped > 0:
+            wide_last      = build_wide(raw_last)
+            summary_last, details_last = run_qc(raw_last, wide_last)
+            coverage_last  = build_coverage(raw_last)
+            base, ext      = os.path.splitext(args.output)
+            last_path      = f"{base}_lastonly{ext}"
+            write_xlsx(last_path, raw_last, wide_last,
+                       summary_last, details_last, coverage_last)
+            print(f"  ✓ Last-only output: {last_path}  "
+                  f"({dropped} earlier submission(s) removed)")
+        else:
+            print(f"  ℹ️  No duplicate submissions found — last-only output identical to full.")
 
     if fails:
         print(f"\n⚠️   {fails} QC check(s) FAILED — review QC_Detail sheet.")

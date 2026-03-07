@@ -25,21 +25,28 @@ import requests
 # Load config.env (same loader as generate_kobo_and_pages.py)
 # ═══════════════════════════════════════════════════════════════
 def load_config(path="config.env"):
+    """Returns (cfg_dict, resolved_path)."""
+    import pathlib
+    cwd_path   = pathlib.Path.cwd() / path
+    script_dir = pathlib.Path(__file__).parent / path
+    if cwd_path.exists():
+        config_path = cwd_path
+    elif script_dir.exists():
+        config_path = script_dir
+    else:
+        return {}, None
     cfg = {}
-    path = str(pathlib.Path(__file__).parent / path)
-    if not os.path.exists(path):
-        return cfg
-    with open(path, encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line or line.startswith("#") or "=" not in line:
                 continue
-            if "=" in line:
-                k, _, v = line.partition("=")
-                cfg[k.strip()] = v.strip()
-    return cfg
+            k, _, v = line.partition("=")
+            cfg[k.strip()] = v.strip()
+    return cfg, config_path
 
-cfg = load_config()
+
+cfg, CONFIG_PATH = load_config()
 def _get(k, default=""):
     return cfg.get(k, default)
 
@@ -280,7 +287,7 @@ def find_existing_asset(slug):
 # ═══════════════════════════════════════════════════════════════
 def update_config_env(slug, url, config_path=None, key_prefix="SUBFORM_URL_"):
     if config_path is None:
-        config_path = str(pathlib.Path(__file__).parent / "config.env")
+        config_path = str(CONFIG_PATH) if CONFIG_PATH else str(pathlib.Path(__file__).parent / "config.env")
     key = f"{key_prefix}{slug}"
     lines = []
     found = False
