@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 13:14",
+  GENERATED_AT:   "2026-03-07 13:18",
 };
 </script>
 
@@ -598,31 +598,23 @@ else {
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
 
-    try {
-      // loginWithMagicLink with redirectURI sends the email and returns immediately.
-      // The user clicks the link in their email, which redirects back here.
-      // The redirect callback handler (below in waitForMagic) completes the auth.
-      await magic.auth.loginWithMagicLink({
-        email,
-        redirectURI: window.location.href,
-        showUI: false,
-      });
-    } catch(err) {
-      if (err.message && err.message.includes('Modal is closed')) {
-        // User closed the Magic modal — not an error
-      } else {
-        showError(err.message || 'Erro ao enviar o link. Tente novamente.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar link de acesso';
-        return;
-      }
-    }
-
-    // Email sent — show confirmation panel
+    // Show sent panel immediately then fire the magic link request.
+    // When the user clicks the link they are redirected back with ?magic_credential=...
+    // which the waitForMagic callback handles to complete auth.
     document.getElementById('sentEmailLabel').textContent = email;
     showSubpanel('panelSent');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Enviar link de acesso';
+
+    magic.auth.loginWithMagicLink({
+      email,
+      redirectURI: window.location.href.split('?')[0].split('#')[0],
+      showUI: false,
+    }).catch(function(err) {
+      if (!err.message || !err.message.includes('Modal is closed')) {
+        showError(err.message || 'Erro ao enviar o link. Tente novamente.');
+      }
+    });
   };
 
   window.handleResend = function() {
@@ -659,11 +651,13 @@ else {
     document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
 
     (async function() {
-      // Handle return from magic link email click
-      if (await magic.auth.isRedirectCallback()) {
+      // Check if returning from a magic link click (magic_credential in URL)
+      const params = new URLSearchParams(window.location.search);
+      const credential = params.get('magic_credential');
+      if (credential) {
         showSubpanel('panelVerifying');
         try {
-          await magic.auth.getRedirectResult();
+          await magic.auth.loginWithCredential(credential);
           revealChecklist();
         } catch(err) {
           showError(err.message || 'Não foi possível completar a verificação.');
