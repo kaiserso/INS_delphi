@@ -12,7 +12,7 @@
      ═══════════════════════════════════════════════════════════ -->
 <script>
 const CONFIG = {
-  REQUIRE_AUTH:   "true" === "true",
+  REQUIRE_AUTH:   "true" === "true",  // set to false for local file:// testing
   MAGIC_API_KEY:  "pk_live_04B22CA3D72C880F",
   ALLOWED_HASHES: ["e027b4708b380cdef8686aeef40f3ff142b4a0e99f6502334c2c86c1fa2139db", "8967bfbddf94167d4b359d325a714fc522417f3d4ee924f8e5064b57841904d0", "07151bfec11a69110fb3fc9612cfba34098081066553859712be036b3eb69a7d", "e9f26809e260cf0b6c58be1e9a043929f22e25530b76933e5da4fabc02ceee8f", "42a763b989c51f449e540f8d8b42b93acfcdf18f2df57cc6dec1f41fba36d322", "4d3cb8b90dc0ea863fc0b35157330f9945cb73d8ace1dac0d6880a942522315a", "af40001674aa3e9cf64d71d09ddf70d42d5cfbcc260e1b1b06f44023b91374d6"], /* injected at build time */
   TOPIC:          "Malária",
@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 12:42",
+  GENERATED_AT:   "2026-03-07 12:54",
 };
 </script>
 
@@ -634,8 +634,19 @@ else {
 
   // Wait for Magic SDK (injected asynchronously)
   function waitForMagic(cb) {
-    if (typeof Magic !== 'undefined') { cb(); return; }
-    setTimeout(() => waitForMagic(cb), 50);
+    let _attempts = 0;
+    function _poll() {
+      if (typeof Magic !== 'undefined') { cb(); return; }
+      _attempts++;
+      if (_attempts > 160) { // 8 seconds
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
+        showError('Não foi possível carregar o serviço de autenticação. Verifique a sua ligação à internet e recarregue a página.');
+        return;
+      }
+      setTimeout(_poll, 50);
+    }
+    _poll();
   }
 
   // Disable submit button until SDK is ready
@@ -660,4 +671,17 @@ else {
         return;
       }
       // Already logged in from a previous session
-      if (await magic.user.isLogg
+      if (await magic.user.isLoggedIn()) {
+        revealChecklist();
+        return;
+      }
+      // Not logged in — show login form normally
+      showSubpanel('panelLogin');
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
+    })();
+  });
+
+</script>
+</body>
+</html>
