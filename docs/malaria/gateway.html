@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 23:09",
+  GENERATED_AT:   "2026-03-07 23:27",
 };
 </script>
 
@@ -481,7 +481,7 @@ function renderChecklist() {
       : '';
     const codes = (g.codes || []).slice(0, 4).join(', ')
                 + ((g.codes || []).length > 4 ? ', …' : '');
-    const meta = g.count + ' intervenç' + (g.count !== 1 ? 'ões' : 'ão')
+    const meta = g.count + ' interven' + (g.count !== 1 ? 'ções' : 'ção')
                + (codes ? ' · ' + codes : '');
     let btn;
     if (isDone)       btn = '<span class="sf-btn done">✓ Submetido</span>';
@@ -521,26 +521,37 @@ if (!CONFIG.REQUIRE_AUTH) {
     showSubpanel('panelError');
   }
 
+  // Hash an email address with SHA-256, returns hex string
+  async function hashEmail(email) {
+    const msgBuf  = new TextEncoder().encode(email.toLowerCase().trim());
+    const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
+    return Array.from(new Uint8Array(hashBuf))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Check allowlist — returns true if allowed (or no list configured)
+  async function isEmailAllowed(email) {
+    if (!CONFIG.ALLOWED_HASHES || CONFIG.ALLOWED_HASHES.length === 0) return true;
+    const hex = await hashEmail(email);
+    return CONFIG.ALLOWED_HASHES.includes(hex);
+  }
+
   async function revealChecklist() {
+    // Re-verify email hash post-auth as a second check
     if (CONFIG.ALLOWED_HASHES && CONFIG.ALLOWED_HASHES.length > 0) {
       try {
-        // Support both old getMetadata() and new getInfo() API
         const meta  = await (magic.user.getInfo
                         ? magic.user.getInfo()
                         : magic.user.getMetadata());
         const email = (meta.email || '').toLowerCase().trim();
-        const msgBuf  = new TextEncoder().encode(email);
-        const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
-        const hashHex = Array.from(new Uint8Array(hashBuf))
-          .map(b => b.toString(16).padStart(2, '0')).join('');
-        if (!CONFIG.ALLOWED_HASHES.includes(hashHex)) {
+        const hex   = await hashEmail(email);
+        if (!CONFIG.ALLOWED_HASHES.includes(hex)) {
           await magic.user.logout();
           showError('Este endereço de email não está autorizado. Por favor contacte o administrador.');
           return;
         }
       } catch(err) {
-        // If hash check fails but ALLOWED_HASHES is empty, still allow through
-        showError('Não foi possível verificar a sua identidade. Por favor tente novamente. (' + (err && err.message) + ')');
+        showError('Não foi possível verificar a sua identidade. (' + (err && err.message) + ')');
         return;
       }
     }
@@ -563,8 +574,7 @@ if (!CONFIG.REQUIRE_AUTH) {
     const emailInput = document.getElementById('emailInput');
     const submitBtn  = document.getElementById('submitBtn');
     const email      = emailInput.value.trim().toLowerCase();
-    const emailRe    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRe.test(email)) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       emailInput.style.borderColor = '#e05a3a';
       emailInput.focus();
       setTimeout(() => emailInput.style.borderColor = '', 1500);
@@ -574,9 +584,27 @@ if (!CONFIG.REQUIRE_AUTH) {
       showError('A autenticação ainda está a carregar. Por favor aguarde.');
       return;
     }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
+
+    // ── Pre-flight allowlist check ──────────────────────────────
+    // If email not on list, simulate the sent panel but never call Magic.
+    // otpInstance remains null so handleOTP will always report invalid code.
+    if (CONFIG.ALLOWED_HASHES && CONFIG.ALLOWED_HASHES.length > 0) {
+      if (!await isEmailAllowed(email)) {
+        document.getElementById('sentEmailLabel').textContent = email;
+        document.getElementById('otpInput').value = '';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar código de acesso';
+        showSubpanel('panelSent');
+        setTimeout(() => document.getElementById('otpInput').focus(), 100);
+        return;
+      }
+    }
+    // ────────────────────────────────────────────────────────────
+
     try {
       otpInstance = magic.auth.loginWithEmailOTP({ email: email, showUI: false });
       otpInstance
@@ -627,7 +655,16 @@ if (!CONFIG.REQUIRE_AUTH) {
       return;
     }
     if (!otpInstance) {
-      showError('Sessão expirada. Por favor recarregue a página.');
+      // Unauthorised email — simulate invalid code response
+      const btn2 = document.getElementById('otpBtn');
+      btn2.disabled = false;
+      btn2.textContent = 'Verificar código';
+      const inp2 = document.getElementById('otpInput');
+      inp2.style.borderColor = '#e05a3a';
+      inp2.value = '';
+      inp2.placeholder = 'Código inválido — tente novamente';
+      inp2.focus();
+      setTimeout(() => { inp2.style.borderColor = ''; inp2.placeholder = '000000'; }, 3000);
       return;
     }
     const btn = document.getElementById('otpBtn');
