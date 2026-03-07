@@ -80,6 +80,32 @@ SUBFORM_URLS = {
     if k.upper().startswith("SUBFORM_URL_")
 }
 
+# ── Load experts.txt and hash emails ─────────────────────────
+import hashlib, json as _json
+
+def load_expert_hashes(path="experts.txt"):
+    """Read experts.txt, normalise emails, return list of SHA-256 hex hashes."""
+    import pathlib
+    cwd_path   = pathlib.Path.cwd() / path
+    script_dir = pathlib.Path(__file__).parent / path
+    fpath = cwd_path if cwd_path.exists() else (script_dir if script_dir.exists() else None)
+    if not fpath:
+        return []
+    hashes = []
+    with open(fpath, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            email = line.lower().strip()
+            hashes.append(hashlib.sha256(email.encode()).hexdigest())
+    return hashes
+
+EXPERT_HASHES = load_expert_hashes()
+print(f"  Experts:     {len(EXPERT_HASHES)} email(s) loaded from experts.txt"
+      if EXPERT_HASHES else "  Experts:     experts.txt not found or empty — "
+                            "auth will allow any Magic-verified email")
+
 print(f"Config loaded from config.env")
 print(f"  Topic:       {TOPIC_LABEL} ({TOPIC_CODE})")
 print(f"  Input:       {INPUT_FILE}")
@@ -1557,6 +1583,32 @@ relay_path = os.path.join(PAGES_DIR, "relay.html")
 with open(relay_path, "w", encoding="utf-8") as f:
     f.write(relay_content)
 print(f"  {relay_path}  (relay)")
+
+# ── Write gateway.html with injected config ───────────────────
+import pathlib as _pathlib
+
+_gateway_template = _pathlib.Path(__file__).parent / "gateway.html"
+if _gateway_template.exists():
+    _gtpl = _gateway_template.read_text(encoding="utf-8")
+
+    # Build hashes JS array
+    _hashes_js = _json.dumps(EXPERT_HASHES)  # compact, single-line
+
+    # Inject config values via token substitution
+    _gtpl = _gtpl.replace('@@REQUIRE_AUTH@@',   'true' if REQUIRE_AUTH else 'false')
+    _gtpl = _gtpl.replace('"@@MAGIC_API_KEY@@"', f'"{MAGIC_API_KEY}"')
+    _gtpl = _gtpl.replace('@@ALLOWED_HASHES@@',  _hashes_js)
+    _gtpl = _gtpl.replace('"@@TOPIC@@"',         f'"{e(TOPIC_LABEL)}"')
+    _gtpl = _gtpl.replace('"@@MASTER_URL@@"',    f'"{MASTER_URL}"')
+    _gtpl = _gtpl.replace('"@@CATALOGUE_URL@@"', f'"{BASE_URL}/index.html"')
+    _gtpl = _gtpl.replace('"@@GENERATED_AT@@"',  f'"{_version_stamp}"')
+
+    _gw_out = os.path.join(PAGES_DIR, "gateway.html")
+    with open(_gw_out, "w", encoding="utf-8") as _f:
+        _f.write(_gtpl)
+    print(f"  {_gw_out}  (gateway, {len(EXPERT_HASHES)} authorised emails)")
+else:
+    print("  ⚠️  gateway.html template not found next to script — skipping")
 
 print(f"\n✅ Generated {total} intervention pages + 1 index + 1 master + 1 relay page")
 print(f"   Pages directory: {PAGES_DIR}")

@@ -6,6 +6,37 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Painel de Avaliação — Malária</title>
 
+  <!-- Auth guard — Magic.link -->
+  <script src="https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"></script>
+  <script>
+    (async function() {
+      document.documentElement.style.visibility = 'hidden';
+      let redirecting = false;
+      try {
+        const magic = new Magic('pk_live_04B22CA3D72C880F');
+        const loggedIn = await magic.user.isLoggedIn();
+        if (!loggedIn) {
+          redirecting = true;
+          window.location.replace(
+            'https://kaiserso.github.io/INS_delphi/malaria/gateway.html?return=' + encodeURIComponent(window.location.href)
+          );
+          return;
+        }
+        window._magicLogout = async function() {
+          await magic.user.logout();
+          window.location.replace('https://kaiserso.github.io/INS_delphi/malaria/gateway.html');
+        };
+      } catch(e) {
+        console.warn('Auth check failed:', e);
+      } finally {
+        // Only restore visibility if we are NOT redirecting to the gateway.
+        // If redirecting, keep hidden to avoid a flash of protected content.
+        if (!redirecting) {
+          document.documentElement.style.visibility = '';
+        }
+      }
+    })();
+  </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -198,7 +229,7 @@ body::before {
 <body>
 <div class="page">
 
-  
+  <div class='signout'><a href='#' onclick='window._magicLogout&&window._magicLogout();return false;'>Terminar sessão</a></div>
 
   <div class="page-header">
     <div class="topic-pill">Malária</div>

@@ -6,6 +6,37 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Diagnóstico de suspeitos (TdR) — Catálogo Delphi | Malária</title>
 
+  <!-- Auth guard — Magic.link -->
+  <script src="https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"></script>
+  <script>
+    (async function() {
+      document.documentElement.style.visibility = 'hidden';
+      let redirecting = false;
+      try {
+        const magic = new Magic('pk_live_04B22CA3D72C880F');
+        const loggedIn = await magic.user.isLoggedIn();
+        if (!loggedIn) {
+          redirecting = true;
+          window.location.replace(
+            'https://kaiserso.github.io/INS_delphi/malaria/gateway.html?return=' + encodeURIComponent(window.location.href)
+          );
+          return;
+        }
+        window._magicLogout = async function() {
+          await magic.user.logout();
+          window.location.replace('https://kaiserso.github.io/INS_delphi/malaria/gateway.html');
+        };
+      } catch(e) {
+        console.warn('Auth check failed:', e);
+      } finally {
+        // Only restore visibility if we are NOT redirecting to the gateway.
+        // If redirecting, keep hidden to avoid a flash of protected content.
+        if (!redirecting) {
+          document.documentElement.style.visibility = '';
+        }
+      }
+    })();
+  </script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -295,7 +326,7 @@ body {
     <a href="index.html">↑ Índice</a>
     <a href="mal_02.html">Próxima →</a>
   </div>
-  
+  <div style='text-align:right;padding:8px 36px;font-size:11px;border-top:1px solid #eee'><a href="#" onclick="window._magicLogout&&window._magicLogout();return false;" style="color:#90A4AE;text-decoration:none">Terminar sessão</a></div>
 
   <div class="footer">
     Delphi de Optimização de Intervenções &nbsp;·&nbsp; Malária
