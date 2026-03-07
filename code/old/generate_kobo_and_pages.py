@@ -25,25 +25,26 @@ import html as html_module
 import pathlib
 
 def load_config(path="config.env"):
+    """Parse a simple key=value config file. Returns a dict of strings."""
     cfg = {}
-    import pathlib
-    # Current working directory takes priority over script directory,
-    # so a local config.env overrides the template next to the script.
-    cwd_path   = pathlib.Path.cwd() / path
-    script_dir = pathlib.Path(__file__).parent / path
-    if cwd_path.exists():
-        config_path = cwd_path
-    elif script_dir.exists():
-        config_path = script_dir
-    else:
-        return cfg
+    config_path = "." / path
+    if not config_path.exists():
+        config_path = pathlib.Path(__file__).parent / path
+        if not config_path.exists():
+            raise FileNotFoundError(
+                f"Config file not found: {config_path}\n"
+                f"Create config.env next to the script. See config.env.example."
+            )
+    
     with open(config_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
+            if not line or line.startswith("#"):
                 continue
-            k, _, v = line.partition("=")
-            cfg[k.strip()] = v.strip()
+            if "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            cfg[key.strip()] = value.strip()
     return cfg
 
 _cfg = load_config()
@@ -269,15 +270,13 @@ for row in qd_ws.iter_rows(min_row=2, values_only=True):
 # stored in the dictionary. The dictionary may predate this feature.
 LABEL_COL = "Etiqueta (Português)"
 HINT_COL  = "Dica / Orientação"
-_version_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 for q in q_templates:
     if q.get("ID", "") == "Q00":
         q[LABEL_COL] = ("Exercício de Optimização — 1ª Oficina"
                         " | {TOPIC_LABEL} · {GROUP_LABEL}")
         q[HINT_COL]  = ("Será apresentado com as intervenções do grupo "
                         "'{GROUP_LABEL}'. Por favor avalie cada uma. "
-                        "Este exercício não visa eliminar programas. "
-                        f"[Versão: {_version_stamp}]")
+                        "Este exercício não visa eliminar programas.")
         break
 
 print(f"  Found {len(q_templates)} question templates")
@@ -326,15 +325,7 @@ GROUP_FIELD = {
     "area":       "Área",
     "programa":   "Programa",
     "componente": "Componente",
-    "grupo":      "Grupo",
 }.get(SUBFORM_GROUP_BY, "Programa")
-
-def strip_group_prefix(label):
-    """Remove leading numeric prefix from Grupo values e.g. '1. manejo de casos' → 'manejo de casos'."""
-    import re as _re
-    if SUBFORM_GROUP_BY == "grupo":
-        label = _re.sub(r"^\d+[\.,]?\s*", "", label).strip()
-    return label
 
 def slugify(text):
     import unicodedata
@@ -362,9 +353,8 @@ for intv in interventions:
     groups_raw.setdefault(key, []).append(intv)
 
 subform_groups = []   # list of (label, slug, [intv, ...])
-for raw_label, items in groups_raw.items():
-    display_label = strip_group_prefix(raw_label)
-    for chunk_label, chunk_items in split_group(display_label, items, SUBFORM_MAX_SIZE):
+for label, items in groups_raw.items():
+    for chunk_label, chunk_items in split_group(label, items, SUBFORM_MAX_SIZE):
         subform_groups.append((chunk_label, slugify(chunk_label), chunk_items))
 
 print(f"\nSub-form groups ({GROUP_FIELD}, max {SUBFORM_MAX_SIZE or 'unlimited'}):")
@@ -478,7 +468,17 @@ def generate_xlsform(group_interventions, group_label, group_slug):
             row = make_survey_row(q, intv, n, group_total, group_label)
             survey_rows.append((q.get("Secção", ""), row))
 
-    # 3. Closing note
+    # 3. Version stamp note (visible in form — confirms which version is loaded)
+    version_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    survey_rows.append(("note", [
+        "note", "form_version_stamp",
+        f"Versão do formulário: {version_stamp}",
+        f"Este formulário foi gerado em {version_stamp}. "
+        f"Se esta data não corresponder à versão esperada, contacte o administrador.",
+        "", "", "", "", "", "", ""
+    ]))
+
+    # 4. Closing note
     for q in q_templates:
         if "closing" in q.get("Sufixo Variável\n(+_{CODE})", "").lower():
             survey_rows.append(("closing", make_survey_row(
@@ -511,13 +511,13 @@ def generate_xlsform(group_interventions, group_label, group_slug):
 
     set_widths(survey, [34, 26, 50, 65, 10, 55, 45, 42, 14, 12, 45])
 
-    # ── choices sheet — intervention_list covers ALL interventions ──
-    # Duplication and integration questions reference the full programme,
-    # not just the interventions in this sub-form.
+    # ── choices sheet — intervention_list scoped to this group ──
+    # Build a group-scoped intervention_list (only this group's interventions
+    # + other) so experts can only reference interventions in their own form.
     group_intv_choices = [
         {"list_name": "intervention_list",
          "name": intv["Código"], "label": intv["Intervenção"]}
-        for intv in interventions
+        for intv in group_interventions
     ]
     group_intv_choices.append(
         {"list_name": "intervention_list",

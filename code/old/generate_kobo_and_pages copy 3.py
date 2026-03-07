@@ -269,15 +269,13 @@ for row in qd_ws.iter_rows(min_row=2, values_only=True):
 # stored in the dictionary. The dictionary may predate this feature.
 LABEL_COL = "Etiqueta (Português)"
 HINT_COL  = "Dica / Orientação"
-_version_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 for q in q_templates:
     if q.get("ID", "") == "Q00":
         q[LABEL_COL] = ("Exercício de Optimização — 1ª Oficina"
                         " | {TOPIC_LABEL} · {GROUP_LABEL}")
         q[HINT_COL]  = ("Será apresentado com as intervenções do grupo "
                         "'{GROUP_LABEL}'. Por favor avalie cada uma. "
-                        "Este exercício não visa eliminar programas. "
-                        f"[Versão: {_version_stamp}]")
+                        "Este exercício não visa eliminar programas.")
         break
 
 print(f"  Found {len(q_templates)} question templates")
@@ -478,7 +476,17 @@ def generate_xlsform(group_interventions, group_label, group_slug):
             row = make_survey_row(q, intv, n, group_total, group_label)
             survey_rows.append((q.get("Secção", ""), row))
 
-    # 3. Closing note
+    # 3. Version stamp note (visible in form — confirms which version is loaded)
+    version_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    survey_rows.append(("note", [
+        "note", "form_version_stamp",
+        f"Versão do formulário: {version_stamp}",
+        f"Este formulário foi gerado em {version_stamp}. "
+        f"Se esta data não corresponder à versão esperada, contacte o administrador.",
+        "", "", "", "", "", "", ""
+    ]))
+
+    # 4. Closing note
     for q in q_templates:
         if "closing" in q.get("Sufixo Variável\n(+_{CODE})", "").lower():
             survey_rows.append(("closing", make_survey_row(
