@@ -519,13 +519,13 @@ def generate_xlsform(group_interventions, group_label, group_slug):
 
     set_widths(survey, [34, 26, 50, 65, 10, 55, 45, 42, 14, 12, 45])
 
-    # ── choices sheet — intervention_list scoped to this group ──
-    # Build a group-scoped intervention_list (only this group's interventions
-    # + other) so experts can only reference interventions in their own form.
+    # ── choices sheet — intervention_list covers ALL interventions ──
+    # Duplication and integration questions reference the full programme,
+    # not just the interventions in this sub-form.
     group_intv_choices = [
         {"list_name": "intervention_list",
          "name": intv["Código"], "label": intv["Intervenção"]}
-        for intv in group_interventions
+        for intv in interventions
     ]
     group_intv_choices.append(
         {"list_name": "intervention_list",
