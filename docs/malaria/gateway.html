@@ -565,7 +565,6 @@ else {
       try {
         const meta  = await magic.user.getMetadata();
         const email = (meta.email || '').toLowerCase().trim();
-        // SHA-256 hash the email in the browser
         const msgBuf = new TextEncoder().encode(email);
         const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
         const hashHex = Array.from(new Uint8Array(hashBuf))
@@ -580,8 +579,12 @@ else {
         return;
       }
     }
-    document.getElementById('signoutLink').style.display = '';
-    showChecklist();
+    // Auth passed — show brief success message then redirect to master
+    showSubpanel('panelVerifying');
+    document.querySelector('#panelVerifying .spinner-label').textContent = 'Acesso confirmado. A redirecionar…';
+    setTimeout(() => {
+      window.location.replace(CONFIG.MASTER_URL);
+    }, 1200);
   }
 
   window.handleSignout = async function() {
