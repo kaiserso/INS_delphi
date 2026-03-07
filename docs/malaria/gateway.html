@@ -425,6 +425,7 @@ body::before {
 
   <div class="page-footer">
     Instituto Nacional de Saúde · Moçambique
+    &nbsp;·&nbsp; <span id="gatewayStamp"></span>
   </div>
 </div>
 
@@ -439,6 +440,10 @@ document.getElementById('checkTopic').textContent    = CONFIG.TOPIC;
 document.getElementById('checkTitle').textContent    = CONFIG.TITLE;
 document.getElementById('checkSubtitle').textContent = CONFIG.SUBTITLE;
 document.getElementById('catalogueLink').href        = CONFIG.CATALOGUE_URL;
+if (CONFIG.GENERATED_AT) {
+  const el = document.getElementById('gatewayStamp');
+  if (el) el.textContent = 'Gerado em ' + CONFIG.GENERATED_AT;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // Checklist logic
@@ -608,29 +613,41 @@ else {
       return;
     }
 
+    // Guard: SDK must be ready
+    if (!window.magic) {
+      showError('A autenticação ainda está a carregar. Por favor aguarde um momento e tente novamente.');
+      return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
 
     try {
-      await magic.auth.loginWithMagicLink({ email, redirectURI: window.location.href });
-      revealChecklist();
+      // loginWithMagicLink with redirectURI sends the email and returns immediately.
+      // The user clicks the link in their email, which redirects back here.
+      // The redirect callback handler (below in waitForMagic) completes the auth.
+      await magic.auth.loginWithMagicLink({
+        email,
+        redirectURI: window.location.href,
+        showUI: false,
+      });
     } catch(err) {
-      if (err.code === 'ERROR_MAGIC_LINK_EXPIRED') {
-        showError('O link expirou. Por favor solicite um novo.');
-      } else if (err.code === 'ERROR_MAGIC_LINK_ALREADY_USED') {
-        showError('Este link já foi utilizado. Por favor solicite um novo.');
-      } else if (err.message && err.message.includes('Modal is closed')) {
+      if (err.message && err.message.includes('Modal is closed')) {
+        // User closed the Magic modal — not an error
+      } else {
+        showError(err.message || 'Erro ao enviar o link. Tente novamente.');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar link de acesso';
-      } else {
-        showError(err.message || 'Erro desconhecido.');
+        return;
       }
-      return;
     }
 
+    // Email sent — show confirmation panel
     document.getElementById('sentEmailLabel').textContent = email;
     showSubpanel('panelSent');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enviar link de acesso';
   };
 
   window.handleResend = function() {
@@ -646,8 +663,14 @@ else {
     setTimeout(() => waitForMagic(cb), 50);
   }
 
+  // Disable submit button until SDK is ready
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = 'A carregar…';
+
   waitForMagic(function() {
     window.magic = new Magic(CONFIG.MAGIC_API_KEY);
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
 
     (async function() {
       // Handle return from magic link email click
