@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 22:29",
+  GENERATED_AT:   "2026-03-07 22:52",
 };
 </script>
 
@@ -334,6 +334,28 @@ body::before {
           <div class="icon-circle sent">✉️</div>
           <div class="subpanel-title">Verifique o seu email</div>
           <p class="subpanel-body">
+            Enviámos um código de 6 dígitos para<br>
+            <span class="sent-email" id="sentEmailLabel"></span><br><br>
+            Pode introduzir o código neste dispositivo ou em qualquer outro.
+          </p>
+          <label class="field-label" for="otpInput">Código de acesso</label>
+          <input type="text" id="otpInput" class="email-input"
+            placeholder="000000" maxlength="6"
+            autocomplete="one-time-code" inputmode="numeric"
+            style="letter-spacing:8px; font-size:24px; text-align:center; padding:14px">
+          <button class="submit-btn" id="otpBtn" onclick="handleOTP()">
+            Verificar código
+          </button>
+          <hr class="divider">
+          <button class="ghost-btn" onclick="handleResend()">
+            Não recebeu? Enviar novamente
+          </button>
+          <p class="info-note" style="margin-top:12px">
+            O código expira em 10 minutos · <strong>no-reply@magic.link</strong>
+          </p>
+        </div>
+          <div class="subpanel-title">Verifique o seu email</div>
+          <p class="subpanel-body">
             Enviámos um link de acesso para<br>
             <span class="sent-email" id="sentEmailLabel"></span><br><br>
             Clique no link para aceder ao painel. Expira em 10 minutos.
@@ -473,24 +495,19 @@ function renderChecklist() {
   CONFIG.GROUPS.forEach(function(g, idx) {
     const isDone = done.includes(g.slug);
     const hasUrl = !!g.url;
-
     const returnUrl = window.location.href.split('?')[0].split('#')[0]
                     + '#completed=' + encodeURIComponent(g.slug);
     const fullUrl = hasUrl
-      ? g.url + (g.url.includes('?') ? '&' : '?')
-        + 'returnURL=' + encodeURIComponent(returnUrl)
+      ? g.url + (g.url.includes('?') ? '&' : '?') + 'returnURL=' + encodeURIComponent(returnUrl)
       : '';
-
     const codes = (g.codes || []).slice(0, 4).join(', ')
                 + ((g.codes || []).length > 4 ? ', …' : '');
     const meta = g.count + ' intervenç' + (g.count !== 1 ? 'ões' : 'ão')
                + (codes ? ' · ' + codes : '');
-
     let btn;
     if (isDone)       btn = '<span class="sf-btn done">✓ Submetido</span>';
     else if (!hasUrl) btn = '<span class="sf-btn soon">Em breve</span>';
     else              btn = '<a class="sf-btn go" href="' + fullUrl + '">Iniciar →</a>';
-
     const card = document.createElement('div');
     card.className = 'sf-card' + (isDone ? ' done' : '');
     card.innerHTML =
@@ -517,7 +534,7 @@ if (!CONFIG.REQUIRE_AUTH) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Auth mode — Magic.link
+// Auth mode — Magic.link Email OTP
 // ═══════════════════════════════════════════════════════════════
 else {
 
@@ -529,7 +546,7 @@ else {
   function showError(msg) {
     document.getElementById('errorDetail').textContent = msg;
     document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
+    document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
     showSubpanel('panelError');
   }
 
@@ -565,6 +582,7 @@ else {
   };
 
   let pendingEmail = null;
+  let otpInstance  = null;  // holds the loginWithEmailOTP PromiEvent
 
   window.handleLogin = async function() {
     const emailInput = document.getElementById('emailInput');
@@ -586,28 +604,73 @@ else {
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
 
-    document.getElementById('sentEmailLabel').textContent = email;
-    showSubpanel('panelSent');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Enviar link de acesso';
+    try {
+      // Start OTP flow — Magic sends the code email.
+      // showUI:false means we handle the OTP input ourselves.
+      // The PromiEvent emits 'email-otp-form-open' when ready for the code,
+      // then resolves when we call emit('verify-email-otp', otp).
+      otpInstance = magic.auth.loginWithEmailOTP({ email, showUI: false });
 
-    // Fire magic link — user clicks link in email, returns here with ?magic_credential=
-    magic.auth.loginWithMagicLink({
-      email,
-      redirectURI: window.location.href.split('?')[0].split('#')[0],
-      showUI: false,
-    }).catch(function(err) {
-      if (err.message && !err.message.includes('Modal is closed')) {
-        showError(err.message || 'Erro ao enviar o link. Tente novamente.');
-      }
-    });
+      otpInstance
+        .on('email-otp-form-open', function() {
+          // Code sent — show our OTP input panel
+          document.getElementById('sentEmailLabel').textContent = email;
+          document.getElementById('otpInput').value = '';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enviar código de acesso';
+          showSubpanel('panelSent');
+          setTimeout(() => document.getElementById('otpInput').focus(), 100);
+        })
+        .on('done', function() {
+          revealChecklist();
+        })
+        .on('error', function(err) {
+          showError((err && err.message) || 'Erro de autenticação. Tente novamente.');
+        })
+        .catch(function(err) {
+          if (!err || !err.message || !err.message.includes('Modal is closed')) {
+            showError((err && err.message) || 'Erro de autenticação. Tente novamente.');
+          }
+        });
+
+    } catch(err) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar código de acesso';
+      showError(err.message || 'Erro ao enviar o código. Tente novamente.');
+    }
   };
 
+  window.handleOTP = function() {
+    const otp = (document.getElementById('otpInput').value || '').trim();
+    if (!/^\d{6}$/.test(otp)) {
+      const inp = document.getElementById('otpInput');
+      inp.style.borderColor = '#e05a3a';
+      inp.focus();
+      setTimeout(() => inp.style.borderColor = '', 1500);
+      return;
+    }
+    if (!otpInstance) {
+      showError('Sessão expirada. Por favor recarregue a página e tente novamente.');
+      return;
+    }
+    const btn = document.getElementById('otpBtn');
+    btn.disabled = true;
+    btn.textContent = 'A verificar…';
+    // Submit the OTP back to the Magic SDK
+    otpInstance.emit('verify-email-otp', otp);
+  };
+
+  // Allow OTP input submission with Enter key
+  document.getElementById('otpInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') window.handleOTP();
+  });
+
   window.handleResend = function() {
+    otpInstance = null;
     showSubpanel('panelLogin');
     document.getElementById('emailInput').value = pendingEmail || '';
     document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
+    document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
   };
 
   function waitForMagic(cb) {
@@ -617,7 +680,7 @@ else {
       _attempts++;
       if (_attempts > 160) {
         document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
+        document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
         showError('Não foi possível carregar o serviço de autenticação. Verifique a sua ligação à internet.');
         return;
       }
@@ -632,22 +695,9 @@ else {
   waitForMagic(function() {
     window.magic = new Magic(CONFIG.MAGIC_API_KEY);
     document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
+    document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
 
     (async function() {
-      // Returning from magic link click
-      const _cred = new URLSearchParams(window.location.search).get('magic_credential');
-      if (_cred) {
-        showSubpanel('panelVerifying');
-        try {
-          await magic.auth.loginWithCredential(_cred);
-          revealChecklist();
-        } catch(err) {
-          showError(err.message || 'Não foi possível completar a verificação.');
-        }
-        return;
-      }
-      // Already logged in from a previous session
       if (await magic.user.isLoggedIn()) {
         revealChecklist();
         return;
