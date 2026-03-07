@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 12:58",
+  GENERATED_AT:   "2026-03-07 13:14",
 };
 </script>
 
@@ -675,12 +675,14 @@ else {
         revealChecklist();
         return;
       }
-      // Not logged in — show login form normally
+      // Not logged in — show login form
       showSubpanel('panelLogin');
       document.getElementById('submitBtn').disabled = false;
       document.getElementById('submitBtn').textContent = 'Enviar link de acesso';
     })();
   });
+
+} // end else (REQUIRE_AUTH)
 
 </script>
 </body>
