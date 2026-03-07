@@ -25,30 +25,25 @@ import html as html_module
 import pathlib
 
 def load_config(path="config.env"):
-    """Parse a simple key=value config file. Returns a dict of strings."""
     cfg = {}
-    # Look in script directory first, then current working directory
-    script_dir = pathlib.Path(__file__).parent / path
+    import pathlib
+    # Current working directory takes priority over script directory,
+    # so a local config.env overrides the template next to the script.
     cwd_path   = pathlib.Path.cwd() / path
-    if script_dir.exists():
-        config_path = script_dir
-    elif cwd_path.exists():
+    script_dir = pathlib.Path(__file__).parent / path
+    if cwd_path.exists():
         config_path = cwd_path
+    elif script_dir.exists():
+        config_path = script_dir
     else:
-        raise FileNotFoundError(
-            f"Config file not found in script directory ({script_dir})\n"
-            f"or current directory ({cwd_path}).\n"
-            f"Create config.env in either location."
-        )
+        return cfg
     with open(config_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line or line.startswith("#") or "=" not in line:
                 continue
-            if "=" not in line:
-                continue
-            key, _, value = line.partition("=")
-            cfg[key.strip()] = value.strip()
+            k, _, v = line.partition("=")
+            cfg[k.strip()] = v.strip()
     return cfg
 
 _cfg = load_config()
@@ -329,7 +324,15 @@ GROUP_FIELD = {
     "area":       "Área",
     "programa":   "Programa",
     "componente": "Componente",
+    "grupo":      "Grupo",
 }.get(SUBFORM_GROUP_BY, "Programa")
+
+def strip_group_prefix(label):
+    """Remove leading numeric prefix from Grupo values e.g. '1. manejo de casos' → 'manejo de casos'."""
+    import re as _re
+    if SUBFORM_GROUP_BY == "grupo":
+        label = _re.sub(r"^\d+[\.,]?\s*", "", label).strip()
+    return label
 
 def slugify(text):
     import unicodedata
@@ -357,8 +360,9 @@ for intv in interventions:
     groups_raw.setdefault(key, []).append(intv)
 
 subform_groups = []   # list of (label, slug, [intv, ...])
-for label, items in groups_raw.items():
-    for chunk_label, chunk_items in split_group(label, items, SUBFORM_MAX_SIZE):
+for raw_label, items in groups_raw.items():
+    display_label = strip_group_prefix(raw_label)
+    for chunk_label, chunk_items in split_group(display_label, items, SUBFORM_MAX_SIZE):
         subform_groups.append((chunk_label, slugify(chunk_label), chunk_items))
 
 print(f"\nSub-form groups ({GROUP_FIELD}, max {SUBFORM_MAX_SIZE or 'unlimited'}):")
