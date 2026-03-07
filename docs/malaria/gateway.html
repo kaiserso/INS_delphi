@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 23:03",
+  GENERATED_AT:   "2026-03-07 23:09",
 };
 </script>
 
@@ -433,7 +433,6 @@ if (_stampEl) _stampEl.textContent = CONFIG.GENERATED_AT ? 'Gerado em ' + CONFIG
 // Checklist logic
 // ═══════════════════════════════════════════════════════════════
 const STORAGE_KEY = 'delphi_gateway_completed';
-
 function getCompleted() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch(e) { return []; }
@@ -443,7 +442,6 @@ function markCompleted(slug) {
   if (!done.includes(slug)) done.push(slug);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
 }
-
 (function() {
   let slug = null;
   const hash = window.location.hash.slice(1);
@@ -507,17 +505,9 @@ function showChecklist() {
   renderChecklist();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Open mode
-// ═══════════════════════════════════════════════════════════════
 if (!CONFIG.REQUIRE_AUTH) {
   showChecklist();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Auth mode — Magic.link Email OTP
-// ═══════════════════════════════════════════════════════════════
-else {
+} else {
 
   function showSubpanel(id) {
     document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
@@ -534,8 +524,11 @@ else {
   async function revealChecklist() {
     if (CONFIG.ALLOWED_HASHES && CONFIG.ALLOWED_HASHES.length > 0) {
       try {
-        const meta    = await magic.user.getMetadata();
-        const email   = (meta.email || '').toLowerCase().trim();
+        // Support both old getMetadata() and new getInfo() API
+        const meta  = await (magic.user.getInfo
+                        ? magic.user.getInfo()
+                        : magic.user.getMetadata());
+        const email = (meta.email || '').toLowerCase().trim();
         const msgBuf  = new TextEncoder().encode(email);
         const hashBuf = await crypto.subtle.digest('SHA-256', msgBuf);
         const hashHex = Array.from(new Uint8Array(hashBuf))
@@ -546,7 +539,8 @@ else {
           return;
         }
       } catch(err) {
-        showError('Não foi possível verificar a sua identidade. Por favor tente novamente.');
+        // If hash check fails but ALLOWED_HASHES is empty, still allow through
+        showError('Não foi possível verificar a sua identidade. Por favor tente novamente. (' + (err && err.message) + ')');
         return;
       }
     }
@@ -569,8 +563,7 @@ else {
     const emailInput = document.getElementById('emailInput');
     const submitBtn  = document.getElementById('submitBtn');
     const email      = emailInput.value.trim().toLowerCase();
-
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRe    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRe.test(email)) {
       emailInput.style.borderColor = '#e05a3a';
       emailInput.focus();
@@ -578,17 +571,14 @@ else {
       return;
     }
     if (!window.magic) {
-      showError('A autenticação ainda está a carregar. Por favor aguarde e tente novamente.');
+      showError('A autenticação ainda está a carregar. Por favor aguarde.');
       return;
     }
-
     submitBtn.disabled = true;
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
-
     try {
       otpInstance = magic.auth.loginWithEmailOTP({ email: email, showUI: false });
-
       otpInstance
         .on('email-otp-sent', function() {
           document.getElementById('sentEmailLabel').textContent = email;
@@ -613,18 +603,17 @@ else {
           revealChecklist();
         })
         .on('error', function(err) {
-          showError((err && err.message) || 'Erro de autenticação. Tente novamente.');
+          showError((err && err.message) || 'Erro de autenticação.');
         })
         .catch(function(err) {
           if (!err || !err.message || !err.message.includes('Modal is closed')) {
-            showError((err && err.message) || 'Erro de autenticação. Tente novamente.');
+            showError((err && err.message) || 'Erro de autenticação.');
           }
         });
-
     } catch(err) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Enviar código de acesso';
-      showError(err.message || 'Erro ao enviar o código. Tente novamente.');
+      showError(err.message || 'Erro ao enviar o código.');
     }
   };
 
@@ -638,7 +627,7 @@ else {
       return;
     }
     if (!otpInstance) {
-      showError('Sessão expirada. Por favor recarregue a página e tente novamente.');
+      showError('Sessão expirada. Por favor recarregue a página.');
       return;
     }
     const btn = document.getElementById('otpBtn');
@@ -663,14 +652,11 @@ else {
   };
 
   function waitForMagic(cb) {
-    let _attempts = 0;
+    let _a = 0;
     function _poll() {
       if (typeof Magic !== 'undefined') { cb(); return; }
-      _attempts++;
-      if (_attempts > 160) {
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
-        showError('Não foi possível carregar o serviço de autenticação. Verifique a sua ligação à internet.');
+      if (++_a > 160) {
+        showError('Não foi possível carregar a autenticação. Verifique a sua ligação.');
         return;
       }
       setTimeout(_poll, 50);
@@ -685,18 +671,13 @@ else {
     window.magic = new Magic(CONFIG.MAGIC_API_KEY);
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
-
     (async function() {
-      if (await magic.user.isLoggedIn()) {
-        revealChecklist();
-        return;
-      }
+      if (await magic.user.isLoggedIn()) { revealChecklist(); return; }
       showSubpanel('panelLogin');
     })();
   });
 
 } // end else (REQUIRE_AUTH)
-
 </script>
 </body>
 </html>
