@@ -20,7 +20,7 @@ const CONFIG = {
   SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
   MASTER_URL:     "https://kaiserso.github.io/INS_delphi/malaria/master.html",
   CATALOGUE_URL:  "https://kaiserso.github.io/INS_delphi/malaria/index.html",
-  GENERATED_AT:   "2026-03-07 22:52",
+  GENERATED_AT:   "2026-03-07 22:56",
 };
 </script>
 
@@ -314,7 +314,7 @@ body::before {
         <div class="subpanel active" id="panelLogin">
           <p class="login-intro">
             Introduza o seu endereço de email institucional. Receberá um
-            link de acesso seguro para participar no exercício de avaliação.
+            código de acesso de 6 dígitos para participar no exercício de avaliação.
           </p>
           <label class="field-label" for="emailInput">Email</label>
           <input type="email" id="emailInput" class="email-input"
@@ -354,19 +354,7 @@ body::before {
             O código expira em 10 minutos · <strong>no-reply@magic.link</strong>
           </p>
         </div>
-          <div class="subpanel-title">Verifique o seu email</div>
-          <p class="subpanel-body">
-            Enviámos um link de acesso para<br>
-            <span class="sent-email" id="sentEmailLabel"></span><br><br>
-            Clique no link para aceder ao painel. Expira em 10 minutos.
-          </p>
-          <button class="ghost-btn" onclick="handleResend()">
-            Não recebeu? Enviar novamente
-          </button>
-          <hr class="divider">
-          <p class="info-note">Verifique também o spam.<br>
-            Email de <strong>no-reply@magic.link</strong></p>
-        </div>
+
 
         <div class="subpanel" id="panelVerifying">
           <div class="spinner-wrap">
@@ -611,8 +599,19 @@ else {
       // then resolves when we call emit('verify-email-otp', otp).
       otpInstance = magic.auth.loginWithEmailOTP({ email, showUI: false });
 
+      // Fallback: show OTP panel after 3s if event doesn't fire
+      const _otpTimeout = setTimeout(function() {
+        document.getElementById('sentEmailLabel').textContent = email;
+        document.getElementById('otpInput').value = '';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar código de acesso';
+        showSubpanel('panelSent');
+        setTimeout(() => document.getElementById('otpInput').focus(), 100);
+      }, 3000);
+
       otpInstance
         .on('email-otp-form-open', function() {
+          clearTimeout(_otpTimeout);
           // Code sent — show our OTP input panel
           document.getElementById('sentEmailLabel').textContent = email;
           document.getElementById('otpInput').value = '';
