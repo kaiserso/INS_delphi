@@ -12,41 +12,17 @@
      ═══════════════════════════════════════════════════════════ -->
 <script>
 const CONFIG = {
-
-  // ── Auth ────────────────────────────────────────────────────
-  // false → show checklist immediately, no login required
-  // true  → show login form first; checklist appears after Magic.link auth
-  REQUIRE_AUTH: false,
-
-  // Magic.link publishable key — only needed when REQUIRE_AUTH is true
-  MAGIC_API_KEY: "pk_live_YOUR_KEY_HERE",
-
-  // SHA-256 hashes of authorised expert emails — injected at build time by
-  // generate_kobo_and_pages.py. Do not edit manually.
-  ALLOWED_HASHES: [],
-
-  // ── Branding ────────────────────────────────────────────────
-  TOPIC:    "Malária",
-  TITLE:    "Delphi de Optimização de Intervenções",
-  SUBTITLE: "1ª Oficina — Avaliação de Optimizabilidade",
-
-  // ── Sub-form groups ─────────────────────────────────────────
-  // One entry per generated Kobo form group.
-  // Re-paste from the script output each time you regenerate.
-  //
-  // After submitting a Kobo form, Enketo returns the expert to this page
-  // with ?completed=<slug> — the card is automatically marked done.
-  GROUPS: [
-    // Paste generated groups here, e.g.:
-    // { slug: "manejo_de_casos_1", label: "Manejo de casos (1)", count: 5,
-    //   codes: ["mal_01","mal_02","mal_03","mal_04","mal_05"],
-    //   url: "https://ee.kobotoolbox.org/x/XXXXXXXX" },
-  ],
-
-  // URL of the generated catalogue index page — shown as a footer link
-  CATALOGUE_URL: "pages/malaria/index.html",
-
+  REQUIRE_AUTH:   @@REQUIRE_AUTH@@,
+  MAGIC_API_KEY:  "@@MAGIC_API_KEY@@",
+  ALLOWED_HASHES: @@ALLOWED_HASHES@@,
+  TOPIC:          "@@TOPIC@@",
+  TITLE:          "Delphi de Optimização de Intervenções",
+  SUBTITLE:       "1ª Oficina — Avaliação de Optimizabilidade",
+  MASTER_URL:     "@@MASTER_URL@@",
+  CATALOGUE_URL:  "@@CATALOGUE_URL@@",
+  GENERATED_AT:   "@@GENERATED_AT@@",
 };
+</script>
 
 // Load Magic SDK only when auth is enabled
 if (CONFIG.REQUIRE_AUTH) {
@@ -440,10 +416,8 @@ document.getElementById('checkTopic').textContent    = CONFIG.TOPIC;
 document.getElementById('checkTitle').textContent    = CONFIG.TITLE;
 document.getElementById('checkSubtitle').textContent = CONFIG.SUBTITLE;
 document.getElementById('catalogueLink').href        = CONFIG.CATALOGUE_URL;
-if (CONFIG.GENERATED_AT) {
-  const el = document.getElementById('gatewayStamp');
-  if (el) el.textContent = 'Gerado em ' + CONFIG.GENERATED_AT;
-}
+const _stampEl = document.getElementById('gatewayStamp');
+if (_stampEl) _stampEl.textContent = CONFIG.GENERATED_AT ? 'Gerado em ' + CONFIG.GENERATED_AT : '';
 
 // ═══════════════════════════════════════════════════════════════
 // Checklist logic
