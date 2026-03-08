@@ -1,0 +1,14 @@
+.DS_Store
+old
+temp
+*~
+.env
+*.env
+py_env
+kobo
+*.xls
+*.xlsx
+experts.txt
+reports/*
+results/*
+kobo_gen/*

@@ -7,27 +7,29 @@ structured Excel workbook, then runs QC checks for completeness and
 consistency.
 
 Usage:
-    python3 aggregate_results.py                        # auto-detect CSVs in current folder
-    python3 aggregate_results.py --input exports/       # folder of CSVs
-    python3 aggregate_results.py --fetch                # pull directly from KoboToolbox API
-    python3 aggregate_results.py --fetch --assets UID1 UID2  # fetch specific assets only
+    python3 aggregate_results.py                        # fetch from KoboToolbox API (default)
+    python3 aggregate_results.py --csv exports/         # load from CSV files instead
+    python3 aggregate_results.py --assets UID1 UID2     # fetch specific assets only
     python3 aggregate_results.py --qc-only              # re-run QC on existing output
-    python3 aggregate_results.py --output results.xlsx  # custom output path
+    python3 aggregate_results.py --output path.xlsx     # custom output path
+    python3 aggregate_results.py --list-assets          # show all assets on account
 
-Input:  One CSV export per sub-form group, downloaded from KoboToolbox
-        (Project → Data → Downloads → CSV, "XML values and headers")
-Output: delphi_w1_malaria_results.xlsx  (aggregated data + QC report)
+Input:  KoboToolbox API (default) or folder of CSV exports
+        (CSV: Project → Data → Downloads → CSV, "XML values and headers")
+Output: ./results/delphi_w1_<topic>_results_YYYYMMDD_HHMMSS.xlsx  (aggregated data + QC report)
 
 Sheets produced:
-    Raw          — all submissions stacked, one row per submission
-    Wide         — one row per expert × intervention (primary analysis sheet)
-    QC_Summary   — one row per check, PASS/FAIL/WARN with counts
-    QC_Detail    — one row per issue found (expert, intervention, check, detail)
-    Coverage     — expert × group submission matrix
+    Submissions     — all submissions stacked, one row per submission
+    Responses       — one row per expert × intervention (primary analysis sheet)
+    QC_Summary      — one row per check, PASS/FAIL/WARN with counts
+    QC_Detail       — one row per issue found (expert, intervention, check, detail)
+    Coverage        — expert × group submission matrix
+    Coverage_detail — expert × intervention completion matrix (✓ = answered, — = not answered)
 """
 
 import os, sys, re, glob, argparse
 from collections import defaultdict
+from datetime import datetime
 
 import pandas as pd
 import openpyxl
@@ -40,14 +42,24 @@ from openpyxl.utils import get_column_letter
 def load_config(path="config.env"):
     cfg = {}
     import pathlib
-    script_dir = pathlib.Path(__file__).parent / path
+    # Current working directory takes priority over script directory,
+    # so a local config.env overrides the template next to the script.
     cwd_path   = pathlib.Path.cwd() / path
-    if script_dir.exists():
-        config_path = script_dir
-    elif cwd_path.exists():
+    script_dir = pathlib.Path(__file__).parent / path
+    if cwd_path.exists():
         config_path = cwd_path
+    elif script_dir.exists():
+        config_path = script_dir
     else:
         return cfg
+    with open(config_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            cfg[k.strip()] = v.strip()
+    return cfg
     with open(config_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -68,8 +80,35 @@ def load_config(path="config.env"):
 cfg       = load_config()
 TOPIC     = cfg.get("TOPIC_CODE", "malaria")
 OUT_FILE  = cfg.get("RESULTS_FILE", f"delphi_w1_{TOPIC}_results.xlsx")
+DICT_FILE = cfg.get("INPUT_FILE", "")  # Dictionary file path from config
 KOBO_SERVER  = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
 KOBO_TOKEN   = cfg.get("KOBO_TOKEN",  "")
+
+def default_output_path():
+    """
+    Build default output path with timestamp in ./results folder.
+    Rules:
+    - If RESULTS_FILE has no directory, write to ./results/<file_with_timestamp>
+    - If RESULTS_FILE includes a directory, keep that directory
+    - Append timestamp before extension unless already present
+    """
+    configured = (OUT_FILE or "").strip() or f"delphi_w1_{TOPIC}_results.xlsx"
+    folder = os.path.dirname(configured)
+    filename = os.path.basename(configured)
+
+    if not folder:
+        folder = "results"
+
+    stem, ext = os.path.splitext(filename)
+    if not ext:
+        ext = ".xlsx"
+
+    has_ts = re.search(r"_\d{8}_\d{6}$", stem)
+    if not has_ts:
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        stem = f"{stem}_{ts}"
+
+    return os.path.join(folder, f"{stem}{ext}")
 
 # ═══════════════════════════════════════════════════════════════
 # Question schema — derived from dictionary
@@ -369,12 +408,20 @@ def detect_group_slug(filepath, df):
     return os.path.splitext(os.path.basename(filepath))[0]
 
 def detect_intervention_codes(df):
-    """Find all intervention codes present as column suffixes."""
+    """
+    Find all intervention codes present as column suffixes where the
+    url_* column is non-empty for at least one row.  This prevents
+    codes from other forms' columns (all NaN in this submission) from
+    being attributed to every submission after stacking.
+    """
     codes = set()
     for col in df.columns:
-        m = re.match(r"gate_(.+)", col)
+        m = re.match(r"url_(.+)", col)
         if m:
-            codes.add(m.group(1))
+            code = m.group(1)
+            # Only count this code if the url column has an actual value
+            if df[col].notna().any() and (df[col].astype(str).str.strip() != "").any():
+                codes.add(code)
     return sorted(codes)
 
 def load_csvs(csv_files):
@@ -708,6 +755,36 @@ def build_coverage(raw):
         matrix.append(row)
     return pd.DataFrame(matrix)
 
+def build_coverage_detail(wide):
+    """
+    Build expert × intervention completion matrix.
+    Shows which interventions each expert has answered.
+    """
+    if wide.empty or "expert_code" not in wide.columns or "intervention" not in wide.columns:
+        return pd.DataFrame()
+    
+    experts = sorted(wide["expert_code"].dropna().unique())
+    interventions = sorted(wide["intervention"].dropna().unique())
+    matrix = []
+    
+    # Build lookup: (expert, intervention) → has_gate_value
+    completion = {}
+    for _, row in wide.iterrows():
+        expert = row.get("expert_code", "")
+        intv = row.get("intervention", "")
+        gate = row.get("gate", "")
+        if expert and intv:
+            # Mark as complete if gate has a value
+            completion[(expert, intv)] = "✓" if gate and str(gate).strip() else "—"
+    
+    for e in experts:
+        row = {"Expert": e}
+        for i in interventions:
+            row[i] = completion.get((e, i), "—")
+        matrix.append(row)
+    
+    return pd.DataFrame(matrix)
+
 # ═══════════════════════════════════════════════════════════════
 # Step 5 — Write xlsx
 # ═══════════════════════════════════════════════════════════════
@@ -780,7 +857,72 @@ def write_sheet_df(wb, name, df, header_bg="1A5C8A", freeze="A2"):
         ws.freeze_panes = freeze
     return ws
 
-def write_xlsx(out_path, raw, wide, summary, details, coverage):
+def copy_catalogo_from_dict(wb_dest):
+    """
+    Copy Catalogo_* sheet from dictionary file (INPUT_FILE in config.env)
+    into the destination workbook. This embeds intervention metadata
+    so the report generator doesn't need a separate dictionary file.
+    """
+    dict_path = DICT_FILE
+    if not dict_path:
+        return  # No dictionary file configured
+    
+    # Search for dictionary file in multiple locations
+    import pathlib
+    search_paths = [
+        pathlib.Path(dict_path),  # As configured (absolute path)
+        pathlib.Path.cwd() / dict_path,  # In current working directory
+        pathlib.Path(__file__).parent / dict_path,  # Next to this script (code/)
+        pathlib.Path(__file__).parent.parent / dict_path,  # One level up (INS_delphi/)
+        pathlib.Path.cwd().parent / dict_path,  # Parent of cwd
+        pathlib.Path(__file__).parent.parent.parent / "LLM outputs" / dict_path,  # Sibling folder
+    ]
+    
+    dict_file = None
+    for path in search_paths:
+        if path.exists():
+            dict_file = path
+            break
+    
+    if not dict_file:
+        return  # Dictionary file not found
+    
+    try:
+        wb_src = openpyxl.load_workbook(str(dict_file), data_only=True)
+        
+        # Find Catalogo_* sheet
+        catalogo_name = None
+        for sheet_name in wb_src.sheetnames:
+            if sheet_name.lower().startswith("catalogo"):
+                catalogo_name = sheet_name
+                break
+        
+        if not catalogo_name:
+            return  # No Catalogo sheet in dictionary file
+        
+        ws_src = wb_src[catalogo_name]
+        ws_dest = wb_dest.create_sheet(catalogo_name)
+        
+        # Copy all cells with values and basic formatting
+        for row in ws_src.iter_rows():
+            for cell in row:
+                new_cell = ws_dest[cell.coordinate]
+                new_cell.value = cell.value
+                if cell.has_style:
+                    new_cell.font = cell.font.copy()
+                    new_cell.fill = cell.fill.copy()
+                    new_cell.alignment = cell.alignment.copy()
+        
+        # Copy column widths
+        for col_letter, col_dim in ws_src.column_dimensions.items():
+            ws_dest.column_dimensions[col_letter].width = col_dim.width
+        
+        print(f"  ✓ Copied metadata sheet: {catalogo_name} from {dict_file.name}")
+        
+    except Exception as e:
+        print(f"  ⚠️  Could not copy Catalogo sheet from dictionary: {e}")
+
+def write_xlsx(out_path, raw, wide, summary, details, coverage, coverage_detail):
     wb = openpyxl.Workbook()
     wb.remove(wb.active)  # remove default sheet
 
@@ -806,10 +948,18 @@ def write_xlsx(out_path, raw, wide, summary, details, coverage):
         ws["A1"] = "No issues found ✓"
         ws["A1"].font = Font(bold=True, color="2E7D52", name="Arial")
 
-    # Coverage
+    # Coverage (expert × group)
     if not coverage.empty:
         write_sheet_df(wb, "Coverage", coverage,
                        header_bg=CLR["header_dark"], freeze="B2")
+
+    # Coverage_detail (expert × intervention)
+    if not coverage_detail.empty:
+        write_sheet_df(wb, "Coverage_detail", coverage_detail,
+                       header_bg=CLR["header_mid"], freeze="B2")
+
+    # Copy Catalogo sheet from dictionary file (if available)
+    copy_catalogo_from_dict(wb)
 
     wb.save(out_path)
     print(f"\n  Saved: {out_path}")
@@ -821,21 +971,20 @@ def write_xlsx(out_path, raw, wide, summary, details, coverage):
 def main():
     parser = argparse.ArgumentParser(
         description="Aggregate Delphi W1 Kobo exports and run QC checks")
-    parser.add_argument("--input",    default=".",
-                        help="Folder containing CSV exports (default: current dir)")
-    parser.add_argument("--output",   default=OUT_FILE,
-                        help=f"Output xlsx path (default: {OUT_FILE})")
-    parser.add_argument("--fetch",    action="store_true",
-                        help="Fetch submissions directly from KoboToolbox API "
-                             "(requires KOBO_TOKEN in config.env)")
+    parser.add_argument("--csv",      metavar="FOLDER",
+                        help="Load submissions from CSV files in FOLDER (instead of fetching from API)")
+    parser.add_argument("--output",
+                        help="Output xlsx path (default: results/delphi_w1_<topic>_results_<timestamp>.xlsx)")
     parser.add_argument("--list-assets", action="store_true",
                         help="List all assets on the KoboToolbox account and exit "
                              "(useful for finding UIDs to add to config.env)")
     parser.add_argument("--assets",   nargs="*", metavar="UID",
-                        help="Restrict --fetch to specific asset UIDs")
+                        help="Restrict fetch to specific asset UIDs (only with API fetch)")
     parser.add_argument("--qc-only",  action="store_true",
                         help="Re-run QC on existing output without re-reading data")
     args = parser.parse_args()
+
+    output_path = args.output or default_output_path()
 
     print(f"\nDelphi W1 — Results Aggregator & QC")
     print(f"{'═'*45}")
@@ -849,12 +998,30 @@ def main():
         list_all_assets_diagnostic()
         sys.exit(0)
 
-    if args.qc_only and os.path.exists(args.output):
-        print(f"Loading existing output for QC re-run: {args.output}")
-        raw  = pd.read_excel(args.output, sheet_name="Submissions", dtype=str).fillna("")
-        wide = pd.read_excel(args.output, sheet_name="Responses",  dtype=str).fillna("")
+    if args.qc_only and os.path.exists(output_path):
+        print(f"Loading existing output for QC re-run: {output_path}")
+        raw  = pd.read_excel(output_path, sheet_name="Submissions", dtype=str).fillna("")
+        wide = pd.read_excel(output_path, sheet_name="Responses",  dtype=str).fillna("")
 
-    elif args.fetch:
+    elif args.csv:
+        # Load from CSV files
+        csv_files = find_csvs(args.csv)
+        if not csv_files:
+            print(f"❌  No CSV files found in: {os.path.abspath(args.csv)}")
+            print("    Export CSVs from KoboToolbox (Data → Downloads → CSV)")
+            sys.exit(1)
+        print(f"\nLoading {len(csv_files)} CSV file(s) from: {os.path.abspath(args.csv)}")
+        raw  = load_csvs(csv_files)
+        raw  = raw.fillna("")
+        print(f"\n  Total submissions loaded: {len(raw)}")
+        print("\nBuilding wide table (expert × intervention)…")
+        wide = build_wide(raw)
+        print(f"  Wide table: {len(wide)} rows "
+              f"({wide['expert_code'].nunique() if not wide.empty else 0} experts × "
+              f"{wide['intervention'].nunique() if not wide.empty else 0} interventions)")
+
+    else:
+        # Default: Fetch from KoboToolbox API
         try:
             import requests
         except ImportError:
@@ -867,23 +1034,6 @@ def main():
             print("  No submissions yet — writing empty output file.")
         else:
             print(f"\n  Total submissions fetched: {len(raw)}")
-        print("\nBuilding wide table (expert × intervention)…")
-        wide = build_wide(raw)
-        print(f"  Wide table: {len(wide)} rows "
-              f"({wide['expert_code'].nunique() if not wide.empty else 0} experts × "
-              f"{wide['intervention'].nunique() if not wide.empty else 0} interventions)")
-
-    else:
-        csv_files = find_csvs(args.input)
-        if not csv_files:
-            print(f"❌  No CSV files found in: {os.path.abspath(args.input)}")
-            print("    Export CSVs from KoboToolbox (Data → Downloads → CSV)")
-            print("    or use --fetch to pull directly from the API.")
-            sys.exit(1)
-        print(f"\nLoading {len(csv_files)} CSV file(s) from: {os.path.abspath(args.input)}")
-        raw  = load_csvs(csv_files)
-        raw  = raw.fillna("")
-        print(f"\n  Total submissions loaded: {len(raw)}")
         print("\nBuilding wide table (expert × intervention)…")
         wide = build_wide(raw)
         print(f"  Wide table: {len(wide)} rows "
@@ -903,11 +1053,15 @@ def main():
         print(f"  {icon} {s['Check']:40}  {s['Issues']:>4} issues")
 
     coverage = build_coverage(raw)
+    coverage_detail = build_coverage_detail(wide)
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     print(f"\nWriting output…")
-    write_xlsx(args.output, raw, wide,
-               summary, details, coverage)
-    print(f"  ✓ Full output: {args.output}")
+    write_xlsx(output_path, raw, wide,
+               summary, details, coverage, coverage_detail)
+    print(f"  ✓ Full output: {output_path}")
 
     # Always also produce a last-only version (one submission per expert per group)
     if not raw.empty:
@@ -916,10 +1070,11 @@ def main():
             wide_last      = build_wide(raw_last)
             summary_last, details_last = run_qc(raw_last, wide_last)
             coverage_last  = build_coverage(raw_last)
-            base, ext      = os.path.splitext(args.output)
+            coverage_detail_last = build_coverage_detail(wide_last)
+            base, ext      = os.path.splitext(output_path)
             last_path      = f"{base}_lastonly{ext}"
             write_xlsx(last_path, raw_last, wide_last,
-                       summary_last, details_last, coverage_last)
+                       summary_last, details_last, coverage_last, coverage_detail_last)
             print(f"  ✓ Last-only output: {last_path}  "
                   f"({dropped} earlier submission(s) removed)")
         else:
