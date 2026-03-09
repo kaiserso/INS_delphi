@@ -97,7 +97,13 @@ def load_expert_hashes(path="experts.txt"):
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            email = line.lower().strip()
+
+            # Support inline comments: "name@example.com  # note"
+            # and ignore the comment part when building hashes.
+            email = line.split("#", 1)[0].strip().lower()
+            if not email:
+                continue
+
             hashes.append(hashlib.sha256(email.encode()).hexdigest())
     return hashes
 
