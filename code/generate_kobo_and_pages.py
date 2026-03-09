@@ -847,6 +847,13 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
                    f"<div class='field-grid'>{field_row('Notas', notes)}</div>"
                    if notes and notes not in ("None", "nan", "") else "")
 
+    auth_logout = (
+      '<div style="text-align:right;padding:8px 36px;font-size:11px;border-top:1px solid #eee">'
+      '<a href="#" onclick="window._magicLogout&&window._magicLogout();return false;" '
+      'style="color:#90A4AE;text-decoration:none">Terminar sessão</a></div>'
+      if REQUIRE_AUTH else ""
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -917,7 +924,7 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     <a href="{e(index_url)}">↑ Índice</a>
     {nav_next}
   </div>
-  {"<div style='text-align:right;padding:8px 36px;font-size:11px;border-top:1px solid #eee'><a href=\"#\" onclick=\"window._magicLogout&&window._magicLogout();return false;\" style=\"color:#90A4AE;text-decoration:none\">Terminar sessão</a></div>" if REQUIRE_AUTH else ""}
+  {auth_logout}
 
   <div class="footer">
     Delphi de Optimização de Intervenções &nbsp;·&nbsp; {e(TOPIC_LABEL)}

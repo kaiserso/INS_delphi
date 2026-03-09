@@ -569,6 +569,7 @@ if (!CONFIG.REQUIRE_AUTH) {
 
   let pendingEmail = null;
   let otpInstance  = null;
+  let unknownAddress = false;
 
   window.handleLogin = async function() {
     const emailInput = document.getElementById('emailInput');
@@ -588,18 +589,17 @@ if (!CONFIG.REQUIRE_AUTH) {
     submitBtn.disabled = true;
     submitBtn.textContent = 'A enviar…';
     pendingEmail = email;
+    unknownAddress = false;
 
     // ── Pre-flight allowlist check ──────────────────────────────
-    // If email not on list, simulate the sent panel but never call Magic.
-    // otpInstance remains null so handleOTP will always report invalid code.
+    // Fail fast for unknown addresses so users get explicit feedback.
     if (CONFIG.ALLOWED_HASHES && CONFIG.ALLOWED_HASHES.length > 0) {
       if (!await isEmailAllowed(email)) {
-        document.getElementById('sentEmailLabel').textContent = email;
-        document.getElementById('otpInput').value = '';
+        otpInstance = null;
+        unknownAddress = true;
         submitBtn.disabled = false;
         submitBtn.textContent = 'Enviar código de acesso';
-        showSubpanel('panelSent');
-        setTimeout(() => document.getElementById('otpInput').focus(), 100);
+        showError('Endereço não reconhecido: ' + email + '. Use um email autorizado ou contacte o administrador.');
         return;
       }
     }
@@ -655,16 +655,11 @@ if (!CONFIG.REQUIRE_AUTH) {
       return;
     }
     if (!otpInstance) {
-      // Unauthorised email — simulate invalid code response
-      const btn2 = document.getElementById('otpBtn');
-      btn2.disabled = false;
-      btn2.textContent = 'Verificar código';
-      const inp2 = document.getElementById('otpInput');
-      inp2.style.borderColor = '#e05a3a';
-      inp2.value = '';
-      inp2.placeholder = 'Código inválido — tente novamente';
-      inp2.focus();
-      setTimeout(() => { inp2.style.borderColor = ''; inp2.placeholder = '000000'; }, 3000);
+      if (unknownAddress && pendingEmail) {
+        showError('Endereço não reconhecido: ' + pendingEmail + '. Use um email autorizado ou contacte o administrador.');
+      } else {
+        showError('Sessão de verificação não encontrada. Volte ao início e peça um novo código.');
+      }
       return;
     }
     const btn = document.getElementById('otpBtn');
