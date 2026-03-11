@@ -5,3 +5,5 @@ temp
 .env
 *.env
 experts.txt
+/results/*
+/reports/*

@@ -8,8 +8,11 @@ Usage:
     streamlit run code/dashboard.py
     
     Or with custom port:
-    streamlit run code/dashboard.py --server.port 8502
-"""
+    streamlit run code/dashboard.py --server.port 8502    
+    With expert exclusions:
+    streamlit run code/dashboard.py -- --exclude-experts 001PM,001XX
+
+Note: Streamlit arguments go before '--', dashboard arguments after."""
 
 import streamlit as st
 import pandas as pd
@@ -18,6 +21,7 @@ import os
 from datetime import datetime
 import time
 from pathlib import Path
+import re
 
 try:
     import altair as alt
@@ -42,6 +46,24 @@ cfg = load_config()
 TOPIC = cfg.get("TOPIC_CODE", "malaria")
 KOBO_SERVER = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
 KOBO_TOKEN = cfg.get("KOBO_TOKEN", "")
+
+# Initialize session state for auto-refresh
+if "auto_refresh_enabled" not in st.session_state:
+    st.session_state.auto_refresh_enabled = False
+if "last_auto_refresh_time" not in st.session_state:
+    st.session_state.last_auto_refresh_time = 0
+
+
+# ═══════════════════════════════════════════════════════════════
+# Helper function for code splitting
+# ═══════════════════════════════════════════════════════════════
+
+def _split_codes(value):
+    """Split comma/semicolon/whitespace-separated codes into a set."""
+    if not value or not isinstance(value, str):
+        return set()
+    codes = re.split(r'[,;\s]+', value.strip())
+    return {c.strip().lower() for c in codes if c.strip()}
 
 
 def load_expected_experts(experts_file=None):
@@ -194,10 +216,13 @@ def apply_report_theme():
 # ═══════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes
-def fetch_and_process_data(force_refresh=False):
+def fetch_and_process_data(force_refresh=False, excluded_experts=None):
     """
     Fetch submissions from Kobo API and build coverage matrices.
     Cached to avoid redundant API calls.
+    
+    Parameters:
+        excluded_experts: frozenset of expert codes (lowercase) to filter out
     """
     try:
         import requests
@@ -223,7 +248,17 @@ def fetch_and_process_data(force_refresh=False):
             "groups": [],
             "n_submissions": 0,
             "n_experts": 0,
+            "n_submissions_before_exclusion": 0,
         }
+    
+    n_before = len(raw)
+    
+    # Apply expert exclusions if provided
+    if excluded_experts:
+        excluded_lc = {str(c).strip().lower() for c in excluded_experts}
+        raw = raw[
+            ~raw["expert_code"].fillna("").astype(str).str.strip().str.lower().isin(excluded_lc)
+        ].copy()
     
     # Build wide table
     wide = build_wide(raw)
@@ -242,6 +277,7 @@ def fetch_and_process_data(force_refresh=False):
         "groups": groups,
         "n_submissions": len(raw),
         "n_experts": len(experts),
+        "n_submissions_before_exclusion": n_before,
     }
 
 
@@ -350,40 +386,6 @@ def render_header():
     st.title(f"📊 Painel de Monitoramento — Delphi W1 ({TOPIC.title()})")
     st.markdown("Acompanhamento em tempo real das respostas dos especialistas")
     st.divider()
-
-
-def render_sidebar(data, stats):
-    """Render sidebar with controls and summary."""
-    with st.sidebar:
-        st.header("⚙️ Controles")
-        
-        # Manual refresh button
-        if st.button("🔄 Actualizar Agora", use_container_width=True):
-            st.cache_data.clear()
-            st.rerun()
-        
-        # Auto-refresh toggle
-        auto_refresh = st.toggle("Auto-actualizar (5 min)", value=False)
-        if auto_refresh:
-            time.sleep(300)  # Wait 5 minutes
-            st.rerun()
-        
-        st.divider()
-        
-        # Summary stats
-        st.header("📈 Resumo")
-        if data and not data["wide"].empty:
-            st.metric("Especialistas (esperados)", stats["n_experts_expected"])
-            st.metric("Especialistas (observados)", stats["n_experts_observed"])
-            st.metric("Submissões", data["n_submissions"])
-            st.metric("Taxa de Resposta", f"{stats['response_rate']}%")
-            st.metric("Intervenções", len(data["interventions"]))
-            st.metric("Grupos", len(data["groups"]))
-            
-            st.divider()
-            st.caption(f"Última actualização: {data['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
-        else:
-            st.warning("Sem dados disponíveis")
 
 
 def render_overview_cards(stats):
@@ -626,15 +628,72 @@ def render_detailed_tables(stats):
 # ═══════════════════════════════════════════════════════════════
 
 def main():
+    # Check if auto-refresh is due (before rendering)
+    if st.session_state.auto_refresh_enabled:
+        current_time = time.time()
+        last_refresh = st.session_state.last_auto_refresh_time
+        if last_refresh == 0:
+            # First time enabled, set initial timestamp
+            st.session_state.last_auto_refresh_time = current_time
+        elif current_time - last_refresh >= 300:  # 300 seconds = 5 minutes
+            st.session_state.last_auto_refresh_time = current_time
+            st.cache_data.clear()
+            st.rerun()
+    
     # Apply typography and palette from the report
     apply_report_theme()
+    
+    # If auto-refresh is enabled, inject client-side JavaScript for polling
+    if st.session_state.auto_refresh_enabled:
+        st.markdown("""
+        <script>
+        // Auto-reload page every 5 minutes (300000 ms) when auto-refresh is enabled
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+        </script>
+        """, unsafe_allow_html=True)
 
     # Render header
     render_header()
     
-    # Fetch data with loading indicator
+    # Create a placeholder for the data fetch to happen after sidebar is rendered
+    # We need to capture sidebar input first
+    with st.sidebar:
+        st.header("⚙️ Controles")
+        
+        # Manual refresh button
+        if st.button("🔄 Actualizar Agora", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+        
+        # Auto-refresh toggle (non-blocking with session state)
+        st.session_state.auto_refresh_enabled = st.toggle(
+            "Auto-actualizar (5 min)", 
+            value=st.session_state.auto_refresh_enabled
+        )
+        
+        # Show status when auto-refresh is active
+        if st.session_state.auto_refresh_enabled:
+            st.caption("✅ Auto-refresh ativo — a página actualiza a cada 5 minutos")
+        
+        st.divider()
+        
+        # Exclusion input
+        st.subheader("⛔ Filtrar Especialistas")
+        exclusion_input = st.text_input(
+            "Códigos a excluir (separados por vírgula):",
+            value="",
+            placeholder="Ex: 001PM, 001XX",
+            help="Insira os códigos de especialistas para remover da análise"
+        )
+        excluded_experts_from_ui = _split_codes(exclusion_input)
+    
+    # Fetch data with loading indicator using the exclusions from UI
     with st.spinner("A carregar dados da API do KoboToolbox..."):
-        data = fetch_and_process_data()
+        data = fetch_and_process_data(
+            excluded_experts=frozenset(excluded_experts_from_ui) if excluded_experts_from_ui else None
+        )
     
     if not data:
         st.error("Falha ao carregar dados. Verifique a configuração do KOBO_TOKEN.")
@@ -643,8 +702,33 @@ def main():
     # Compute statistics
     stats = compute_stats(data)
     
-    # Render sidebar
-    render_sidebar(data, stats)
+    # Render rest of sidebar with stats
+    with st.sidebar:
+        if excluded_experts_from_ui:
+            st.info(
+                f"🚫 **{len(excluded_experts_from_ui)} especialista(s) excluído(s)**\n\n"
+                f"Códigos: {', '.join(sorted(excluded_experts_from_ui))}"
+            )
+            if data:
+                n_removed = data.get("n_submissions_before_exclusion", 0) - data.get("n_submissions", 0)
+                st.caption(f"Submissões removidas: {n_removed}")
+        
+        st.divider()
+        
+        # Summary stats
+        st.header("📈 Resumo")
+        if data and not data["wide"].empty:
+            st.metric("Especialistas (esperados)", stats["n_experts_expected"])
+            st.metric("Especialistas (observados)", stats["n_experts_observed"])
+            st.metric("Submissões", data["n_submissions"])
+            st.metric("Taxa de Resposta", f"{stats['response_rate']}%")
+            st.metric("Intervenções", len(data["interventions"]))
+            st.metric("Grupos", len(data["groups"]))
+            
+            st.divider()
+            st.caption(f"Última actualização: {data['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
+        else:
+            st.warning("Sem dados disponíveis")
     
     # Main content
     if data["wide"].empty:

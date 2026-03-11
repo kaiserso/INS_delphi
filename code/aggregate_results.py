@@ -475,6 +475,7 @@ def build_wide(raw):
         codes    = detect_intervention_codes(submission.to_frame().T)
 
         submitted_at = str(submission.get("_submitted_at", "")).strip()
+        submitted_seq = str(submission.get("_submitted_seq", "")).strip()
         for code in codes:
             row = {
                 "expert_code":      expert,
@@ -482,6 +483,7 @@ def build_wide(raw):
                 "group":            group,
                 "intervention":     code,
                 "_submitted_at":    submitted_at,
+                "_submitted_seq":   submitted_seq,
                 "_source_file":     source,
             }
             for suffix in INTV_FIELDS:
@@ -497,6 +499,53 @@ def build_wide(raw):
     # Sort for readability
     wide = wide.sort_values(["expert_code", "intervention"]).reset_index(drop=True)
     return wide
+
+def add_submission_sequence(raw):
+    """
+    Add _submitted_seq numbering submissions in chronological order within each
+    (expert_code, _group) pair. Missing timestamps sort last and preserve input order.
+    """
+    if raw.empty:
+        return raw.copy()
+
+    df = raw.copy()
+    if "_submitted_at" in df.columns:
+        sort_ts = pd.to_datetime(df["_submitted_at"], errors="coerce", utc=True)
+    else:
+        sort_ts = pd.Series(pd.NaT, index=df.index)
+
+    df["_sort_ts"] = sort_ts
+    df["_row_order"] = range(len(df))
+    df = df.sort_values(["expert_code", "_group", "_sort_ts", "_row_order"], na_position="last")
+    df["_submitted_seq"] = (
+        df.groupby(["expert_code", "_group"], dropna=False)
+          .cumcount()
+          .add(1)
+          .astype(str)
+    )
+    df = df.sort_values("_row_order").drop(columns=["_sort_ts", "_row_order"])
+    return df
+
+def strip_submission_identifiers(raw, wide):
+    """
+    Prepare idstripped variants for sharing:
+    - _submitted_at reduced to YYYY-MM-DD
+    - _submitted_seq retained/added to preserve submission order
+    - workbook writer can omit the raw Submissions sheet entirely
+    """
+    raw_id = add_submission_sequence(raw)
+    wide_id = build_wide(raw_id)
+
+    for df in (raw_id, wide_id):
+        if "_submitted_at" not in df.columns:
+            continue
+        ts = pd.to_datetime(df["_submitted_at"], errors="coerce", utc=True)
+        date_only = ts.dt.strftime("%Y-%m-%d")
+        fallback = df["_submitted_at"].astype(str).str.strip().str[:10]
+        df["_submitted_at"] = date_only.where(ts.notna(), fallback)
+        df.loc[df["_submitted_at"].isin(["NaT", "nan", "None"]), "_submitted_at"] = ""
+
+    return raw_id, wide_id
 
 def keep_last_only(raw):
     """
@@ -922,13 +971,15 @@ def copy_catalogo_from_dict(wb_dest):
     except Exception as e:
         print(f"  ⚠️  Could not copy Catalogo sheet from dictionary: {e}")
 
-def write_xlsx(out_path, raw, wide, summary, details, coverage, coverage_detail):
+def write_xlsx(out_path, raw, wide, summary, details, coverage, coverage_detail,
+               include_submissions_sheet=True):
     wb = openpyxl.Workbook()
     wb.remove(wb.active)  # remove default sheet
 
     # Raw
-    write_sheet_df(wb, "Submissions", raw.drop(columns=["_source_file"], errors="ignore"),
-                   header_bg=CLR["header_dark"], freeze="C2")
+    if include_submissions_sheet:
+        write_sheet_df(wb, "Submissions", raw.drop(columns=["_source_file"], errors="ignore"),
+                       header_bg=CLR["header_dark"], freeze="C2")
 
     # Wide
     write_sheet_df(wb, "Responses", wide.drop(columns=["_source_file"], errors="ignore"),
@@ -1063,22 +1114,42 @@ def main():
                summary, details, coverage, coverage_detail)
     print(f"  ✓ Full output: {output_path}")
 
+    base, ext = os.path.splitext(output_path)
+    idstrip_path = f"{base}_idstrip{ext}"
+    raw_idstrip, wide_idstrip = strip_submission_identifiers(raw, wide)
+    write_xlsx(idstrip_path, raw_idstrip, wide_idstrip,
+               summary, details, coverage, coverage_detail,
+               include_submissions_sheet=False)
+    print(f"  ✓ Full idstrip output: {idstrip_path}")
+
     # Always also produce a last-only version (one submission per expert per group)
     if not raw.empty:
         raw_last, dropped = keep_last_only(raw)
+        wide_last      = build_wide(raw_last)
+        summary_last, details_last = run_qc(raw_last, wide_last)
+        coverage_last  = build_coverage(raw_last)
+        coverage_detail_last = build_coverage_detail(wide_last)
+        last_path      = f"{base}_lastonly{ext}"
+        last_idstrip_path = f"{base}_lastonly_idstrip{ext}"
         if dropped > 0:
-            wide_last      = build_wide(raw_last)
-            summary_last, details_last = run_qc(raw_last, wide_last)
-            coverage_last  = build_coverage(raw_last)
-            coverage_detail_last = build_coverage_detail(wide_last)
-            base, ext      = os.path.splitext(output_path)
-            last_path      = f"{base}_lastonly{ext}"
             write_xlsx(last_path, raw_last, wide_last,
                        summary_last, details_last, coverage_last, coverage_detail_last)
             print(f"  ✓ Last-only output: {last_path}  "
                   f"({dropped} earlier submission(s) removed)")
         else:
-            print(f"  ℹ️  No duplicate submissions found — last-only output identical to full.")
+            write_xlsx(last_path, raw_last, wide_last,
+                       summary_last, details_last, coverage_last, coverage_detail_last)
+            print(f"  ✓ Last-only output: {last_path}  (identical to full; no earlier submissions removed)")
+
+        raw_last_idstrip, wide_last_idstrip = strip_submission_identifiers(raw_last, wide_last)
+        write_xlsx(last_idstrip_path, raw_last_idstrip, wide_last_idstrip,
+                   summary_last, details_last, coverage_last, coverage_detail_last,
+                   include_submissions_sheet=False)
+        if dropped > 0:
+            print(f"  ✓ Last-only idstrip output: {last_idstrip_path}  "
+                  f"({dropped} earlier submission(s) removed)")
+        else:
+            print(f"  ✓ Last-only idstrip output: {last_idstrip_path}  (identical to full idstrip)")
 
     if fails:
         print(f"\n⚠️   {fails} QC check(s) FAILED — review QC_Detail sheet.")

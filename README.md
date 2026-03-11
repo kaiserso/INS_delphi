@@ -92,3 +92,31 @@ python code/generate_qrcode.py --output qr_codes/malaria_gateway.png --box-size 
 2. **During data collection:** Run `dashboard.py` to monitor progress in real-time
 3. **Generate results:** Run `aggregate_results.py` to create archival results file
 4. **Create report:** Run `generate_w1_report.py` on results file to generate formatted HTML
+
+## Pending issues
+
+ISSUE: Expert codes misinterpreted as times on Portuguese-locale browsers
+Status: Open
+Priority: High — must fix before workshop
+Affected component: KoboToolbox Enketo form — Código do Especialista dropdown (Q01)
+Description:
+On machines with a Portuguese locale (pt-PT or pt-MZ), the expert codes in the dropdown are rendered as times rather than strings. The browser's locale-aware parser interprets the leading digits + PM suffix as a time expression. Examples observed: 001PM → 00:01, 002PM → 14h00, 005PM → 00h05, 006PM → 18h00. The XX-suffix codes appear unaffected. Only one machine confirmed affected so far but likely affects any pt-locale browser.
+Root cause:
+The code format [0-9]{3}PM is ambiguous — leading zeros + PM suffix is a valid time expression in Portuguese locale time parsing. The issue originates in the XLSForm choices list where these values are not explicitly typed as strings.
+Recommended fix:
+Prefix all expert codes with a letter to make them unambiguously non-numeric. Proposed new format: E[0-9]{3}PM and E[0-9]{3}XX (e.g. E001PM, E011XX).
+Files requiring changes:
+
+deploy_kobo_forms.py — choices list generation
+generate_kobo_and_pages.py — EXPERT_CODES list and any regex validation
+gateway.html — ALLOWED_HASHES (all hashes must be regenerated for new code format)
+aggregate_results.py — EXPERT_CODES list, regex validation ^[0-9]{3}(PM|XX)$
+delphi_w1_malaria_template.xlsx — Listas sheet codes and dropdown validation
+dicionario_delphi_w1_malaria.xlsx — codes list if maintained there
+Any already-submitted responses — codes used so far will need to be noted and remapped if resubmitting
+
+Note: Codes already submitted to Kobo under the old format should be
+documented before redeployment. If the workshop has not yet started,
+clean redeployment is straightforward. If partial submissions exist,
+the aggregator's expert_code field will need a remap step.
+

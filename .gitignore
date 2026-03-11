@@ -12,7 +12,7 @@ py_env
 kobo
 *.xls
 *.xlsx
-experts.txt
-reports/*
-results/*
+/experts*.txt
+/reports/*
+/results/*
 kobo_gen/*

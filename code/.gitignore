@@ -1,0 +1,7 @@
+/.quarto/
+**/*.quarto_ipynb
+reports
+generate_w1_report_template.Rmd
+generate_w1_report_template.Qmd
+generate_w1_report.R
+
