@@ -51,6 +51,7 @@ def load_config(path="config.env"):
     return cfg
 
 _cfg = load_config()
+_deployed_cfg = load_config("deployed_forms.env")
 
 def _get(key, default=""):
     return _cfg.get(key, default)
@@ -96,12 +97,19 @@ CLOSING_NOTE     = _get("CLOSING_NOTE",
     "Após submeter, as suas respostas não poderão ser editadas. "
     "O grupo de metodologia irá compilar os resultados antes da 2ª Oficina.")
 
-# Read all SUBFORM_URL_<slug> = <url> entries
+# Read all SUBFORM_URL_<slug> = <url> entries from deployed_forms.env.
+# Fallback to config.env values if deployed_forms.env is not populated yet.
 SUBFORM_URLS = {
+  k[len("SUBFORM_URL_"):].strip(): v
+  for k, v in _deployed_cfg.items()
+  if k.upper().startswith("SUBFORM_URL_")
+}
+if not SUBFORM_URLS:
+  SUBFORM_URLS = {
     k[len("SUBFORM_URL_"):].strip(): v
     for k, v in _cfg.items()
     if k.upper().startswith("SUBFORM_URL_")
-}
+  }
 
 # ── Load experts.txt and hash emails ─────────────────────────
 import hashlib, json as _json
@@ -136,6 +144,7 @@ print(f"  Experts:     {len(EXPERT_HASHES)} email(s) loaded from experts.txt"
                             "auth will allow any Magic-verified email")
 
 print(f"Config loaded from config.env")
+print(f"Deploy map:  deployed_forms.env")
 print(f"  Topic:       {TOPIC_LABEL} ({TOPIC_CODE})")
 print(f"  Input:       {INPUT_FILE}")
 print(f"  Output Kobo: {OUTPUT_KOBO}")
@@ -639,7 +648,7 @@ kobo_base = re.sub(r"\.xlsx$", "", kobo_name, flags=re.IGNORECASE)
 for group_label, group_slug, group_interventions in subform_groups:
     wb, n_survey, n_choices = generate_xlsform(
         group_interventions, group_label, group_slug)
-  out_path = os.path.join(KOBO_DIR, f"{kobo_base}_{group_slug}.xlsx")
+    out_path = os.path.join(KOBO_DIR, f"{kobo_base}_{group_slug}.xlsx")
     wb.save(out_path)
     print(f"  {out_path}  ({n_survey} survey rows, {n_choices} choices)")
 
@@ -1657,7 +1666,7 @@ print(f"\n✅ Generated {total} intervention pages + 1 index + 1 master + 1 rela
 print(f"   Pages directory: {PAGES_DIR}")
 if any(not SUBFORM_URLS.get(slug) for _, slug, _ in subform_groups):
     print("\n⚠️  Some sub-forms have no Kobo URL yet.")
-    print("   Deploy one Kobo form per group, then add to config.env:")
+    print("   Deploy one Kobo form per group, then add to deployed_forms.env:")
     for label, slug, items in subform_groups:
         if not SUBFORM_URLS.get(slug):
             print(f"   SUBFORM_URL_{slug} = https://ee.kobotoolbox.org/x/XXXXXXXX")

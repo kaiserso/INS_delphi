@@ -16,3 +16,4 @@ kobo
 /reports/*
 /results/*
 kobo_gen/*
+/docs
