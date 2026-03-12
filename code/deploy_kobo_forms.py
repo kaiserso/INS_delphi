@@ -52,15 +52,18 @@ def _get(k, default=""):
 
 KOBO_SERVER   = _get("KOBO_SERVER",  "https://eu.kobotoolbox.org")  # change to kf.kobotoolbox.org for global
 KOBO_TOKEN    = _get("KOBO_TOKEN",   "")
-TOPIC_CODE    = _get("TOPIC_CODE",   "malaria")
+TOPIC_CODE    = _get("TOPIC_CODE",   "YOUR_PROGRAM_CODE")
 OUTPUT_KOBO   = _get("OUTPUT_KOBO",  f"delphi_w1_{TOPIC_CODE}_kobo.xlsx")
+KOBO_DIR      = _get("KOBO_DIR",     "kobo_gen")
 
 # Derive subform slugs from existing SUBFORM_URL_* keys or XLS files
 def get_slugs():
     """Find all generated XLS files matching the output pattern."""
-    base = re.sub(r"\.xlsx$", "", OUTPUT_KOBO, flags=re.IGNORECASE)
+    base = re.sub(r"\.xlsx$", "", os.path.basename(OUTPUT_KOBO), flags=re.IGNORECASE)
     slugs = []
-    for f in sorted(os.listdir(".")):
+    if not os.path.isdir(KOBO_DIR):
+        return slugs
+    for f in sorted(os.listdir(KOBO_DIR)):
         if f.startswith(base + "_") and f.endswith(".xlsx"):
             slug = f[len(base) + 1 : -len(".xlsx")]
             slugs.append(slug)
@@ -324,11 +327,12 @@ def main():
     slugs = get_slugs()
     if not slugs:
         print("❌  No XLSForm files found matching pattern:")
-        print(f"    {re.sub(r'.xlsx$', '', OUTPUT_KOBO)}_<slug>.xlsx")
+        print(f"    {KOBO_DIR}/{re.sub(r'.xlsx$', '', os.path.basename(OUTPUT_KOBO))}_<slug>.xlsx")
         print("    Run generate_kobo_and_pages.py first.")
         sys.exit(1)
 
     print(f"Found {len(slugs)} sub-form(s): {', '.join(slugs)}")
+    print(f"Kobo XLS dir: {KOBO_DIR}")
     print(f"KoboToolbox server: {KOBO_SERVER}\n")
 
     if args.list:
@@ -342,8 +346,8 @@ def main():
     results = {}  # slug → enketo_url
 
     for slug in slugs:
-        base = re.sub(r"\.xlsx$", "", OUTPUT_KOBO, flags=re.IGNORECASE)
-        xlsx_path = f"{base}_{slug}.xlsx"
+        base = re.sub(r"\.xlsx$", "", os.path.basename(OUTPUT_KOBO), flags=re.IGNORECASE)
+        xlsx_path = os.path.join(KOBO_DIR, f"{base}_{slug}.xlsx")
         form_name = f"W1 Delphi | {TOPIC_CODE.capitalize()} | {slug}"
 
         print(f"\n{'─'*55}")

@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """
 generate_kobo_and_pages.py
-Reads dicionario_delphi_w1_malaria.xlsx and produces:
-  1. delphi_w1_malaria_kobo.xlsx  — KoboToolbox XLSForm
-  2. pages/malaria/*.html         — one static page per intervention
+Reads dicionario_delphi_w1_<program>.xlsx and produces:
+  1. delphi_w1_<program>_kobo.xlsx  — KoboToolbox XLSForm
+  2. pages/<program>/*.html         — one static page per intervention
 
 Usage:
   python generate_kobo_and_pages.py
-  (paths hardcoded below — edit INPUT_FILE / OUTPUT_KOBO / PAGES_DIR as needed)
+  python generate_kobo_and_pages.py --catalog-sheet "Catalogo_SMI"
+
+Required:
+  Define CATALOG_SHEET in config.env or pass --catalog-sheet on command line.
 """
 
 import os
 import re
+import sys
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -54,15 +58,34 @@ def _get(key, default=""):
 def _bool(key, default=True):
     return _get(key, str(default)).lower() not in ("false", "0", "no", "off")
 
-INPUT_FILE    = _get("INPUT_FILE",   "dicionario_delphi_w1_malaria.xlsx")
-OUTPUT_KOBO   = _get("OUTPUT_KOBO",  "delphi_w1_malaria_kobo.xlsx")
-PAGES_DIR     = _get("PAGES_DIR",    "pages/malaria")
-TOPIC_LABEL   = _get("TOPIC_LABEL",  "Malária")
-TOPIC_CODE    = _get("TOPIC_CODE",   "malaria")
-BASE_URL      = _get("BASE_URL",     "https://delphi-catalogo.example.org/malaria")
+def _get_cli_catalog_sheet(argv):
+  """Read --catalog-sheet from command line (if provided)."""
+  i = 1
+  while i < len(argv):
+    arg = argv[i]
+    if arg in ("--catalog-sheet", "--catalog-tab") and i + 1 < len(argv):
+      return argv[i + 1].strip()
+    if arg.startswith("--catalog-sheet="):
+      return arg.split("=", 1)[1].strip()
+    if arg.startswith("--catalog-tab="):
+      return arg.split("=", 1)[1].strip()
+    i += 1
+  return ""
+
+INPUT_FILE    = _get("INPUT_FILE",   "dicionario_delphi_w1_YOUR_PROGRAM_CODE.xlsx")
+OUTPUT_KOBO   = _get("OUTPUT_KOBO",  "delphi_w1_YOUR_PROGRAM_CODE_kobo.xlsx")
+KOBO_DIR      = _get("KOBO_DIR",     "kobo_gen")
+PAGES_DIR     = _get("PAGES_DIR",    "docs/YOUR_PROGRAM_CODE")
+TOPIC_LABEL   = _get("TOPIC_LABEL",  "YOUR_PROGRAM_NAME")
+TOPIC_CODE    = _get("TOPIC_CODE",   "YOUR_PROGRAM_CODE")
+CATALOG_SHEET = _get_cli_catalog_sheet(sys.argv) or _get("CATALOG_SHEET", "").strip()
+BASE_URL      = _get("BASE_URL",     "https://delphi-catalogo.example.org/YOUR_PROGRAM_CODE")
 MAGIC_API_KEY = _get("MAGIC_API_KEY","pk_live_YOUR_KEY_HERE")
 GATEWAY_URL   = _get("GATEWAY_URL",  "https://your-site.github.io/gateway.html")
 REQUIRE_AUTH  = _bool("REQUIRE_AUTH", True)
+
+if not CATALOG_SHEET:
+  sys.exit("Error: define CATALOG_SHEET in config.env or pass --catalog-sheet '<sheet name>'.")
 
 SUBFORM_GROUP_BY = _get("SUBFORM_GROUP_BY", "programa").lower().strip()
 SUBFORM_MAX_SIZE = int(_get("SUBFORM_MAX_SIZE", "0") or "0")
@@ -116,13 +139,16 @@ print(f"Config loaded from config.env")
 print(f"  Topic:       {TOPIC_LABEL} ({TOPIC_CODE})")
 print(f"  Input:       {INPUT_FILE}")
 print(f"  Output Kobo: {OUTPUT_KOBO}")
+print(f"  Kobo dir:    {KOBO_DIR}")
 print(f"  Pages dir:   {PAGES_DIR}")
+print(f"  Catalog tab: {CATALOG_SHEET}")
 print(f"  Base URL:    {BASE_URL}")
 print(f"  Auth guard:  {'enabled' if REQUIRE_AUTH else 'disabled'}")
 print(f"  Grouping:    by {SUBFORM_GROUP_BY}"
       + (f", max {SUBFORM_MAX_SIZE} per form" if SUBFORM_MAX_SIZE else ""))
 
 os.makedirs(PAGES_DIR, exist_ok=True)
+os.makedirs(KOBO_DIR, exist_ok=True)
 
 # ── Auth guard snippet (injected into every HTML page) ────────
 # Checks Magic.link session on page load; redirects to gateway if not logged in.
@@ -189,7 +215,10 @@ print("Reading dictionary:", INPUT_FILE)
 wb_in = openpyxl.load_workbook(INPUT_FILE, data_only=True)
 
 # --- Catalogue tab ---
-cat_ws = wb_in["Catalogo_Malaria"]
+if CATALOG_SHEET not in wb_in.sheetnames:
+    available = ", ".join(wb_in.sheetnames)
+    sys.exit(f"Error: CATALOG_SHEET '{CATALOG_SHEET}' not found in workbook. Available: {available}")
+cat_ws = wb_in[CATALOG_SHEET]
 # Row 1 = zone headers (merged), row 2 = column headers, row 3+ = data
 cat_headers = [str(c.value).strip() if c.value else ""
                for c in cat_ws[2]]
@@ -604,12 +633,13 @@ def generate_xlsform(group_interventions, group_label, group_slug):
 
 # ── Generate one XLSForm per group ───────────────────────────
 # Derive output filename from OUTPUT_KOBO base + group slug
-kobo_base = re.sub(r"\.xlsx$", "", OUTPUT_KOBO, flags=re.IGNORECASE)
+kobo_name = os.path.basename(OUTPUT_KOBO)
+kobo_base = re.sub(r"\.xlsx$", "", kobo_name, flags=re.IGNORECASE)
 
 for group_label, group_slug, group_interventions in subform_groups:
     wb, n_survey, n_choices = generate_xlsform(
         group_interventions, group_label, group_slug)
-    out_path = f"{kobo_base}_{group_slug}.xlsx"
+  out_path = os.path.join(KOBO_DIR, f"{kobo_base}_{group_slug}.xlsx")
     wb.save(out_path)
     print(f"  {out_path}  ({n_survey} survey rows, {n_choices} choices)")
 

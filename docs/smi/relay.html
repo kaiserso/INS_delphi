@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>A redirecionar…</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  body { font-family: sans-serif; display: flex; align-items: center;
+         justify-content: center; min-height: 100vh; margin: 0;
+         background: #f7f9fb; color: #5a6a7a; }
+</style>
+</head>
+<body>
+<p>A registar submissão…</p>
+<script>
+(function() {
+  var params  = new URLSearchParams(window.location.search);
+  var slug    = params.get('slug');
+  var dest    = params.get('dest') || 'master.html';
+  var key     = 'delphi_SMI_completed';
+
+  if (slug) {
+    try {
+      var done = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!done.includes(slug)) done.push(slug);
+      localStorage.setItem(key, JSON.stringify(done));
+    } catch(e) {}
+  }
+
+  // Small delay so the write completes before navigation
+  setTimeout(function() { window.location.replace(dest); }, 100);
+})();
+</script>
+</body>
+</html>
