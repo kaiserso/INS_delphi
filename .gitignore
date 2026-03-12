@@ -1,0 +1,10 @@
+*~
+__pycache__
+/debug*py
+/gateway*png
+.DS_Store
+old
+temp
+.env
+*.env
+py_env

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel de Avaliação — Malária</title>
+
+  <!-- Auth guard — Magic.link -->
+  <script src="https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"></script>
+  <script>
+    (async function() {
+      document.documentElement.style.visibility = 'hidden';
+      let redirecting = false;
+      try {
+        const magic = new Magic('pk_live_04B22CA3D72C880F');
+        const loggedIn = await magic.user.isLoggedIn();
+        if (!loggedIn) {
+          redirecting = true;
+          window.location.replace(
+            'https://kaiserso.github.io/INS_delphi/malaria/gateway.html?return=' + encodeURIComponent(window.location.href)
+          );
+          return;
+        }
+        window._magicLogout = async function() {
+          await magic.user.logout();
+          window.location.replace('https://kaiserso.github.io/INS_delphi/malaria/gateway.html');
+        };
+      } catch(e) {
+        console.warn('Auth check failed:', e);
+      } finally {
+        // Only restore visibility if we are NOT redirecting to the gateway.
+        // If redirecting, keep hidden to avoid a flash of protected content.
+        if (!redirecting) {
+          document.documentElement.style.visibility = '';
+        }
+      }
+    })();
+  </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:    #0f1923;
+  --muted:  #5a6a7a;
+  --faint:  #e8edf2;
+  --accent: #1a5c8a;
+  --green:  #2e7d52;
+  --amber:  #b45309;
+  --surface:#f7f9fb;
+  --white:  #ffffff;
+}
+html, body {
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 15%, rgba(26,92,138,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 70% at 90% 85%, rgba(46,125,82,.05)  0%, transparent 60%);
+  pointer-events: none;
+}
+.page {
+  position: relative;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+/* ── Header ── */
+.page-header {
+  background: var(--accent);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -30px;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+}
+.topic-pill {
+  display: inline-block;
+  background: rgba(255,255,255,.18);
+  color: rgba(255,255,255,.9);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+  margin-bottom: 12px;
+}
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 300; font-size: 24px;
+  color: #fff; line-height: 1.3;
+  margin-bottom: 6px;
+}
+.page-subtitle { font-size: 13px; color: rgba(255,255,255,.65); }
+/* ── Progress bar ── */
+.progress-wrap {
+  margin-bottom: 28px;
+}
+.progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted);
+  margin-bottom: 8px;
+}
+.progress-bar-bg {
+  height: 6px; background: var(--faint);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--green);
+  border-radius: 3px;
+  transition: width .4s ease;
+  width: 0%;
+}
+/* ── Sub-form cards ── */
+.subform-card {
+  background: var(--white);
+  border: 1.5px solid var(--faint);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: box-shadow .2s, border-color .2s;
+}
+.subform-card.done {
+  border-color: #b7dfcc;
+  background: #f6fdf9;
+}
+.subform-card.locked {
+  opacity: .55;
+  cursor: not-allowed;
+}
+.status-icon {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  background: var(--faint);
+  color: var(--muted);
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+}
+.subform-card.done .status-icon {
+  background: #d1f0e2; color: var(--green);
+}
+.card-body { flex: 1; min-width: 0; }
+.card-label {
+  font-weight: 500; font-size: 15px;
+  color: var(--ink); margin-bottom: 3px;
+}
+.card-meta {
+  font-size: 12px; color: var(--muted);
+}
+.card-action { flex-shrink: 0; }
+.open-btn {
+  padding: 9px 18px;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  border: none; border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background .2s;
+}
+.open-btn:hover { background: #174e78; }
+.open-btn.done-btn {
+  background: transparent;
+  border: 1.5px solid #b7dfcc;
+  color: var(--green);
+  cursor: default;
+}
+.open-btn.no-url {
+  background: var(--faint);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+/* ── Catalogue link ── */
+.catalogue-link {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.catalogue-link a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.catalogue-link a:hover { text-decoration: underline; }
+/* ── Footer ── */
+.page-footer {
+  text-align: center;
+  font-size: 11px; color: #b0bec5;
+  margin-top: 40px;
+}
+/* ── Auth logout link ── */
+.signout {
+  text-align: right;
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+.signout a { color: #b0bec5; text-decoration: none; }
+.signout a:hover { color: var(--muted); }
+.stub-notice {
+  background: #EDE7F6;
+  border: 1px dashed #9575CD;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 12px; color: #4527A0;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class='signout'><a href='#' onclick='window._magicLogout&&window._magicLogout();return false;'>Terminar sessão</a></div>
+
+  <div class="page-header">
+    <div class="topic-pill">Malária</div>
+    <div class="page-title">Painel de Avaliação</div>
+    <div class="page-subtitle">Malária &nbsp;·&nbsp; 4 formulários &nbsp;·&nbsp; 19 intervenções</div>
+  </div>
+
+  
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progresso</span>
+      <span id="progressText">0 de 4 formulários submetidos</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div id="cardList"></div>
+
+  <div class="catalogue-link">
+    <a href="index.html">↗ Catálogo de fichas de intervenção</a>
+  </div>
+
+  <div class="page-footer">
+    Delphi de Optimização &nbsp;·&nbsp; Malária
+    &nbsp;·&nbsp; Gerado em 10/03/2026
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <button onclick="resetProgress()"
+      style="background:none;border:1px solid #B0BEC5;border-radius:4px;
+             padding:2px 10px;font-size:11px;color:#78909C;cursor:pointer;
+             font-family:inherit"
+      title="Apagar progresso guardado localmente e recomeçar">
+      ↺ Reiniciar progresso
+    </button>
+    &nbsp;
+    <button onclick="showDebug()"
+      style="background:none;border:1px solid #B0BEC5;border-radius:4px;
+             padding:2px 10px;font-size:11px;color:#78909C;cursor:pointer;
+             font-family:inherit"
+      title="Mostrar estado de progresso guardado neste dispositivo">
+      🔍 Debug
+    </button>
+  </div>
+
+  <div id="debugPanel" style="display:none;margin:12px auto;max-width:680px;
+       background:#263238;color:#80CBC4;border-radius:6px;
+       padding:14px 18px;font-size:11px;font-family:monospace;
+       white-space:pre-wrap;text-align:left;"></div>
+
+</div>
+
+<script>
+const GROUPS = [
+  {
+    "slug": "manejo_de_casos",
+    "label": "manejo de casos",
+    "count": 5,
+    "codes": [
+      "mal_01",
+      "mal_02",
+      "mal_03",
+      "mal_04",
+      "mal_05"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/pkIHAQ5v?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dmanejo_de_casos%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+  },
+  {
+    "slug": "manejo_de_casos_e_prevencao",
+    "label": "manejo de casos e prevenção",
+    "count": 5,
+    "codes": [
+      "mal_06",
+      "mal_07",
+      "mal_08",
+      "mal_09",
+      "mal_10"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/SAdWP9WK?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dmanejo_de_casos_e_prevencao%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+  },
+  {
+    "slug": "prevencao",
+    "label": "prevenção",
+    "count": 6,
+    "codes": [
+      "mal_11",
+      "mal_12",
+      "mal_13",
+      "mal_14",
+      "mal_15",
+      "mal_16"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/roOJYV0F?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dprevencao%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+  },
+  {
+    "slug": "prevencao_e_outros",
+    "label": "prevenção e outros",
+    "count": 3,
+    "codes": [
+      "mal_17",
+      "mal_18",
+      "mal_19"
+    ],
+    "url": "https://ee-eu.kobotoolbox.org/single/Mf3wKn68?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dprevencao_e_outros%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+  }
+];
+const STORAGE_KEY = 'delphi_malaria_completed';
+const TOTAL = GROUPS.length;
+
+// ── Persistence helpers ──────────────────────────────────────
+function getCompleted() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function markCompleted(slug) {
+  const done = getCompleted();
+  if (!done.includes(slug)) { done.push(slug); }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+}
+function resetProgress() {
+  if (confirm('Apagar todo o progresso guardado neste dispositivo e recomeçar?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderCards();
+    const panel = document.getElementById('debugPanel');
+    if (panel && panel.style.display !== 'none') showDebug();
+  }
+}
+
+function showDebug() {
+  const panel = document.getElementById('debugPanel');
+  if (!panel) return;
+  if (panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    return;
+  }
+  const completed = getCompleted();
+  const allSlugs = GROUPS.map(g => g.slug);
+  const pending = allSlugs.filter(s => !completed.includes(s));
+  const lines = [
+    '── localStorage key: ' + STORAGE_KEY,
+    '── completed (' + completed.length + '/' + allSlugs.length + '): ' +
+      (completed.length ? completed.join(', ') : '(none)'),
+    '── pending (' + pending.length + '): ' +
+      (pending.length ? pending.join(', ') : '(none)'),
+    '',
+    '── raw value:',
+    localStorage.getItem(STORAGE_KEY) || '(not set)',
+  ];
+  panel.textContent = lines.join('\n');
+  panel.style.display = 'block';
+}
+
+// ── Check for completed=<slug> on page load ──────────────────
+// Uses URL hash (#completed=slug) instead of query string so that
+// GitHub Pages normalisation redirects don't strip the parameter.
+// Also supports legacy ?completed=slug query string as fallback.
+(function handleReturn() {
+  let slug = null;
+
+  // Hash-based: master.html#completed=manejo_de_casos_1
+  const hash = window.location.hash.slice(1); // strip leading #
+  if (hash.startsWith('completed=')) {
+    slug = decodeURIComponent(hash.slice('completed='.length));
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // Query string fallback: master.html?completed=manejo_de_casos_1
+  if (!slug) {
+    const params = new URLSearchParams(window.location.search);
+    slug = params.get('completed');
+    if (slug) history.replaceState(null, '', window.location.pathname);
+  }
+
+  if (slug) markCompleted(slug);
+})();
+
+// ── Render cards ─────────────────────────────────────────────
+function renderCards() {
+  const done = getCompleted();
+  const doneCount = GROUPS.filter(g => done.includes(g.slug)).length;
+  const pct = TOTAL > 0 ? Math.round(doneCount / TOTAL * 100) : 0;
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent =
+    doneCount + ' de ' + TOTAL + ' formulários submetidos';
+
+  const list = document.getElementById('cardList');
+  list.innerHTML = '';
+
+  GROUPS.forEach(function(g, idx) {
+    const isDone  = done.includes(g.slug);
+    const hasUrl  = !!g.url;
+    const card    = document.createElement('div');
+    card.className = 'subform-card' + (isDone ? ' done' : '');
+
+    // Status icon: checkmark if done, number if pending
+    const icon = isDone ? '✓' : String(idx + 1);
+    const iconBadge = '<div class="status-icon">' + icon + '</div>';
+
+    // Meta: intervention count + codes
+    const codesSnippet = g.codes.slice(0, 4).join(', ')
+                       + (g.codes.length > 4 ? ', …' : '');
+    const meta = g.count + ' intervenção' + (g.count !== 1 ? 'ões' : '')
+               + ' &nbsp;·&nbsp; ' + codesSnippet;
+
+    // Action button
+    let btn = '';
+    if (isDone) {
+      btn = '<span class="open-btn done-btn">✓ Submetido</span>';
+    } else if (!hasUrl) {
+      btn = '<span class="open-btn no-url" title="URL não configurado">Em breve</span>';
+    } else {
+      btn = '<a class="open-btn" href="' + g.url + '">Iniciar →</a>';
+    }
+
+    card.innerHTML =
+      iconBadge +
+      '<div class="card-body">' +
+        '<div class="card-label">' + g.label + '</div>' +
+        '<div class="card-meta">' + meta + '</div>' +
+      '</div>' +
+      '<div class="card-action">' + btn + '</div>';
+
+    list.appendChild(card);
+  });
+}
+
+renderCards();
+</script>
+</body>
+</html>
