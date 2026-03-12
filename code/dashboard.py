@@ -55,17 +55,33 @@ if "last_auto_refresh_time" not in st.session_state:
     st.session_state.last_auto_refresh_time = 0
 
 
+def _secrets_get(key, default=""):
+    """Safe wrapper around st.secrets — returns default when no secrets file exists."""
+    try:
+        return str(st.secrets.get(key, default)).strip()
+    except Exception:
+        return default
+
+
+def _secrets_keys():
+    """Safe wrapper around st.secrets.keys() — returns empty list when unavailable."""
+    try:
+        return list(st.secrets.keys())
+    except Exception:
+        return []
+
+
 def resolve_kobo_credentials(token_override="", server_override=""):
     """Resolve Kobo credentials with priority: UI override > secrets > env > config.env."""
     server = (
         (server_override or "").strip()
-        or str(st.secrets.get("KOBO_SERVER", "")).strip()
+        or _secrets_get("KOBO_SERVER")
         or os.getenv("KOBO_SERVER", "").strip()
         or DEFAULT_KOBO_SERVER
     )
     token = (
         (token_override or "").strip()
-        or str(st.secrets.get("KOBO_TOKEN", "")).strip()
+        or _secrets_get("KOBO_TOKEN")
         or os.getenv("KOBO_TOKEN", "").strip()
         or DEFAULT_KOBO_TOKEN
     )
@@ -84,9 +100,9 @@ def resolve_kobo_asset_entries():
         if key.upper().startswith("SUBFORM_ASSET_") and str(value).strip():
             assets[key] = str(value).strip()
 
-    for key in st.secrets.keys():
+    for key in _secrets_keys():
         if key.upper().startswith("SUBFORM_ASSET_"):
-            value = str(st.secrets.get(key, "")).strip()
+            value = _secrets_get(key)
             if value:
                 assets[key] = value
 
