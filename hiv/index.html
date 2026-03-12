@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Catálogo de Intervenções — HIV</title>
+
+  <!-- Auth guard — Magic.link -->
+  <script src="https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"></script>
+  <script>
+    (async function() {
+      document.documentElement.style.visibility = 'hidden';
+      let redirecting = false;
+      try {
+        const magic = new Magic('pk_live_344022CF34F5004D');
+        const loggedIn = await magic.user.isLoggedIn();
+        if (!loggedIn) {
+          redirecting = true;
+          window.location.replace(
+            'https://kaiserso.github.io/INS_delphi/hiv/gateway.html?return=' + encodeURIComponent(window.location.href)
+          );
+          return;
+        }
+        window._magicLogout = async function() {
+          await magic.user.logout();
+          window.location.replace('https://kaiserso.github.io/INS_delphi/hiv/gateway.html');
+        };
+      } catch(e) {
+        console.warn('Auth check failed:', e);
+      } finally {
+        // Only restore visibility if we are NOT redirecting to the gateway.
+        // If redirecting, keep hidden to avoid a flash of protected content.
+        if (!redirecting) {
+          document.documentElement.style.visibility = '';
+        }
+      }
+    })();
+  </script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #f5f7fa;
+    padding: 0;
+}
+.page-wrap {
+    max-width: 860px;
+    margin: 32px auto;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    overflow: hidden;
+}
+.page-header {
+    background: #1F4E79;
+    color: #fff;
+    padding: 28px 36px 22px 36px;
+}
+.page-header .topic-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #90CAF9;
+    margin-bottom: 8px;
+}
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+.page-header .objective {
+    font-size: 14px;
+    color: #BBDEFB;
+    line-height: 1.6;
+    border-left: 3px solid #42A5F5;
+    padding-left: 12px;
+    margin-top: 10px;
+}
+.code-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 11px;
+    font-family: monospace;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+}
+.body-content { padding: 28px 36px 36px 36px; }
+.section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #1F4E79;
+    border-bottom: 2px solid #BBDEFB;
+    padding-bottom: 5px;
+    margin: 24px 0 14px 0;
+}
+.field-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.field-grid .field-row:nth-child(odd)  { background: #f8fbff; }
+.field-grid .field-row:nth-child(even) { background: #ffffff; }
+.field-row {
+    display: contents;
+}
+.field-label {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #37474F;
+    border-bottom: 1px solid #e8e8e8;
+    border-right: 1px solid #e0e0e0;
+    background: inherit;
+}
+.field-value {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #212121;
+    line-height: 1.6;
+    border-bottom: 1px solid #e8e8e8;
+    background: inherit;
+}
+.ineff-box {
+    background: #FFF8E1;
+    border-left: 4px solid #FFB300;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+.ineff-box .ineff-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #E65100;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.ineff-box .ineff-text {
+    font-size: 13px;
+    color: #4E342E;
+    line-height: 1.6;
+}
+.causes-box {
+    background: #FBE9E7;
+    border-left: 4px solid #E64A19;
+    border-radius: 0 4px 4px 0;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+.causes-box .causes-title {
+    font-weight: 700;
+    font-size: 12px;
+    color: #BF360C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.causes-box .causes-text {
+    font-size: 13px;
+    color: #4E342E;
+    line-height: 1.6;
+}
+.nav-bar {
+    background: #E3F2FD;
+    padding: 12px 36px;
+    font-size: 12px;
+    color: #1565C0;
+    border-top: 1px solid #BBDEFB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.nav-bar a {
+    color: #1565C0;
+    text-decoration: none;
+    font-weight: 600;
+}
+.nav-bar a:hover { text-decoration: underline; }
+.stub-notice {
+    background: #EDE7F6;
+    border: 1px dashed #9575CD;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #4527A0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.footer {
+    background: #ECEFF1;
+    padding: 12px 36px;
+    font-size: 11px;
+    color: #90A4AE;
+    text-align: center;
+    border-top: 1px solid #CFD8DC;
+}
+@media print {
+    body { background: #fff; }
+    .page-wrap { box-shadow: none; margin: 0; border-radius: 0; }
+    .stub-notice { display: none; }
+}
+
+  table { width:100%; border-collapse:collapse; }
+  tr:hover td { background:#f0f7ff !important; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="topic-tag">Delphi de Optimização &nbsp;·&nbsp; 1ª Oficina</div>
+    <h1>Catálogo de Intervenções<br>HIV</h1>
+    <div class="objective">
+      Seleccione uma intervenção para ver a ficha completa com objectivo,
+      organização, ineficiências identificadas e causas.
+    </div>
+  </div>
+  <div class="body-content" style="padding:0">
+    <table>
+      <thead>
+        <tr style="background:#E3F2FD">
+          <th style="padding:10px 12px;text-align:left;font-size:11px;
+                     color:#1565C0;text-transform:uppercase;letter-spacing:1px;
+                     border-bottom:2px solid #BBDEFB;width:100px">Código</th>
+          <th style="padding:10px 12px;text-align:left;font-size:11px;
+                     color:#1565C0;text-transform:uppercase;letter-spacing:1px;
+                     border-bottom:2px solid #BBDEFB">Intervenção</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_01</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › APSS</div>
+          <a href="hiv_01.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">APSS&amp;PP</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_02</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › RH</div>
+          <a href="hiv_02.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: 1 assessora de APSS
+▪Provincial: Gestor de APSS (1 MC)
+▪Distritos (MC): Oficiais de APSS e Psicólogos distritais
+▪US (MC/GZ): Conselheiros, Gestores de caso, supervisores de campo, conselheiros comunitários, AJM, HC e EP </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_03</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Formações/Treinos</div>
+          <a href="hiv_03.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico e logistico para realização de formações em sala assim como em serviço</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_04</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Supplies</div>
+          <a href="hiv_04.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">. Aquisição de material de escritório (canetas, cadernos, papeleiros, etc)
+. Impressão de instrumentos de registos e Job aids
+. Alocacao de mobiliario </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_05</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Apoio Tecnico</div>
+          <a href="hiv_05.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_06</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › APSS</div>
+          <a href="hiv_06.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Contratação e alocação de conselheiros, mães mentoras, AJM e psicólogos 
+2. Geração e impressão de listas a partir do SESP para apoio na identificação de pacientes que necessitam de intervenção de APSS (factores de risco, faltosos e seguimento de adesão)
+3. Provisão directa de serviços de aconselhamento para reforço de adesão 
+4. Reprodução de material de apoio e instrumentos de registo
+6. Visitas ao domicilio para provisao de servicos de APSS (seguimento preventivo, reintegracao, reforco de adesao, etc) 
+8. Monitoria do desempenho do staff comunitario</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_07</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › RH (Nivel Central)</div>
+          <a href="hiv_07.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Contratação de conselheiros leigos  e educadores de Pares para oferta de Apoio Psicossocial na US e Comunidade.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar de intervenção nas pessoas e comunidades afetadas pelo HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_08</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_08.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Seguimento Preventivo de utentes Vivendo com HIV (Casos especiais, utentes reintegrados)  e reintegração de pacientes faltosos e abandonos atraves de chamadas telefonicas , Visitas domiciliares e envio de mensagens lembretes e de reforço de adesão</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a adesão ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_09</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › 
+Supplies/Insumos</div>
+          <a href="hiv_09.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução de materiais de apoio no âmbito da oferta dos Serviços de APSS/PP</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_10</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Formações/Treinos</div>
+          <a href="hiv_10.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitação dos Atendentes do ALO VIDA nas areas do PNC ITS HIV e SIDA</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Capacitar pessoal para suporte a PVHIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_11</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Formações/Treinos</div>
+          <a href="hiv_11.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none"> Conversão do Pacote de Auto estigma para Treino de Provedores na plataforma de Telessaude  </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_12</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_12.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta integrada de Apoio Psicossocial para preparação (Aconselhamento Pre-TARV) e seguimento de adesão de Utentes Vivendo com HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a adesão ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_13</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_13.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Rastreio de Doenças Mentais em PVHIV com Factores Psicossociais que afectam a adesão</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Diagnosticar e tratar doenças mentais relacionadas</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_14</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_14.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Revelação de Diagnostico para crianças vivendo com HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Apoiar crianças na aceitação do diagnóstico</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_15</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_15.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Certificação de Unidades Sanitarias Livres de Estigma e Discriminação</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Prover ambientes seguros paraPVHIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_16</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_16.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Avaliação e actualização da ferramenta de apoio as famílias de PVHIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o suporte às famílias</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_17</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>APSS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_17.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Elaboração do Guião integrado de Abordagens de Pares para Utentes Vivendo com HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Mobilizar pares para apoio às PVHIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_18</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Oral Teste (Auto Teste)</div>
+          <a href="hiv_18.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a testagem e diagnósticos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_19</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › ATS TDR HIV</div>
+          <a href="hiv_19.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Diagnosticar e tratar HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_20</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › ATS</div>
+          <a href="hiv_20.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Provisão direta de serviços clínicos de ATS na US e comunidade e ligacao aos CT
+2. Distribuição de selftesting na comunidade
+3. Formações de certificação inicial 
+4. Formações de recertificação a cada dois (2) anos
+5. Reprodução de material de apoio e de instrumentos de registo de ATS
+6. Aquisição de cronómetros e pilhas
+7. Aquisição de batas (uniforme) para os conselheiros/staff leigo alocado as US</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Diagnosticar e tratar HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_21</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › RH (Nivel Central)</div>
+          <a href="hiv_21.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assessor para área de ATS no MISAU</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a coordenação de ATS no MISAU</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_22</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › RH (Nivel US)</div>
+          <a href="hiv_22.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Contratação de Conselheiros para implementação do ATIP e do ATIU na US</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a implementação de ATS</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_23</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_23.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta de Aconselhamento e Testagem Iniciado pelo Utente (ATIU) na Comunidade, incluindo a distribuição do ATHIV para todos utentes elegíveis</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a testagem e diagnósticos precoces</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_24</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_24.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação faseada de uso de ATHIV para o inicio e continuidade da PrEP oral e injectável</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a adesão à PrEP entre populações em risco</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_25</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_25.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação da estratégia de Caso índice para o alcance de casos com HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Diagnosticar e tratar pessoas com HIV rapidamente</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_26</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Supplies/Insumos</div>
+          <a href="hiv_26.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução e alocação na US e comunidade dos algoritmos simplificados para elegibilidade para testagem do HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_27</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Formações/Treinos</div>
+          <a href="hiv_27.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Formações para implementação nacional do algoritmo de 3 testes</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a precisão no diagnóstico de HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_28</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Formações/Treinos</div>
+          <a href="hiv_28.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Conversão do pacote de formacao de ATS para a plataforma telessaúde</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_29</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Formações/Treinos</div>
+          <a href="hiv_29.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Formações para implementação e expansão do ATHIV na US</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Expandir o acesso e uso do ATHIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_30</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Formações/Treinos</div>
+          <a href="hiv_30.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Formações em ATS incluindo ATHIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade do atendimento em ATS</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_31</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Formações/Treinos</div>
+          <a href="hiv_31.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitação de provedores para Oferta de Aconselhamento e Testagem Iniciado pelo Provedor (ATIP) de rotina e mediante avaliação de elegibilidade nos serviços clínicos.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a testagem e a adesão ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_32</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_32.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta de Aconselhamento e Testagem Iniciado pelo Provedor (ATIP) de rotina e mediante avaliação de elegibilidade nos serviços clínicos da Unidade Sanitária, para todos utentes elegíveis </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a testagem em unidades clínicas</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_33</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_33.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta de Aconselhamento e Testagem Iniciado pelo Utente (ATIU) na UATS da Unidade Sanitária, para todos utentes voluntários </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a testagem voluntária</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_34</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_34.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta de ATHIV nas US</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Expandir o acesso ao tratamento HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_35</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>ATS › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_35.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta do ATHIV sanguineo</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a detecção e tratamento precoce de HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_36</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › ARVs Adultos</div>
+          <a href="hiv_36.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o fornecimento contínuo de ARVs</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_37</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › C&amp;T Adulto: RH</div>
+          <a href="hiv_37.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: 1 assessora de C&amp;T_Adulto
+▪Provincial: Gestor de C&amp;T_adulto (1 MC/ 1 GZ)
+▪Distritos: Coordenadores distritais
+▪US: MC- Alocação de TMGs nas US com défice de RH (actualmente cerca de 15% destes são pontos focais de programas nas US). MC/GZ - Oficiais de programa e Alocação de arquivistas nas US&#x27;s de médio e grande volume.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o fornecimento contínuo de ARVs</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_38</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › C&amp;T Adulto: Formações/Treinos</div>
+          <a href="hiv_38.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico e logistico para realização de formações em sala assim como em serviço</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o fornecimento contínuo de ARVs</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_39</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › C&amp;T Adulto: Supplies</div>
+          <a href="hiv_39.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Alocação de material de escritório, instrumentos de registo, material medico cirurgico anualmente</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o fornecimento contínuo de ARVs</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_40</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › C&amp;T Adulto: Apoio Tecnico</div>
+          <a href="hiv_40.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o fornecimento contínuo de ARVs</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_41</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › C&amp;T Adulto</div>
+          <a href="hiv_41.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Provisão directa de servicos clinicos atraves de DSD Staff alocados as US
+2. Apoio tecnico presencial e remota
+3. Revisão diaria de FM (CV, TPT, MDS) e colocacao de stickers para oferta de servico
+4. Trangulacao de dados (Activos em TARV, Novos inicios, CV, MI, DAH)
+5. Implementacao do novo Master Card (Formacao virtual e em servico, reproducao e distribuicao pelas US)
+6. Implementação dos Pacote/Directriz  de MQ, DAH, EM , MDS, entre outros 
+7. Expansao dos diversos serviços (DS, DAH, etc)
+8. MQHIV
+9. Apoio na realizacao  dos Comites de Servicos clinicos
+10. Recolha, analise e discussões dos dados  de Monitoria Intensiva
+11. Implementacao da Mentoria clinica 
+12. Cascata de Doenca avancada por HIV (Rastreio, Diagnostico, oferta Profilaxia/tratamento, triangulacao)
+13. Visita de apoio tecnico/supervisão
+14.  Aquisicao de material medico-cirurgico e cabines de manejo de citostaticos
+15.  Aquisicao de material de escritorio, mesas, cadeiras e armarios</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o fornecimento contínuo de ARVs</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_42</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_42.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar reunião híbrida sobre a implementação dos MDS</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a implementação dos MDS em comunidades</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_43</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_43.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oficina de Trabalho para a actualizaçao da Plataforma das visitas de monitoria das intervenções vitais no âmbito da qualidade assistencial</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade das visitas de monitoria</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_44</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_44.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar visitas de monitoria das intervenções vitais no âmbito da qualidade assistencial</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficácia das intervenções</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_45</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_45.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar oficinas de trabalho provinciais para a monitoria das intervenções vitais no âmbito da qualidade assistencial</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a monitoria em nível provincial</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_46</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_46.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação do guiao operacional para engajamento masculino </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar o engajamento masculino</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_47</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › RH (Nivel Central)</div>
+          <a href="hiv_47.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Contratação de Técnicos de Saude para prestação de serviços integrados de TARV </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a prestação de serviços TARV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_48</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Supplies/Insumos</div>
+          <a href="hiv_48.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução do Guia de MDS para HIV </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_49</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Supplies/Insumos</div>
+          <a href="hiv_49.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assegurar a Reproducao e distribuição das cadernetas do Utente</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_50</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_50.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Actualização periódica dos materiais de apoio para area de C&amp;T, em conformidade com as normas vigentes (Guiões, Directrizes e Pacotes de Formação...)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Otimizar tratamento para todos os utentes</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_51</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_51.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar refrescamentos e actualizacoes nas normas de TARV para criancas, adolescentes e adultos usando as diferentes plataformas Online existentes (nivel central, provincial e a nivel da US)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a eliminação da transmissão vertical</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_52</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_52.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Garantir que todos os utentes (adultos, adolescentes e  crianças)  estejam em TARV com  regimes optimizados de acordo com as normas nacionais.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a adesão ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_53</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_53.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar oficina de Comite Terapeutico </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a adesão ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_54</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_54.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Manter e reforçar a implementação de Dispensa Semestral nas 408 US em implementação e expandir para todos os pacientes elegiveis em coordenacao do MISAU de acordo com a disponibilidade de stocks de ARVs, priorizando áreas afectadas por crises humanitárias (incluíndo instabilidade política, desastres naturais e outros)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a integração dos serviços de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_55</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_55.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitação para Integração de serviços de DNTs e C&amp;T de HIV/SIDA</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a integração e qualidade dos serviços</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_56</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_56.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Formação de clínicos na gestão da hipertensão (pacote de integração)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a competência dos clínicos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_57</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_57.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar visitas de monitoria das intervenções vitais no âmbito da qualidade assistencial</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade do atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_58</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T ADULTO › Formações/Treinos</div>
+          <a href="hiv_58.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Conversão para o modelo de telessaude do pacote no âmbito da resposta as situações de emergência </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_59</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T GERAL › CD4 </div>
+          <a href="hiv_59.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a realização de testes de CD4</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_60</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T GERAL › Carga Viral</div>
+          <a href="hiv_60.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Monitorar a carga viral dos pacientes</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_61</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › ARVs Pediátricos</div>
+          <a href="hiv_61.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o acesso a ARVs para crianças</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_62</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › C&amp;T Ped: RH</div>
+          <a href="hiv_62.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: 1 assessora de C&amp;T_Pediatrico
+▪Provincial: Gestor de C&amp;T_Pediatrico (1 MC/ 1 GZ)
+▪US: Contratação e alocação de mães mentoras de pediatria nas U.S apoiadas (28 em MC e 22 em GZ); Alocação de Oficiais de Programa de Pediatria em U.S de grande volume em Maputo Cidade</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o acesso a ARVs para crianças</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_63</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › C&amp;T Ped: Formações/Treinos</div>
+          <a href="hiv_63.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">∙ Apoio técnico e logístico para a realização de formações em sala e em serviço.
+∙ Suporte à realização do estágio clínico de provedores de C&amp;T ped no Centro de Excelência Pediátrico de Mavalane(Maputo Cidade)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o acesso a ARVs para crianças</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_64</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › C&amp;T Ped: Supplies</div>
+          <a href="hiv_64.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">∙ Alocação de material de escritório, instrumentos de registo, material medico cirurgico anualmente;
+∙ Apetrechamento das paragens únicas de pediatria com material lúdico;</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o acesso a ARVs para crianças</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_65</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › C&amp;T Ped: Apoio Tecnico</div>
+          <a href="hiv_65.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o acesso a ARVs para crianças</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_66</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › C&amp;T Ped</div>
+          <a href="hiv_66.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Provisao directa de servicos atraves dos TMG  alocados  nas PU de Ped pelo Projeto
+2. Aquisição de equipamentos e insumos para expanção de paragem unica Pediatria (Estetoscopio, esfigmomanometro, balanca, altimetro) e de escritorio)     
+3.  Planificacao , organisacao e monitoria das oficinas de TARV Pediatrico 
+4. Contratação das MM Pediatricas ,formacao ,  manutenção e supervisão das actividades 
+5. Apoio das US na capacitacao dos facilitadores de ligacao e implementação do programa OVC   
+6.  Encontros de coordenação com actores comunitários dos diferentes programa ( AJM , OVC , MM )</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o acesso a ARVs para crianças</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_67</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › RH (Nivel Central)</div>
+          <a href="hiv_67.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Contratação de TMG para as paragens únicas de pediatria</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o atendimento pediátrico</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_68</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › RH (Nivel Central)</div>
+          <a href="hiv_68.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assessora para área de HIV Pediatrico e do Adolescente</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a abordagem pediátrica</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_69</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_69.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Expandir e monitorar a implementação das intervenções das mães mentoras para as crianças dos 0-10 anos em todas as unidades sanitárias TARV.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar o suporte e adesão ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_70</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › Supplies/Insumos</div>
+          <a href="hiv_70.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reproduzir/Distribuir e alocar as ferramentas de TARV pediátrico e do adolescente e jovem incluindo: materias de formação, algoritmos, job aids, tripticos e  album seriado com mensagens de C&amp;T de adolescentes e jovens , albuns seriados &quot;conhecendo os ARVs pediátricos) </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_71</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › Formações/Treinos</div>
+          <a href="hiv_71.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar actualizações e refrescamentos nas normas de HIV para crianças e adolescentes</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a adesão e compreensão das normas</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_72</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>C&amp;T PED › Formações/Treinos</div>
+          <a href="hiv_72.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar a conversão do pacote de HIV Pediátrico e do adolesente na plataforma Telesaúde</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_73</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Testes DAH</div>
+          <a href="hiv_73.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a detecção precoce de doenças avançadas</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_74</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Tratamento Meningite</div>
+          <a href="hiv_74.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir tratamento eficaz para meningite</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_75</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Tratamento Sarcoma Kaposi</div>
+          <a href="hiv_75.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a adesão ao tratamento de Sarcoma Kaposi</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_76</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_76.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitação de provedores no âmbito do seguimento de utentes com DAH</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade do acompanhamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_77</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_77.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realização de visitas de monitoria no âmbito dos serviços vitais oferecidos aos utentes com DAH</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a qualidade dos serviços prestados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_78</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_78.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoiar a implementação ou expansão de tratamento de Sarcoma de Kaposi  (pequenas reabilitações, aquisição de cabines de manejo de citostáticos e de outros equipamentos para apetrechamento das salas de tratamento)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento disponível</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_79</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_79.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assegurar a oferta de serviços ambulatórios completos de DAH na CRAM (alto maé) como Centro de referência de DAH</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o acesso a serviços de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_80</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_80.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Fornecer apoio técnico na componente TB/HIV a nível nacional, incluindo a implementação do pacote de doença avançada na paragem única, implementação faseada de Raio-X digital e CAD 4) apoiar na disseminação. </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a resposta ao HIV/TB</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_81</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_81.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitação para a implementação ou expansão de tratamento de Sarcoma de Kaposi  (formações)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a capacidade de resposta ao tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_82</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Doenca Avancada › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_82.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Fortalecer o rastreio de lesões pré-cancerosas do colo do utero entre MVHIV (CACUM )</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a detecção precoce de câncer cervical</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_83</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Reuniões</div>
+          <a href="hiv_83.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Intervenções no âmbito da resposta a resistencia aos Antiretrovirais de HIV </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a resposta à resistência</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_84</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Formações/Treinos</div>
+          <a href="hiv_84.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Treinos sobre testagem de CD4 de diferentes plataformas </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a capacidade de testagem</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_85</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_85.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Fortalecer a monitoria de CV de HIV com recurso ao plasma. </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficácia da monitoria</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_86</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_86.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Integrar o m-PIMA para carga viral e PCR nas brigadas e clínicas móveis, visando populações vulneráveis e contextos de emergência.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o diagnóstico em populações vulneráveis</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_87</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_87.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Avaliação de melhoria de qualidade de testagem rápida de HIV, Sífilis e Hepatite </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a qualidade das testagens</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_88</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › 
+Supplies/Insumos</div>
+          <a href="hiv_88.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Desenvolvimento e Reprodução de material de apoio para HIVDR, Algoritmos laboratoriais, e livros de resgisto para CIQ  </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_89</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_89.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assegurar a disponibilidade contínua de painéis de proficiência para a testagem em todos os níveis do sistema de saúde.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a precisão dos testes</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_90</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_90.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Expandir o uso de m-PIMA e do GeneXpert para a monitoria da Carga Viral e DPI</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a capacidade de monitoramento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_91</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_91.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementar a revisão de casos para todos pacientes com CV acima de 50 e 1000c/ml com todos provedores antes de apresentar ao comite TARV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficácia do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_92</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Laboratório › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_92.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Verificação de novos lotes de testes rápidos antes da distribuição no SNS</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a qualidade dos testes</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_93</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Logística/ Aquisição › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_93.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar a quantificação anual de ARVs, TDRs de HIV, autotestes, insumos de redução de danos, kits de carga viral e TPT, bem como actualizar os planos de aprovisionamento.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir o abastecimento contínuo de insumos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_94</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Logística/ Aquisição › Formações/Treinos</div>
+          <a href="hiv_94.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar supervisões de farmácia com enfoque na avaliação da qualidade dos dados.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados de farmácia</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_95</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Logística/ Aquisição › Supplies/Insumos</div>
+          <a href="hiv_95.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Adquirir medicamentos para TARV, PTV, Testes Rápidos de HIV, Carga viral de HIV e DPI, PrEP, TPT e autotestes.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a disponibilidade de medicamentos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_96</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Logística/ Aquisição › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_96.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assegurar o transporte de medicamentos, através da terceirização e da frota da CMAM, a todos os níveis.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a entrega pontual de insumos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_97</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Logística/ Aquisição › Formações/Treinos</div>
+          <a href="hiv_97.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Actualização do manual de procedimentos de gestão de  medicamentos e artigos médicos integrados no programa de HIV, abrangendo TARV adulto e pediátrico, PrEP, PTV, testagem e outras intervenções associadas.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a gestão de medicamentos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_98</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Logística/ Aquisição › Supplies/Insumos</div>
+          <a href="hiv_98.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Adquirir Medicamentos para ITS/IOS, DNT (Cotrimoxazol, Penicilina Benatinica...) </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a disponibilidade de medicamentos</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_99</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Qualidade</div>
+          <a href="hiv_99.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Avaliacao de Qualidade de Dados</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_100</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › RH</div>
+          <a href="hiv_100.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: 1 assessor de M&amp;A, Gestor de M&amp;A (MISAU)
+▪Provincial: Gestor de M&amp;A (1 MC / 1 GZ), Assessor de M&amp;A na SPS/DPS (1 MC / 1 GZ)
+▪Distritos (MC/GZ): Oficiais de M&amp;A
+▪US (MC/GZ): Alocação de oficiais de dados/digitadores/Assistentes de dados</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_101</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Formações/Treinos</div>
+          <a href="hiv_101.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico e logistico para realização de formações em sala assim como em serviço</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_102</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Supplies</div>
+          <a href="hiv_102.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none"> ∙ Aquisição e alocação de material de escritório e mobiliário para as 2 provincias;
+ ∙ Maputo Cidade: Apoio em comunicação/internet para os pontos focais de estatística, NEDs e Direcção  Municipal de Saúde (M&amp;A);
+ ∙ Gaza: Apoio em comunicação/internet para as US&#x27;s para implementação de sistemas</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_103</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Apoio Tecnico</div>
+          <a href="hiv_103.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços: 
+∙ Realização de AQDs (apoio técnico e logística) para todos os níveis das provincias apoiadas
+∙ Apoio na implementação e expansão de sistemas electrónicos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_104</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › M&amp;A</div>
+          <a href="hiv_104.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Monitoria semanal de indicadores chave
+2. Digitacao de dados no EPTS
+3. Triangulacao semanal, mensal e trimestral
+4. Auditoria do ePTS: completude
+5. Auditorias internas e do MISAU
+6. Implementacao do modulo de CCR (piloto)
+7. Analise semanal, mensal, trimestral de dados
+8. Aquisicao e distribuicao de telemoveis para chamadas preventivas e de reintegracao
+9. Reporte ao PEPFAR e MISAU: recontagem dos dados manuais
+10. Dashbaords visualizacao de dados
+11. Monitoria das actividaes dos digitadores
+12. Impressão, reprodução e distribuicao dos diferentes materiais de registo </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_105</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › RH (Nivel Central)</div>
+          <a href="hiv_105.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Avaliacão da implementacão do 2.º Plano de Aceleração da Resposta ao HIV e SIDA e desenvolvimento do 3.º Plano de Aceleração da Resposta ao HIV e SIDA</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a resposta ao HIV/SIDA</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_106</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Formações/Treinos</div>
+          <a href="hiv_106.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar oficinas anuais de informação estratégica</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a capacidade de resposta estratégia</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_107</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Formações/Treinos</div>
+          <a href="hiv_107.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Conversão do procedimento operacional padrão de Avaliação da Qualidade dos Dados para a plataforma Telessaúde</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_108</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_108.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar Rondas Anuais de Avaliação da Qualidade dos Dados</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos dados coletados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_109</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_109.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar visitas de apoio técnico no âmbito da melhoria da qualidade de dados</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a qualidade dos dados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_110</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_110.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Desenvolvimento e manutenção de sistemas de visualização e partilha de dados programáticos (Dashboards)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a transparência e uso dos dados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_111</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_111.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Desenvolvimento de novos instrumentos do SIS para o Programa de HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a eficácia do sistema de informação</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_112</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_112.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução dos instrumentos do SIS para o Programa de HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_113</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Supplies/Insumos</div>
+          <a href="hiv_113.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Aquisição de equipamento informático e material de escritório</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a operacionalidade das unidades de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_114</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › RH (Nivel Central)</div>
+          <a href="hiv_114.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assessores da area de M&amp;A para o MISAU (central, provincial)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a capacidade de gestão</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_115</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Supplies/Insumos</div>
+          <a href="hiv_115.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Aquisição de Licenças de aplicativos (Zoom, Antivirus, Power BI e microsoft office).</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a capacidade técnica</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_116</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>M&amp;A e Sistemas › Supplies/Insumos</div>
+          <a href="hiv_116.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Custos de comunicação (internet, telefones)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a comunicação entre unidades</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_117</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Qualidade</div>
+          <a href="hiv_117.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação dos Ciclos PDSA</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos serviços de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_118</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_118.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Estratégia de Coaching (conversão para a plataforma de Telessaúde, incluíndo integração de um pacote simplificado na capacitação de Mentores)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_119</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › RH (Nivel Central)</div>
+          <a href="hiv_119.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">
+Assessores da área de MQ para o MISAU
+</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a abordagem da melhoria da qualidade</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_120</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › RH (Nivel Central)</div>
+          <a href="hiv_120.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Elaboração do Manual de Gestão do Program que inclui orientações sobre a oferta de serviços nas áreas do PNC ITS-HIV/SIDA</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Padronizar a oferta de serviços</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_121</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_121.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Engajamento do utente na melhoria da qualidade assistencial</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a participação dos utentes na saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_122</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_122.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação da ferramenta eletrónica de Mentoria</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a supervisão e apoio técnico</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_123</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_123.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação de MI em todas US com ciclos de MQHIV e SESP</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a transparência e uso dos dados</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_124</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_124.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação dos ciclos de MQHIV </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a qualidade dos serviços de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_125</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_125.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">
+Sessões de Mentoria (PrEP, ATS-APSS e Clínica) em todas US TARV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a capacitação dos profissionais de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_126</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_126.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assegurar a disponibilidade de dados de MI num dashboard nacional</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a visibilidade da informação</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_127</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_127.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar a Reunião Provincial e Nacional de MQ HIV</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Coordenar esforços e compartilhar boas práticas</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_128</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Melhoria de Qualidade › 
+Supplies/Insumos</div>
+          <a href="hiv_128.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução de instrumento de MQ HIV:
+- Tabelas de Mentorias (PrEP, ATS-APSS e Clínica)
+- Guião dos encontros semanais do CGSC da US
+- Ficha de Monitoria de Implementação do Plano de Acção de MQ e Planos de Acção de MQ</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_129</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › PREP Vaginal</div>
+          <a href="hiv_129.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a prevenção do HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_130</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › PREP Injectavel</div>
+          <a href="hiv_130.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a prevenção do HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_131</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Lubrificante</div>
+          <a href="hiv_131.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Reduzir o risco de transmissão do HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_132</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › ITS</div>
+          <a href="hiv_132.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Tratar e prevenir infecções</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_133</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Femininos</div>
+          <a href="hiv_133.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_134</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › PREP Oral</div>
+          <a href="hiv_134.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a prevenção do HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_135</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Masculino</div>
+          <a href="hiv_135.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_136</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › RH</div>
+          <a href="hiv_136.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: 1 assessora de Prevenção
+▪Provincial: Gestor de Prevenção (MC 1, GZ 1), Gestor de ATS/APSS (1 MC/ 1 GZ)
+▪Distritos: Oficiais distritais de ATS/APSS
+▪US: Alocacao de conselheiros e gestores de caso</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_137</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Formações/Treinos</div>
+          <a href="hiv_137.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio tecnico e logistico em todos pacotes de formacao de prevencao a nivel de US, distrito e Provincia</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_138</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Supplies</div>
+          <a href="hiv_138.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Alocacao de consumiveis de testagem (luvas, alccol, algodao) mobiliario (mesas de testagem, cadeiras de utentes)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_139</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Apoio Tecnico</div>
+          <a href="hiv_139.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">
+Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_140</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Apoio Tecnico</div>
+          <a href="hiv_140.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Expansão da PrEP para todos os sites TARV 
+2. Chamadas lembrete antes da consulta (atribuição/aquisição de telefone e credito)
+5. Encontros de analise e discussão de dados nas US
+6. Provisão directa de serviços através dos TMG alocados pelo projecto</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_141</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Comportamental</div>
+          <a href="hiv_141.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. Campanhas de comunicação
+2. Palestras
+3. Diálogos comunitários
+4. Contratacao de conselheiros efacilitadores de dialogos
+4. Spots radiofónicos nas rádios comunitárias
+5. Conversas nas rádios comunitários de diferentes temas com provedores de saude: adesão ao tratamento, CV, testagem, VBG, PrEP, PTV, etc.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a proteção contra o HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_142</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Formações/Treinos</div>
+          <a href="hiv_142.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitar Pessoal Leigo para Criação de Demanda para prevenção Combinada, incluindo PrEP injectavel</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a conscientização e utilização de PrEP</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_143</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_143.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Implementação e Expansão da PrEP (Oral e Injectável)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar o acesso à PrEP</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_144</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Intervenção
+(Planificada ou Em Curso)</div>
+          <a href="hiv_144.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realizar visitas de monitoria da implementação e expansão da PrEP (Oral e Injectável)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a qualidade da implementação</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_145</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Intervenção
+(Planificada ou Em Curso)</div>
+          <a href="hiv_145.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Criacao de Demanda para PrEP Oral</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a aceitação e uso da PrEP Oral</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_146</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Intervenção
+(Planificada ou Em Curso)</div>
+          <a href="hiv_146.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Criacao de Demanda para PrEP Injectavel (LEN)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a aceitação e uso da PrEP Injectável</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_147</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › 
+Supplies/Insumos</div>
+          <a href="hiv_147.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução de material de IEC para PrEP</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_148</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Formações/Treinos</div>
+          <a href="hiv_148.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Capacitação para implementação da PrEP Oral e Injectável</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a capacidade dos profissionais de saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_149</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>Prevenção › Reunião</div>
+          <a href="hiv_149.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reunião de monitoria das estratégias no âmbito da resposta ao primeiro 95 e fortalecimento da implementação da PrEP</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a coordenação e eficiência das estratégias</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_150</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Carga Viral Hepatite B</div>
+          <a href="hiv_150.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a monitoria e tratamento da Hepatite B</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_151</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › TDR Hepatite B</div>
+          <a href="hiv_151.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento de Hepatite B</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_152</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › TDR Sifilis</div>
+          <a href="hiv_152.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Reduzir a transmissão de sífilis</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_153</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › ARVs PTV</div>
+          <a href="hiv_153.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e adesão ao tratamento de HIV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_154</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › DUO Sifilis e HIV</div>
+          <a href="hiv_154.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_155</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › RH</div>
+          <a href="hiv_155.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: 1 assessora de SMI
+▪Provincial: Gestor de SMI (MC 1, Gaza 1), Gestora de CaCU (1 MC)
+▪Distritos: Oficiais distritais de SMI
+▪US: Alocação de enfermeiras de SMI, conselheiras de SMI, Maes Mentoras</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_156</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Formações/Treinos</div>
+          <a href="hiv_156.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico e logístico para a realização de formações em sala e em serviço a nivel Provincial, Distrital e da US</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_157</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Supplies</div>
+          <a href="hiv_157.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Alocacao de material escritorio, material medico cirurgico, instrumentos de registo e material IEC</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_158</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Apoio Tecnico</div>
+          <a href="hiv_158.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_159</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › PTV</div>
+          <a href="hiv_159.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1.Assistencia técnica atraves das assistentes de PTV/Supervisão conjunta com DPS/SPS e SDSMAS
+2. Encontros de analise e discussão de dados e encontros de coordenação de actividade da área                                                                                                                                                                                                                                                                                                                                                           7. Encontros de coordenação com actores comunitários                                                                                                                                                                                                                                                                                 8. Formações de atualização da área (novas normas)                                                                                                                                                                                                                                                                                9.  Provisão directa de serviços através dos ESMI/Assistentes de SMI alocados pelo projecto                                                                                                                                                                                                    10. Contratação das MM, manutenção e supervisão das actividades                                                                                                                                                                                                                                                                                                                                                                                                                                  12. Exercícios de ligação entre serviços (maternidade/CCR e CCR/Serviços tarv)     </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_160</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › CACUM</div>
+          <a href="hiv_160.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1.Compra de aparelhos de termoablacao para as provincia  e transporte de aparelho comprados com  fundos do Misau                                                                                                                                                                                                                                                                           5. Compra de aparelhos de Leep para as provincias                                                                                                                                                                                                                                                                                                        6. Aquisição de insumos (Acido acetico, lugol, hemogin, mangueiras, especulos, pincas, panelas de esterilizacao, )filtros de carvao, etc)para maquinas de LEEP e material medico cirurgico (Marqueza, gambiar), manutenção dos equipamentosetc.                                                                                                                                                                                                                                 7. Apoio na formacao de Termoabalaco e de Leep                                                                                                                                                                                                                                                                                         8. Fornecimento de credito e telemovel aos hospitais de referencia                                                                                                                                                                                                                                                      9. Fornecimento de subsidio de transporte a mulheres com lesao maior que 75% para o hospital de referencia                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        12. Geracao de lista de mulheres sem rastreio a mais de 1 ano, para referencia para rastreio        </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a eficiência do tratamento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_161</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_161.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Oferta do pacote de PTV do HIV, Sífilis e Hepatite B</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a cobertura das intervenções de PTV</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_162</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Reuniões</div>
+          <a href="hiv_162.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Realização da oficina de trabalho, nacionail e provinciais, no âmbito da monitoria da implementação do Plano Nacional de Tripla Eliminação da Transmissão Vertical do HIV, Sífilis e Hepatite B 2026- 2030</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a coordenação e implementação</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_163</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Formações/Treinos</div>
+          <a href="hiv_163.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Actualizações do pacote de PTV, incluíndo capacitações e conversão para a plataforma de telessáude</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">disponibilizar o pacote no plataforma telesaude</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_164</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_164.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Supervisão integrada de PTV e SMI</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Garantir a eliminação da transmissão vertical</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_165</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_165.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Avaliação do meio termo da implementação do Plano Nacional  de Tripla ETV do HIV, Sífilis e Hepatite B 2026- 2030</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Monitorar o progresso e eficácia do plano</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_166</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › RH (Nivel Central)</div>
+          <a href="hiv_166.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Assessor para área de PTV  no MISAU</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Fortalecer a gestão e implementação das intervenções</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_167</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › RH (Nivel Central)</div>
+          <a href="hiv_167.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Contratação de enfermeiras para o sector de SMI (CPN, CCR e SAAJ)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar a capacidade de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_168</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Formações/Treinos</div>
+          <a href="hiv_168.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Desenvolvimento e implementação do pacote de formação de pais e cuidadores, líderes comunitários, religiosos e políticos em matéria de PTV, SSR e PF </a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a capacidade de resposta comunitária</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_169</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_169.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Desenvolvimento de material IEC no âmbito da tripla ETV do HIV, Sífilis e Hepatite B</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Aumentar a conscientização e educação em saúde</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_170</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › 
+Supplies/Insumos</div>
+          <a href="hiv_170.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Reprodução de material de apoio no âmbito da tripla ETV do HIV, Sífilis e Hepatite B</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Disponibilizar instrumentos para registo e/ou melhoria de atendimento</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_171</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>PTV (Eliminação Tripla) › Intervenção 
+(Planificada ou Em Curso)</div>
+          <a href="hiv_171.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Avaliação para identificar barreiras locais, facilitadores, mitos e percepções em torno da Tripla Eliminação para informar a estratégia de CMSC.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Informar estratégias e intervenções baseadas em evidências</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_172</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>TB/HIV › TPT</div>
+          <a href="hiv_172.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Medicamentos/
+Insumos</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e prevenção de TB</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_173</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>TB/HIV › RH</div>
+          <a href="hiv_173.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">▪Nacional: Assessor de TB
+▪Provincial: Gestores de TB (MC 1, Gaza 1)
+▪Distritos (MC): Oficiais distritais de TB/HIV 
+▪US: Alocação de conselheiros leigos, Técnicos de Medicina Geral, Enfermeiros para a PU da TB e Oficiais de tosse.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e prevenção de TB</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_174</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>TB/HIV › Formações/Treinos</div>
+          <a href="hiv_174.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técncio e logistico nas formações provinciais, distritais e nas US.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e prevenção de TB</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_175</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>TB/HIV › Supplies</div>
+          <a href="hiv_175.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">∙ Alocacao de consumiveis hospitalares (máscaras cirurgicas e N95, alcoól, testes rápidos de gravidez, fits de glícemia);
+∙ Aquisição e distribuição de mobiliario (mesas para provedores e utentes, secretarias, ventoinhas para PCI);
+∙ Alocação de consumiveis de escritório (canetas, sebentas, lápis, marcadores);
+∙Alocação de equipamento hospitalar (glicometros, ECG, Nebulizadores, esfigmomanometros)</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e prevenção de TB</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_176</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>TB/HIV › Apoio Tecnico</div>
+          <a href="hiv_176.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">Apoio técnico ao Sistema Nacional de Saúde através de oficiais técnicos nas Unidades Sanitárias e distritos, gestores a nível provincial e assessores técnicos a nível central, garantindo apoio direto no terreno, coordenação programática e orientação estratégica para a melhoria da qualidade dos serviços.</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e prevenção de TB</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 12px;font-family:monospace;font-size:12px;
+                   color:#546E7A;border-bottom:1px solid #eee">hiv_177</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #eee">
+          <div style='font-size:11px;color:#90A4AE;margin-bottom:2px'>TB/HIV › TB</div>
+          <a href="hiv_177.html" style="color:#1F4E79;font-weight:600;
+             text-decoration:none">1. TPT (inicio e completude) a todos pacientes vivendo com HIV
+2. Seguimento da cascata de TX_TB (rastreio de TB em PVHIV e seguimento dos presuntivos até ao diagnóstico TB e inicio do Tratamento)
+3. Rastreio de TB em todas portas de entrada incluindo o FAST em 26 unidades sanitárias
+4. Apoio a PU de TB/HIV
+5. APSS e retenção a todos pacientes com TB
+6. Aquisição de equipamentos e insumos para expanção de paragem unica TB
+7. Apoio tecnico nas melhoria de qualidade de TB
+8. Reprodução e distribuição dos instrumentos de TB</a>
+          <div style="font-size:12px;color:#78909C;margin-top:3px">Melhorar o tratamento e prevenção de TB</div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">
+    177 intervenções &nbsp;·&nbsp; HIV
+    &nbsp;·&nbsp; Gerado em 12/03/2026
+    &nbsp;·&nbsp;
+    <a href="catalogo_HIV.xlsx" download
+       style="color:#1565C0;text-decoration:none;font-weight:600">
+      ⬇ Descarregar em Excel</a>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <a href="https://kaiserso.github.io/INS_delphi/hiv/master.html"
+       style="color:#1565C0;text-decoration:none;font-weight:600">
+      ↩ Voltar ao painel de avaliação</a>
+  </div>
+</div>
+</body>
+</html>
