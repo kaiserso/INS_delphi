@@ -150,6 +150,7 @@ PROGRAMS = {
             "Programa":                      "programa",
             "Componente":                    "componente",
             "Actividade":                    "actividade",
+            "Actividade/ Descricao":         "actividade",  # variant in new file
             "Implementador":                 "implementador",
             "Nível":                         "nivel",
             "Descricao (o que inclui)":      "descricao",
@@ -224,15 +225,24 @@ PROGRAMS = {
 def load_catalog(path, cfg):
     wb = openpyxl.load_workbook(path, data_only=True)
     sheet_name = cfg["catalog_sheet"]
-    ws = (wb[sheet_name] if sheet_name in wb.sheetnames
-          else next((wb[s] for s in wb.sheetnames
-                     if "revis" not in s.lower()), wb.worksheets[0]))
+    ws = None
+    if sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+    else:
+        # Try case-insensitive / prefix match (e.g. "SMI" matches "SMI (2)" and vice versa)
+        sheet_name_lower = sheet_name.lower().split("(")[0].strip()
+        for s in wb.sheetnames:
+            if s.lower().split("(")[0].strip() == sheet_name_lower and "revis" not in s.lower():
+                ws = wb[s]
+                break
+    if ws is None:
+        ws = next((wb[s] for s in wb.sheetnames if "revis" not in s.lower()), wb.worksheets[0])
 
     col_map   = cfg["col_map"]
     key_field = cfg["key_field"]
 
     # Locate header row: contains the key field label
-    key_labels = {"Intervenção", "Actividade"}
+    key_labels = {"Intervenção", "Actividade", "Actividade/ Descricao"}
     header_row_idx, headers = None, []
     for i, row in enumerate(ws.iter_rows(values_only=True), 1):
         if any(str(c).strip() in key_labels for c in row if c):
@@ -707,7 +717,7 @@ def build_dictionary(program_key, catalog_path, output_dir):
 DEFAULT_CATALOGS = {
     "malaria": "Cata_logo_de_intervenc_o_es___Mala_ria__EG.xlsx",
     "tb":      "Catalogo_de_intervencoes_TB_rev1_revPN21012026.xlsx",
-    "hiv":     "Catalogo_de_intervencoes_HIVv_30122025_rev1_04022026.xlsx",
+    "hiv":     "Catalogo_de_intervencoes_HIVv_30122025_rev1_11032026_1_.xlsx",
     "smi":     "Cata_logo_de_Intervenc_o_es_SMI-06_02_2026_UV_16h.xlsx",
 }
 

@@ -249,6 +249,32 @@ for row in cat_ws.iter_rows(min_row=3, values_only=True):
     intv["URL da Ficha"] = f"{BASE_URL}/{intv['Código']}.html"
     interventions.append(intv)
 
+
+def _pick(intv, *keys):
+    """Return first non-empty value for the provided keys."""
+    for k in keys:
+        v = intv.get(k, "")
+        if v not in (None, "", "None", "nan"):
+            return str(v)
+    return ""
+
+
+def _normalise_intervention_record(intv):
+    """Normalise schema differences across program dictionaries."""
+    label = _pick(intv, "Intervenção", "Actividade")
+    if label:
+        intv["Intervenção"] = label
+        intv.setdefault("Actividade", label)
+
+    objective = _pick(intv, "Objectivo(s)", "Objetivo(s)")
+    if objective:
+        intv["Objectivo(s)"] = objective
+
+    return intv
+
+
+interventions = [_normalise_intervention_record(intv) for intv in interventions]
+
 # ── Normalise numeric columns ─────────────────────────────────
 # Columns that should be formatted as integers (thousands sep = ".")
 INT_COLS   = ["Pop. elegível", "Número alcançado"]
@@ -375,7 +401,7 @@ for intv in interventions:
     intv_choices.append({
         "list_name": "intervention_list",
         "name":      intv["Código"],
-        "label":     intv["Intervenção"],
+    "label":     _pick(intv, "Intervenção", "Actividade", "Código"),
     })
 # Add 'other' at end
 intv_choices.append({
@@ -457,8 +483,8 @@ def substitute(text, intv, n, total, group_label=""):
     text = text.replace("{GROUP_LABEL}", group_label)
     if intv:
         text = text.replace("{CODE}",      intv["Código"])
-        text = text.replace("{LABEL}",     intv["Intervenção"])
-        text = text.replace("{OBJECTIVE}", intv["Objectivo(s)"])
+        text = text.replace("{LABEL}",     _pick(intv, "Intervenção", "Actividade", "Código"))
+        text = text.replace("{OBJECTIVE}", _pick(intv, "Objectivo(s)", "Objetivo(s)"))
         text = text.replace("{URL}",       intv["URL da Ficha"])
         text = text.replace("{N}",         str(n))
         text = text.replace("{TOTAL}",     str(total))
@@ -586,7 +612,7 @@ def generate_xlsform(group_interventions, group_label, group_slug):
     # not just the interventions in this sub-form.
     group_intv_choices = [
         {"list_name": "intervention_list",
-         "name": intv["Código"], "label": intv["Intervenção"]}
+       "name": intv["Código"], "label": _pick(intv, "Intervenção", "Actividade", "Código")}
         for intv in interventions
     ]
     group_intv_choices.append(
@@ -848,7 +874,7 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     area   = intv.get("Área", "")
     prog   = intv.get("Programa", "")
     comp   = intv.get("Componente", "")
-    label  = intv["Intervenção"]
+    label  = _pick(intv, "Intervenção", "Actividade", "Código")
     level  = intv.get("Nível", "")
     desc   = intv.get("Descrição (o que inclui)", "")
     obj    = intv.get("Objectivo(s)", "")
@@ -985,7 +1011,7 @@ def build_index_page(interventions):
     rows = ""
     for i, intv in enumerate(interventions, 1):
         code  = intv["Código"]
-        label = intv["Intervenção"]
+        label = _pick(intv, "Intervenção", "Actividade", "Código")
         obj   = intv.get("Objectivo(s)", "")
         prog  = intv.get("Programa", "")
         comp  = intv.get("Componente", "")
