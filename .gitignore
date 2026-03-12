@@ -1,4 +1,6 @@
 __pycache__
+#.*#
+~$*
 /debug*py
 /gateway*png
 /check_metadata.py
