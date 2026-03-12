@@ -45,7 +45,23 @@ except ImportError as e:
 # Load config
 cfg = load_config()
 deployed_cfg = load_config("deployed_forms.env")
-TOPIC = cfg.get("TOPIC_CODE", "malaria")
+
+
+def _init_secret_get(key, default=""):
+    """Read Streamlit secret safely during module initialization."""
+    try:
+        return str(st.secrets.get(key, default)).strip()
+    except Exception:
+        return default
+
+
+TOPIC = (
+    _init_secret_get("TOPIC_CODE")
+    or os.getenv("TOPIC_CODE", "").strip()
+    or cfg.get("TOPIC_CODE", "")
+    or deployed_cfg.get("TOPIC_CODE", "")
+    or "malaria"
+)
 DEFAULT_KOBO_SERVER = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
 DEFAULT_KOBO_TOKEN = cfg.get("KOBO_TOKEN", "")
 
