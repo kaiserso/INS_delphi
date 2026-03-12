@@ -233,7 +233,7 @@ def find_delphi_assets():
     print(f"  Found {len(all_assets)} total asset(s) on account. Filtering…")
 
     # Try progressively looser matches
-    topic_word = TOPIC_CODE.lower()   # e.g. "malaria"
+    topic_word = TOPIC.lower()   # e.g. "malaria"
     matched = []
     for a in all_assets:
         name = a.get("name", "").lower()
@@ -244,7 +244,7 @@ def find_delphi_assets():
             matched.append(a)
 
     if not matched:
-        print(f"\n  ⚠️  No assets matched topic='{TOPIC_CODE}' or keyword 'delphi'.")
+        print(f"\n  ⚠️  No assets matched topic='{TOPIC}' or keyword 'delphi'.")
         print(f"  All assets on this account:")
         for a in all_assets:
             print(f"    uid={a['uid']}  name={a.get('name','(unnamed)')}")

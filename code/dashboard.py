@@ -33,6 +33,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Import necessary functions from aggregate_results
 try:
+    import aggregate_results as aggregate_module
     from aggregate_results import (
         load_config, fetch_all, build_wide, 
         detect_intervention_codes, normalise_columns
@@ -43,15 +44,91 @@ except ImportError as e:
 
 # Load config
 cfg = load_config()
+deployed_cfg = load_config("deployed_forms.env")
 TOPIC = cfg.get("TOPIC_CODE", "malaria")
-KOBO_SERVER = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
-KOBO_TOKEN = cfg.get("KOBO_TOKEN", "")
+DEFAULT_KOBO_SERVER = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
+DEFAULT_KOBO_TOKEN = cfg.get("KOBO_TOKEN", "")
 
 # Initialize session state for auto-refresh
 if "auto_refresh_enabled" not in st.session_state:
     st.session_state.auto_refresh_enabled = False
 if "last_auto_refresh_time" not in st.session_state:
     st.session_state.last_auto_refresh_time = 0
+
+
+def _secrets_get(key, default=""):
+    """Safe wrapper around st.secrets — returns default when no secrets file exists."""
+    try:
+        return str(st.secrets.get(key, default)).strip()
+    except Exception:
+        return default
+
+
+def _secrets_keys():
+    """Safe wrapper around st.secrets.keys() — returns empty list when unavailable."""
+    try:
+        return list(st.secrets.keys())
+    except Exception:
+        return []
+
+
+def resolve_kobo_credentials(token_override="", server_override=""):
+    """Resolve Kobo credentials with priority: UI override > secrets > env > config.env."""
+    server = (
+        (server_override or "").strip()
+        or _secrets_get("KOBO_SERVER")
+        or os.getenv("KOBO_SERVER", "").strip()
+        or DEFAULT_KOBO_SERVER
+    )
+    token = (
+        (token_override or "").strip()
+        or _secrets_get("KOBO_TOKEN")
+        or os.getenv("KOBO_TOKEN", "").strip()
+        or DEFAULT_KOBO_TOKEN
+    )
+    return server, token
+
+
+def resolve_kobo_asset_entries():
+    """Collect SUBFORM_ASSET_* entries from deployed_forms.env, config.env, env vars, and secrets.
+
+    Priority (highest last, so later sources overwrite earlier ones):
+      deployed_forms.env < config.env < environment variables < st.secrets
+    """
+    assets = {}
+
+    # deployed_forms.env — written by deploy_kobo_forms.py; primary local source
+    for key, value in deployed_cfg.items():
+        if key.upper().startswith("SUBFORM_ASSET_") and str(value).strip():
+            assets[key] = str(value).strip()
+
+    for key, value in cfg.items():
+        if key.upper().startswith("SUBFORM_ASSET_") and str(value).strip():
+            assets[key] = str(value).strip()
+
+    for key, value in os.environ.items():
+        if key.upper().startswith("SUBFORM_ASSET_") and str(value).strip():
+            assets[key] = str(value).strip()
+
+    for key in _secrets_keys():
+        if key.upper().startswith("SUBFORM_ASSET_"):
+            value = _secrets_get(key)
+            if value:
+                assets[key] = value
+
+    return assets
+
+
+def sync_kobo_runtime_config(server, token, asset_entries=()):
+    """Propagate resolved credentials/assets into aggregate_results runtime globals."""
+    aggregate_module.KOBO_SERVER = server
+    aggregate_module.KOBO_TOKEN = token
+
+    for key in [k for k in list(aggregate_module.cfg.keys()) if k.upper().startswith("SUBFORM_ASSET_")]:
+        del aggregate_module.cfg[key]
+
+    for key, value in asset_entries:
+        aggregate_module.cfg[key] = value
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -216,7 +293,13 @@ def apply_report_theme():
 # ═══════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=300, show_spinner=False)  # Cache for 5 minutes
-def fetch_and_process_data(force_refresh=False, excluded_experts=None):
+def fetch_and_process_data(
+    force_refresh=False,
+    excluded_experts=None,
+    kobo_server="",
+    kobo_token="",
+    asset_entries=(),
+):
     """
     Fetch submissions from Kobo API and build coverage matrices.
     Cached to avoid redundant API calls.
@@ -230,9 +313,11 @@ def fetch_and_process_data(force_refresh=False, excluded_experts=None):
         st.error("requests library not installed. Run: pip install requests")
         return None
     
-    if not KOBO_TOKEN:
-        st.error("KOBO_TOKEN not configured in config.env")
+    if not kobo_token:
+        st.error("KOBO_TOKEN não configurado (Secrets, variável de ambiente, input manual ou config.env)")
         return None
+
+    sync_kobo_runtime_config(kobo_server, kobo_token, asset_entries=asset_entries)
     
     # Fetch data
     raw = fetch_all(asset_filter=None)
@@ -661,6 +746,41 @@ def main():
     # We need to capture sidebar input first
     with st.sidebar:
         st.header("⚙️ Controles")
+
+        st.subheader("🔐 Kobo API")
+        use_manual_token = st.toggle(
+            "Inserir token manualmente (sessão actual)",
+            value=False,
+            help="No Streamlit Cloud, prefira guardar KOBO_TOKEN em Secrets."
+        )
+        manual_token = ""
+        manual_server = ""
+        if use_manual_token:
+            manual_token = st.text_input(
+                "KOBO_TOKEN",
+                value="",
+                type="password",
+                help="Token usado apenas nesta sessão do dashboard."
+            )
+            manual_server = st.text_input(
+                "KOBO_SERVER (opcional)",
+                value=DEFAULT_KOBO_SERVER,
+                help="Ex: https://eu.kobotoolbox.org"
+            )
+
+        resolved_server, resolved_token = resolve_kobo_credentials(
+            token_override=manual_token,
+            server_override=manual_server,
+        )
+        resolved_assets = resolve_kobo_asset_entries()
+
+        token_source = "manual" if manual_token.strip() else (
+            "secrets/env/config" if resolved_token else "não configurado"
+        )
+        st.caption(f"Fonte do token: {token_source}")
+        st.caption(f"Servidor Kobo: {resolved_server}")
+        st.caption(f"Assets configurados (SUBFORM_ASSET_*): {len(resolved_assets)}")
+        st.divider()
         
         # Manual refresh button
         if st.button("🔄 Actualizar Agora", use_container_width=True):
@@ -692,7 +812,10 @@ def main():
     # Fetch data with loading indicator using the exclusions from UI
     with st.spinner("A carregar dados da API do KoboToolbox..."):
         data = fetch_and_process_data(
-            excluded_experts=frozenset(excluded_experts_from_ui) if excluded_experts_from_ui else None
+            excluded_experts=frozenset(excluded_experts_from_ui) if excluded_experts_from_ui else None,
+            kobo_server=resolved_server,
+            kobo_token=resolved_token,
+            asset_entries=tuple(sorted(resolved_assets.items())),
         )
     
     if not data:
