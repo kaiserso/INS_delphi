@@ -1,11 +1,7 @@
-et_xmlfile==2.0.0
-git-filter-repo==2.47.0
-numpy==2.4.2
-openpyxl==3.1.5
-pandas==3.0.1
-python-dateutil==2.9.0.post0
-six==1.17.0
+pandas>=2.0.0,<3
+numpy>=1.26.0
 requests
-streamlit>=1.30.0
+streamlit>=1.36.0
 qrcode[pil]>=7.4.2
+openpyxl>=3.1.5
 
