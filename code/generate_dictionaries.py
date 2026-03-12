@@ -155,6 +155,11 @@ PROGRAMS = {
             "Nível":                         "nivel",
             "Descricao (o que inclui)":      "descricao",
             "Objectivo(s)":                  "objectivos",
+            "Alcance geográfico da intervenção":                "alcance",
+            "Recursos necessários para a implementação":        "recursos",
+            "Etapas chave para a implementação da intervenção": "etapas",
+            "Descrição dos riscos e limitações que compromentem a implementação da intervenção": "riscos",
+            "Possiveis factores associados aos riscos e limitações descritas": "factores",
             "Ano de início":                 "ano_inicio",
             "Total Gastos 2024":             "gastos_2024",   # use the total column
             "Pop elegivel":                  "pop_elegivel",
@@ -170,11 +175,16 @@ PROGRAMS = {
             "Código","URL da Ficha","Grupo",
             "Programa","Componente","Actividade","Implementador",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
+            "Alcance geográfico da intervenção",
+            "Recursos necessários para a implementação",
+            "Etapas chave para a implementação da intervenção",
+            "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
+            "Possiveis factores associados aos riscos e limitações descritas",
             "Ano de início","Total Gastos 2024","Pop. elegível",
             "Fonte de elegibilidade","Número alcançado (Dez 2024)","Cobertura",
             "Custo por unidade","Nº US com implementação","Notas",
         ],
-        "col_widths": [10,45,22,18,25,55,25,14,45,45,14,18,16,22,18,12,25,18,40],
+        "col_widths": [10,45,22,18,25,55,25,14,45,45,30,35,35,40,40,14,18,16,22,18,12,25,18,40],
         "skip_row_if": lambda row: not row.get("actividade"),
         "row_builder": "hiv",
     },
@@ -380,6 +390,9 @@ def _row_hiv(idx, rec, cfg, interventions):
         rec.get("actividade"), rec.get("implementador"),
         rec.get("nivel"),
         rec.get("descricao"), rec.get("objectivos"),
+        rec.get("alcance"), rec.get("recursos"),
+        rec.get("etapas"),
+        rec.get("riscos"), rec.get("factores"),
         sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
         sv(rec.get("pop_elegivel")), rec.get("fonte_eligibilidade"),
         sv(rec.get("num_alcancado")), fmt_coverage(rec.get("cobertura")),
@@ -399,7 +412,7 @@ ROW_BUILDERS = {
 SECTION_SPANS = {
     "standard": [("A1","C1"),("D1","G1"),("H1","J1"),("K1","M1"),("N1","R1")],
     "tb":       [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","R1")],
-    "hiv":      [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","S1")],
+    "hiv":      [("A1","C1"),("D1","G1"),("H1","O1"),("P1","R1"),("S1","X1")],
 }
 SECTION_LABELS = {
     "standard": ["Gerado pelo Script",None,None,
@@ -414,9 +427,9 @@ SECTION_LABELS = {
                  "Cobertura e Custos",None,None,None,None],
     "hiv":      ["Gerado pelo Script",None,None,
                  "Identificação",None,None,None,
-                 "Descrição",None,None,
-                 "Financiamento",None,
-                 "Cobertura, Implementação e Custos",None,None,None,None,None,None],
+                 "Descrição e Implementação",None,None,None,None,None,None,None,
+                 "Financiamento",None,None,
+                 "Cobertura, Implementação e Custos",None,None,None,None,None],
 }
 
 def build_catalogo(wb, interventions, cfg):

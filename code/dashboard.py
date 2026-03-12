@@ -200,22 +200,22 @@ st.set_page_config(
 
 
 def apply_report_theme():
-    """Apply the same font stack and color scheme used in the HTML report."""
+    """Apply light, professional styling matching the HTML report design."""
     st.markdown(
         """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
 
         :root {
-            --ink: #f5f2ed;
-            --paper: #0f1923;
-            --surface: #16212e;
+            --ink: #1a1a1a;
+            --paper: #f5f7fa;
+            --surface: #ffffff;
             --accent: #c0392b;
             --accent2: #1a5276;
             --gold: #b7860b;
-            --muted: #c3ccd6;
-            --border: #2c3a4a;
-            --sim: #1a6b3a;
+            --muted: #78909C;
+            --border: #ECEFF1;
+            --sim: #2e7d52;
             --sim-bg: #e8f5ee;
             --poss: #7a5c00;
             --poss-bg: #fef9e7;
@@ -231,8 +231,6 @@ def apply_report_theme():
             color: var(--ink);
         }
 
-        /* Force readable text on dark background in Streamlit containers */
-        .stApp,
         .stApp p,
         .stApp span,
         .stApp div,
@@ -260,8 +258,9 @@ def apply_report_theme():
         div[data-testid="stMetric"] {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 10px 12px;
+            border-radius: 8px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         div[data-testid="stMetric"] label {
@@ -269,22 +268,28 @@ def apply_report_theme():
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.08em;
+            font-weight: 600;
         }
 
         div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-            color: var(--accent);
+            color: var(--accent2);
             font-family: 'DM Serif Display', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
         }
 
         .stButton > button {
             background: var(--accent2);
             color: #ffffff;
-            border: 1px solid var(--accent2);
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(26, 82, 118, 0.15);
         }
 
         .stButton > button:hover {
-            background: #243246;
-            border-color: #243246;
+            background: #154470;
+            box-shadow: 0 2px 6px rgba(26, 82, 118, 0.25);
             color: #ffffff;
         }
 
@@ -296,7 +301,45 @@ def apply_report_theme():
         [data-testid="stDataFrame"] {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
+        }
+
+        /* Divider styling */
+        .element-container .stHorizontalBlock hr {
+            border-color: var(--border);
+            margin: 20px 0;
+        }
+
+        /* Toggle and checkbox styling */
+        [data-testid="stCheckbox"] {
+            color: var(--ink);
+        }
+
+        [data-testid="stCheckbox"] input {
+            accent-color: var(--accent2);
+        }
+
+        /* Text input styling */
+        input, textarea {
+            background: var(--surface) !important;
+            color: var(--ink) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 6px !important;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--muted) !important;
+        }
+
+        /* Tab styling */
+        [data-testid="stTabs"] button {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        [data-testid="stTabs"] button[aria-selected="true"] {
+            color: var(--accent2);
+            border-bottom: 2px solid var(--accent2);
         }
         </style>
         """,
@@ -538,9 +581,9 @@ def render_coverage_heatmap(data):
     # Style the dataframe
     def highlight_cells(val):
         if val == "✓":
-            return "background-color: #e8f5ee; color: #1a6b3a; font-weight: 700"
+            return "background-color: #e8f5ee; color: #2e7d52; font-weight: 700"
         elif val == "—":
-            return "background-color: #f3f4f6; color: #6b7280"
+            return "background-color: #f5f5f5; color: #90A4AE"
         return ""
     
     styled = coverage.style.applymap(highlight_cells, subset=coverage.columns[1:])
@@ -569,9 +612,9 @@ def render_group_coverage(data):
     # Style the dataframe
     def highlight_cells(val):
         if val == "✓":
-            return "background-color: #e8f5ee; color: #1a6b3a; font-weight: 700"
+            return "background-color: #e8f5ee; color: #2e7d52; font-weight: 700"
         elif val == "—":
-            return "background-color: #f3f4f6; color: #6b7280"
+            return "background-color: #f5f5f5; color: #90A4AE"
         elif str(val).startswith("×"):
             return "background-color: #fef9e7; color: #7a5c00; font-weight: 700"
         return ""
@@ -602,7 +645,7 @@ def render_response_rates(stats):
                         tooltip=["Intervenção", "Respondentes", "Total Especialistas", "Taxa (%)"],
                     )
                     .properties(height=400)
-                    .configure_axis(labelColor="#f5f2ed", titleColor="#f5f2ed")
+                    .configure_axis(labelColor="#1a1a1a", titleColor="#1a1a1a")
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
@@ -628,7 +671,7 @@ def render_response_rates(stats):
                         tooltip=["Especialista", "Respondidas", "Total Intervenções", "Taxa (%)"],
                     )
                     .properties(height=400)
-                    .configure_axis(labelColor="#f5f2ed", titleColor="#f5f2ed")
+                    .configure_axis(labelColor="#1a1a1a", titleColor="#1a1a1a")
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
@@ -688,7 +731,7 @@ def render_submission_timeline(data):
                 tooltip=[alt.Tooltip("count():Q", title="Submissões")],
             )
             .properties(height=260)
-            .configure_axis(labelColor="#f5f2ed", titleColor="#f5f2ed")
+            .configure_axis(labelColor="#1a1a1a", titleColor="#1a1a1a")
         )
         st.altair_chart(hist, use_container_width=True)
     else:

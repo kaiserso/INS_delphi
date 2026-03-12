@@ -878,11 +878,12 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     level  = intv.get("Nível", "")
     desc   = intv.get("Descrição (o que inclui)", "")
     obj    = intv.get("Objectivo(s)", "")
+    # Exact column names from generated HIV dictionary
     geo    = intv.get("Alcance geográfico da intervenção", "")
     res    = intv.get("Recursos necessários para a implementação", "")
-    steps  = intv.get("Etapas chave para a implementação", "")
-    risks  = intv.get("Riscos e limitações", "")
-    causes = intv.get("Possíveis factores associados aos riscos", "")
+    steps  = intv.get("Etapas chave para a implementação da intervenção", "")
+    risks  = intv.get("Descrição dos riscos e limitações que comprometem a implementação da intervenção", "")
+    causes = intv.get("Possiveis factores associados aos riscos e limitações descritas", "")
     year   = intv.get("Ano de início", "")
     spend  = intv.get("Gastos em 2024 (MZN)", "")
     funder = intv.get("Fonte(s) de financiamento", "")
@@ -891,6 +892,12 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     cover  = intv.get("Cobertura", "")
     cost   = intv.get("Custo por unidade", "")
     notes  = intv.get("Notas", "")
+    # HIV-specific fields (empty for other programs)
+    implementador = intv.get("Implementador", "")
+    fonte_elegibilidade = intv.get("Fonte de elegibilidade", "")
+    # Handle typo in HIV column: "Num de US com implementatcao"
+    num_us = _pick(intv, "Nº US com implementação", "Num de US com implementação", "Num de US com implementatcao (Dez 2024)")
+    reached_specific = intv.get("Número alcançado (Dez 2024)", "") or reached  # HIV sometimes has date suffix
 
     nav_prev = (f'<a href="{e(prev_url)}">← Anterior</a>'
                 if prev_url else '<span style="color:#aaa">← Anterior</span>')
@@ -913,6 +920,16 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
             f'<div class="stub-notice">&#9888; Página de demonstração — '
             f'URL provisório: <code>{e(url)}</code>. '
             f'Actualize BASE_URL no script quando as páginas forem publicadas.</div>')
+
+    # HIV-specific section (only shown if implementador is present)
+    hiv_section = ""
+    if implementador or fonte_elegibilidade or num_us:
+        hiv_fields = ""
+        hiv_fields += field_row("Implementador", implementador) if implementador and implementador not in ("None", "nan", "") else ""
+        hiv_fields += field_row("Fonte de Elegibilidade", fonte_elegibilidade) if fonte_elegibilidade and fonte_elegibilidade not in ("None", "nan", "") else ""
+        hiv_fields += field_row("Nº US com Implementação", num_us) if num_us and num_us not in ("None", "nan", "") else ""
+        if hiv_fields:
+            hiv_section = f"<div class='section-title'>Implementação (HIV)</div><div class='field-grid'>{hiv_fields}</div>"
 
     notes_block = (f"<div class='section-title'>Notas</div>"
                    f"<div class='field-grid'>{field_row('Notas', notes)}</div>"
@@ -981,10 +998,12 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
       {field_row("Gastos em 2024 (MZN)", spend)}
       {field_row("Fonte(s) de Financiamento", funder)}
       {field_row("Pop. Elegível", pop)}
-      {field_row("Número Alcançado", reached)}
+      {field_row("Número Alcançado", reached_specific)}
       {field_row("Cobertura", cover)}
       {field_row("Custo por Unidade", cost)}
     </div>
+
+    {hiv_section}
 
     {notes_block}
 
