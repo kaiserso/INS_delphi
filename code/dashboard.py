@@ -44,6 +44,7 @@ except ImportError as e:
 
 # Load config
 cfg = load_config()
+deployed_cfg = load_config("deployed_forms.env")
 TOPIC = cfg.get("TOPIC_CODE", "malaria")
 DEFAULT_KOBO_SERVER = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
 DEFAULT_KOBO_TOKEN = cfg.get("KOBO_TOKEN", "")
@@ -89,8 +90,17 @@ def resolve_kobo_credentials(token_override="", server_override=""):
 
 
 def resolve_kobo_asset_entries():
-    """Collect SUBFORM_ASSET_* entries from config, env, and secrets."""
+    """Collect SUBFORM_ASSET_* entries from deployed_forms.env, config.env, env vars, and secrets.
+
+    Priority (highest last, so later sources overwrite earlier ones):
+      deployed_forms.env < config.env < environment variables < st.secrets
+    """
     assets = {}
+
+    # deployed_forms.env — written by deploy_kobo_forms.py; primary local source
+    for key, value in deployed_cfg.items():
+        if key.upper().startswith("SUBFORM_ASSET_") and str(value).strip():
+            assets[key] = str(value).strip()
 
     for key, value in cfg.items():
         if key.upper().startswith("SUBFORM_ASSET_") and str(value).strip():
