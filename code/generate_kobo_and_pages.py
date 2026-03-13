@@ -270,6 +270,64 @@ def _normalise_intervention_record(intv):
     if objective:
         intv["Objectivo(s)"] = objective
 
+    aliases = [
+      (
+        (
+          "Alcance geográfico da intervenção",
+          "Alcance geográfico",
+        ),
+        (
+          "Alcance geográfico da intervenção",
+        ),
+      ),
+      (
+        (
+          "Recursos necessários para a implementação",
+          "Recursos necessários",
+        ),
+        (
+          "Recursos necessários para a implementação",
+        ),
+      ),
+      (
+        (
+          "Etapas chave para a implementação da intervenção",
+          "Etapas chave para a implementação",
+          "Etapas chave",
+        ),
+        (
+          "Etapas chave para a implementação da intervenção",
+          "Etapas chave para a implementação",
+        ),
+      ),
+      (
+        (
+          "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
+          "Riscos e limitações",
+        ),
+        (
+          "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
+          "Riscos e limitações",
+        ),
+      ),
+      (
+        (
+          "Possiveis factores associados aos riscos e limitações descritas",
+          "Possíveis factores associados aos riscos",
+          "Possíveis factores associados",
+        ),
+        (
+          "Possiveis factores associados aos riscos e limitações descritas",
+          "Possíveis factores associados aos riscos",
+        ),
+      ),
+    ]
+    for source_keys, target_keys in aliases:
+        value = _pick(intv, *source_keys)
+        if value:
+            for target_key in target_keys:
+                intv[target_key] = value
+
     return intv
 
 
@@ -441,6 +499,17 @@ def slugify(text):
     text = re.sub(r"\s+", "_", text)
     return text
 
+def unique_slug(base_slug, used):
+    """Return a unique slug by appending _2, _3, ... when needed."""
+    base_slug = (base_slug or "grupo").strip("_") or "grupo"
+    slug = base_slug
+    suffix = 2
+    while slug in used:
+        slug = f"{base_slug}_{suffix}"
+        suffix += 1
+    used.add(slug)
+    return slug
+
 def split_group(label, items, max_size):
     if max_size <= 0 or len(items) <= max_size:
         return [(label, items)]
@@ -458,10 +527,17 @@ for intv in interventions:
     groups_raw.setdefault(key, []).append(intv)
 
 subform_groups = []   # list of (label, slug, [intv, ...])
+used_slugs = set()
 for raw_label, items in groups_raw.items():
     display_label = strip_group_prefix(raw_label)
-    for chunk_label, chunk_items in split_group(display_label, items, SUBFORM_MAX_SIZE):
-        subform_groups.append((chunk_label, slugify(chunk_label), chunk_items))
+    for chunk_index, (chunk_label, chunk_items) in enumerate(
+        split_group(display_label, items, SUBFORM_MAX_SIZE),
+        start=1,
+    ):
+        source_label = raw_label if chunk_index == 1 else f"{raw_label} ({chunk_index})"
+        slug_base = slugify(source_label)
+        group_slug = unique_slug(slug_base, used_slugs)
+        subform_groups.append((chunk_label, group_slug, chunk_items))
 
 print(f"\nSub-form groups ({GROUP_FIELD}, max {SUBFORM_MAX_SIZE or 'unlimited'}):")
 for label, slug, items in subform_groups:

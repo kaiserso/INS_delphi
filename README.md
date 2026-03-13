@@ -1,6 +1,6 @@
 # INS_delphi
 
-Delphi W1 data collection and reporting system for malaria intervention optimization.
+Delphi W1 data collection and reporting system for malaria/SMI/HIV/TB intervention optimization.
 
 ## Setup
 
@@ -85,6 +85,24 @@ python code/generate_qrcode.py
 ```bash
 python code/generate_qrcode.py --output qr_codes/malaria_gateway.png --box-size 15
 ```
+
+### generate_kobo_and_pages.py
+
+Generate Kobo XLSForms and intervention HTML pages from the dictionary workbook.
+
+**Usage:**
+```bash
+python code/generate_kobo_and_pages.py
+```
+
+**Grouping configuration (`config.env`):**
+- `SUBFORM_GROUP_BY` must be one of: `area`, `programa`, `componente`, `grupo`
+- `SUBFORM_MAX_SIZE` optionally splits large groups into chunks
+
+**Validation behavior:**
+- Script fails fast if `SUBFORM_GROUP_BY` has an invalid value
+- Script fails if any row has blank value in the selected grouping column
+   (example: if `SUBFORM_GROUP_BY=grupo`, all `Grupo` cells must be filled)
 
 ## Workflow
 

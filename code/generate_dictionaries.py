@@ -45,6 +45,7 @@ import sys
 import os
 import math
 import pathlib
+import unicodedata
 from datetime import datetime
 
 try:
@@ -232,6 +233,18 @@ PROGRAMS = {
             "Descrição (o que inclui)":      "descricao",   # note accented Descrição
             "Descricao (o que inclui)":      "descricao",   # fallback unaccented
             "Objectivo(s)":                  "objectivos",
+            "Alcance geográfico da intervenção":                "alcance",
+            "Alcance geografico da intervencao":                "alcance",
+            "Recursos necessários para a implementação":        "recursos",
+            "Recursos necessarios para a implementacao":        "recursos",
+            "Etapas chave para a implementação da intervenção": "etapas",
+            "Etapas chave para implementação da intervenção":   "etapas",
+            "Etapas chave para a implementacao da intervencao": "etapas",
+            "Descrição dos riscos e limitações que comprometem a implementação da intervenção": "riscos",
+            "Descricao dos riscos e limitacoes que comprometem a implementacao da intervencao": "riscos",
+            "Descrição dos riscos e limitações que compromentem a implementação da intervenção": "riscos",
+            "Possíveis factores associados aos riscos e limitações descritas": "factores",
+            "Possiveis factores associados aos riscos e limitacoes descritas": "factores",
             "Ano de início":                 "ano_inicio",
             "Gastos em 2024 ":               "gastos_2024", # trailing space in source
             "Gastos em 2024":                "gastos_2024", # fallback
@@ -248,10 +261,12 @@ PROGRAMS = {
             "Código","URL da Ficha","Grupo",
             "Área","Programa","Componente","Intervenção",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
-            "Ano de início","Gastos em 2024","Fonte(s) de financiamento",
+            "Alcance geográfico","Recursos necessários","Etapas chave",
+            "Riscos e limitações","Possíveis factores associados",
+            "Ano de início","Gastos em 2024 (USD)","Fonte(s) de financiamento",
             "Pop. elegível","Número alcançado","Cobertura","Custo por unidade","Notas",
         ],
-        "col_widths": [10,45,22,10,22,25,50,14,45,45,12,18,22,14,14,12,25,40],
+        "col_widths": [10,45,22,10,22,25,50,14,45,45,30,35,35,35,35,12,18,22,14,14,12,25,40],
         "skip_row_if": lambda row: False,
         "row_builder": "standard",
     },
@@ -278,6 +293,10 @@ def load_catalog(path, cfg):
         ws = next((wb[s] for s in wb.sheetnames if "revis" not in s.lower()), wb.worksheets[0])
 
     col_map   = cfg["col_map"]
+    normalized_col_map = {
+        _normalize_header(source_header): target_key
+        for source_header, target_key in col_map.items()
+    }
     key_field = cfg["key_field"]
 
     # Locate header row: contains the key field label
@@ -299,7 +318,7 @@ def load_catalog(path, cfg):
         rec = {}
         for ci, h in enumerate(headers):
             # Use the first matching col_map key (handles duplicate cols like two Gastos)
-            key = col_map.get(h)
+            key = col_map.get(h) or normalized_col_map.get(_normalize_header(h))
             if key and key not in rec:
                 rec[key] = row[ci] if ci < len(row) else None
         if not rec.get(key_field):
@@ -343,6 +362,13 @@ def fmt_coverage(val):
 def sv(val):
     """Safe string: convert to str or return None."""
     return str(val) if val is not None else None
+
+def _normalize_header(value):
+    if value is None:
+        return ""
+    text = unicodedata.normalize("NFKD", str(value))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return " ".join(text.strip().lower().split())
 
 def group_label(idx, interventions, cfg):
     """Build a descriptive group label based on Programa values within the batch."""
@@ -397,6 +423,8 @@ def _row_standard(idx, rec, cfg, interventions):
         rec.get("area"), rec.get("programa"), rec.get("componente"),
         rec.get("intervencao"), rec.get("nivel"),
         rec.get("descricao"), rec.get("objectivos"),
+        rec.get("alcance"), rec.get("recursos"), rec.get("etapas"),
+        rec.get("riscos"), rec.get("factores"),
         sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
         rec.get("fontes"),
         sv(rec.get("pop_elegivel")), sv(rec.get("num_alcancado")),
@@ -406,7 +434,20 @@ def _row_standard(idx, rec, cfg, interventions):
 
 def _row_tb(idx, rec, cfg, interventions):
     """TB row layout (same fields as SMI/Malária but fewer cols)."""
-    return _row_standard(idx, rec, cfg, interventions)
+    code = f"{cfg['code_prefix']}_{idx+1:02d}"
+    return [
+        code,
+        f"{cfg['base_url']}/{code}.html",
+        group_label(idx, interventions, cfg),
+        rec.get("area"), rec.get("programa"), rec.get("componente"),
+        rec.get("intervencao"), rec.get("nivel"),
+        rec.get("descricao"), rec.get("objectivos"),
+        sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
+        rec.get("fontes"),
+        sv(rec.get("pop_elegivel")), sv(rec.get("num_alcancado")),
+        fmt_coverage(rec.get("cobertura")),
+        rec.get("custo_unidade"), rec.get("notas"),
+    ]
 
 def _row_hiv(idx, rec, cfg, interventions):
     """HIV row layout — Actividade + Implementador, no Área."""
@@ -439,14 +480,15 @@ ROW_BUILDERS = {
 # ─────────────────────────────────────────────────────────────────
 
 SECTION_SPANS = {
-    "standard": [("A1","C1"),("D1","G1"),("H1","J1"),("K1","M1"),("N1","R1")],
+    "standard": [("A1","C1"),("D1","G1"),("H1","J1"),("K1","O1"),("P1","R1"),("S1","W1")],
     "tb":       [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","R1")],
     "hiv":      [("A1","C1"),("D1","G1"),("H1","O1"),("P1","R1"),("S1","X1")],
 }
 SECTION_LABELS = {
     "standard": ["Gerado pelo Script",None,None,
                  "Identificação",None,None,None,
-                 "Descrição e Implementação",None,None,
+                 "Descrição",None,None,
+                 "Implementação",None,None,None,None,
                  "Financiamento",None,None,
                  "Cobertura e Custos",None,None,None,None],
     "tb":       ["Gerado pelo Script",None,None,
