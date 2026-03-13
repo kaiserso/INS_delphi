@@ -234,7 +234,7 @@ body::before {
   <div class="page-header">
     <div class="topic-pill">Saúde Materna e Infantil</div>
     <div class="page-title">Painel de Avaliação</div>
-    <div class="page-subtitle">Saúde Materna e Infantil &nbsp;·&nbsp; 17 formulários &nbsp;·&nbsp; 88 intervenções</div>
+    <div class="page-subtitle">Saúde Materna e Infantil &nbsp;·&nbsp; 11 formulários &nbsp;·&nbsp; 77 intervenções</div>
   </div>
 
   
@@ -242,7 +242,7 @@ body::before {
   <div class="progress-wrap">
     <div class="progress-label">
       <span>Progresso</span>
-      <span id="progressText">0 de 17 formulários submetidos</span>
+      <span id="progressText">0 de 11 formulários submetidos</span>
     </div>
     <div class="progress-bar-bg">
       <div class="progress-bar-fill" id="progressFill"></div>
@@ -257,7 +257,7 @@ body::before {
 
   <div class="page-footer">
     Delphi de Optimização &nbsp;·&nbsp; Saúde Materna e Infantil
-    &nbsp;·&nbsp; Gerado em 12/03/2026
+    &nbsp;·&nbsp; Gerado em 13/03/2026
     &nbsp;&nbsp;|&nbsp;&nbsp;
     <button onclick="resetProgress()"
       style="background:none;border:1px solid #B0BEC5;border-radius:4px;
@@ -286,8 +286,8 @@ body::before {
 <script>
 const GROUPS = [
   {
-    "slug": "cpn_1",
-    "label": "cpn (1)",
+    "slug": "cpn",
+    "label": "cpn",
     "count": 7,
     "codes": [
       "smi_01",
@@ -298,110 +298,86 @@ const GROUPS = [
       "smi_06",
       "smi_07"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/2akitTCt?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dcpn_1%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "cpn_2",
-    "label": "cpn (2)",
-    "count": 2,
-    "codes": [
-      "smi_08",
-      "smi_09"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/I8da985g?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dcpn_2%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "maternidade_e_posnatal",
-    "label": "maternidade e pós-natal",
-    "count": 3,
-    "codes": [
-      "smi_10",
-      "smi_11",
-      "smi_12"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/byOiDBfE?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dmaternidade_e_posnatal%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "genecologia",
-    "label": "genecologia",
-    "count": 3,
-    "codes": [
-      "smi_13",
-      "smi_14",
-      "smi_15"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/aW2W9aMd?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dgenecologia%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "saude_neonatal_1",
-    "label": "saúde neonatal (1)",
+    "slug": "cpn_e_maternidade",
+    "label": "cpn e maternidade",
     "count": 7,
     "codes": [
+      "smi_08",
+      "smi_09",
+      "smi_10",
+      "smi_11",
+      "smi_12",
+      "smi_13",
+      "smi_14"
+    ],
+    "url": ""
+  },
+  {
+    "slug": "ginecologia_e_saude_neonatal",
+    "label": "ginecologia e saúde neonatal",
+    "count": 7,
+    "codes": [
+      "smi_15",
       "smi_16",
       "smi_17",
       "smi_18",
       "smi_19",
       "smi_20",
-      "smi_21",
-      "smi_22"
+      "smi_21"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/k0v4hxoK?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dsaude_neonatal_1%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "saude_neonatal_2",
-    "label": "saúde neonatal (2)",
-    "count": 3,
-    "codes": [
-      "smi_23",
-      "smi_24",
-      "smi_25"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/NDwY6BrZ?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dsaude_neonatal_2%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "saude_infantil_1",
-    "label": "saúde infantil (1)",
+    "slug": "saude_neonatal_e_saude_infantil",
+    "label": "saúde neonatal e saúde infantil",
     "count": 7,
     "codes": [
+      "smi_22",
+      "smi_23",
+      "smi_24",
+      "smi_25",
       "smi_26",
       "smi_27",
-      "smi_28",
+      "smi_28"
+    ],
+    "url": ""
+  },
+  {
+    "slug": "planeamento_familiar",
+    "label": "planeamento familiar",
+    "count": 7,
+    "codes": [
       "smi_29",
       "smi_30",
       "smi_31",
-      "smi_32"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/iGxJC8pE?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dsaude_infantil_1%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "saude_infantil_2",
-    "label": "saúde infantil (2)",
-    "count": 7,
-    "codes": [
+      "smi_32",
       "smi_33",
       "smi_34",
-      "smi_35",
+      "smi_35"
+    ],
+    "url": ""
+  },
+  {
+    "slug": "planeamento_familiar",
+    "label": "planeamento familiar",
+    "count": 7,
+    "codes": [
       "smi_36",
       "smi_37",
       "smi_38",
-      "smi_39"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/X365rVre?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dsaude_infantil_2%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "saude_infantil_3",
-    "label": "saúde infantil (3)",
-    "count": 3,
-    "codes": [
+      "smi_39",
       "smi_40",
       "smi_41",
       "smi_42"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/HCpCDCTd?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dsaude_infantil_3%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "planeamento_familiar_1_1",
-    "label": "planeamento familiar (1) (1)",
+    "slug": "planeamento_familiar_e_programa_de_reabilitacao_nutricional",
+    "label": "planeamento familiar e programa de reabilitação nutricional",
     "count": 7,
     "codes": [
       "smi_43",
@@ -412,11 +388,11 @@ const GROUPS = [
       "smi_48",
       "smi_49"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/zcoGzi8F?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dplaneamento_familiar_1_1%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "planeamento_familiar_1_2",
-    "label": "planeamento familiar (1) (2)",
+    "slug": "programa_de_reabilitacao_nutricional_e_prevencao_de_deficiencia_de_micronutrientes",
+    "label": "programa de reabilitação nutricional e prevenção de deficiência de micronutrientes",
     "count": 7,
     "codes": [
       "smi_50",
@@ -427,52 +403,44 @@ const GROUPS = [
       "smi_55",
       "smi_56"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/eWJZNx8Q?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dplaneamento_familiar_1_2%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "planeamento_familiar_1_3",
-    "label": "planeamento familiar (1) (3)",
-    "count": 1,
-    "codes": [
-      "smi_57"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/f0OIKbkf?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dplaneamento_familiar_1_3%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "nutricao_1",
-    "label": "nutrição (1)",
+    "slug": "prevencao_de_deficiencia_de_micronutrientes_e_pacote_de_intervencoes_de_nutricao_na_comunidade",
+    "label": "prevenção de deficiência de micronutrientes e pacote de intervenções de nutrição na comunidade",
     "count": 7,
     "codes": [
+      "smi_57",
       "smi_58",
       "smi_59",
       "smi_60",
       "smi_61",
       "smi_62",
-      "smi_63",
-      "smi_64"
+      "smi_63"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/LcWOjew7?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dnutricao_1%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "nutricao_2",
-    "label": "nutrição (2)",
+    "slug": "educacao_alimentar_e_promocao_e_proteccao_ao_aleitamento_materno",
+    "label": "educação alimentar e promocao e proteccao ao aleitamento materno",
     "count": 7,
     "codes": [
+      "smi_64",
       "smi_65",
       "smi_66",
       "smi_67",
       "smi_68",
       "smi_69",
-      "smi_70",
-      "smi_71"
+      "smi_70"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/755m5nhR?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dnutricao_2%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "nutricao_3",
-    "label": "nutrição (3)",
-    "count": 6,
+    "slug": "pav",
+    "label": "pav",
+    "count": 7,
     "codes": [
+      "smi_71",
       "smi_72",
       "smi_73",
       "smi_74",
@@ -480,34 +448,7 @@ const GROUPS = [
       "smi_76",
       "smi_77"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/F6fZvAFC?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dnutricao_3%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "pav_1",
-    "label": "pav (1)",
-    "count": 7,
-    "codes": [
-      "smi_78",
-      "smi_79",
-      "smi_80",
-      "smi_81",
-      "smi_82",
-      "smi_83",
-      "smi_84"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/9GpojTB5?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dpav_1%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
-  },
-  {
-    "slug": "pav_2",
-    "label": "pav (2)",
-    "count": 4,
-    "codes": [
-      "smi_85",
-      "smi_86",
-      "smi_87",
-      "smi_88"
-    ],
-    "url": "https://ee-eu.kobotoolbox.org/single/mLBz6JN0?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fsmi%2Frelay.html%3Fslug%3Dpav_2%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fsmi%252Fmaster.html"
+    "url": ""
   }
 ];
 const STORAGE_KEY = 'delphi_SMI_completed';
