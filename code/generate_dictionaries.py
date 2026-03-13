@@ -44,6 +44,7 @@ SMI    : Column structure identical to Malária except "Descrição" (with accen
 import sys
 import os
 import math
+import pathlib
 from datetime import datetime
 
 try:
@@ -54,12 +55,40 @@ except ImportError:
     sys.exit("Install openpyxl:  pip install openpyxl")
 
 # ─────────────────────────────────────────────────────────────────
+# CONFIG
+# ─────────────────────────────────────────────────────────────────
+
+def load_config(path="config.env"):
+    cfg = {}
+    cwd_path   = pathlib.Path.cwd() / path
+    script_dir = pathlib.Path(__file__).parent / path
+    config_path = cwd_path if cwd_path.exists() else (script_dir if script_dir.exists() else None)
+    if not config_path:
+        return cfg
+    with open(config_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            cfg[k.strip()] = v.strip()
+    return cfg
+
+_cfg = load_config()
+
+def _get(key, default=""):
+    return _cfg.get(key, default)
+
+EXPERT_CODE_SUFFIX = _get("EXPERT_CODE_SUFFIX", "PM")
+EXPERT_CODE_COUNT  = int(_get("EXPERT_CODE_COUNT", "25") or "25")
+ADMIN_CODE_SUFFIX  = _get("ADMIN_CODE_SUFFIX",  "XX")
+ADMIN_CODE_COUNT   = int(_get("ADMIN_CODE_COUNT",  "15") or "15")
+
+# ─────────────────────────────────────────────────────────────────
 # PROGRAM CONFIGURATIONS
 # ─────────────────────────────────────────────────────────────────
 
 GROUP_SIZE  = 7
-N_PM_CODES  = 25
-N_XX_CODES  = 15
 
 PROGRAMS = {
     "malaria": {
@@ -150,10 +179,16 @@ PROGRAMS = {
             "Programa":                      "programa",
             "Componente":                    "componente",
             "Actividade":                    "actividade",
+            "Actividade/ Descricao":         "actividade",  # variant in new file
             "Implementador":                 "implementador",
             "Nível":                         "nivel",
             "Descricao (o que inclui)":      "descricao",
             "Objectivo(s)":                  "objectivos",
+            "Alcance geográfico da intervenção":                "alcance",
+            "Recursos necessários para a implementação":        "recursos",
+            "Etapas chave para a implementação da intervenção": "etapas",
+            "Descrição dos riscos e limitações que compromentem a implementação da intervenção": "riscos",
+            "Possiveis factores associados aos riscos e limitações descritas": "factores",
             "Ano de início":                 "ano_inicio",
             "Total Gastos 2024":             "gastos_2024",   # use the total column
             "Pop elegivel":                  "pop_elegivel",
@@ -169,11 +204,16 @@ PROGRAMS = {
             "Código","URL da Ficha","Grupo",
             "Programa","Componente","Actividade","Implementador",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
-            "Ano de início","Total Gastos 2024","Pop. elegível",
+            "Alcance geográfico da intervenção",
+            "Recursos necessários para a implementação",
+            "Etapas chave para a implementação da intervenção",
+            "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
+            "Possiveis factores associados aos riscos e limitações descritas",
+            "Ano de início","Gastos em 2024 (USD)","Pop. elegível",
             "Fonte de elegibilidade","Número alcançado (Dez 2024)","Cobertura",
             "Custo por unidade","Nº US com implementação","Notas",
         ],
-        "col_widths": [10,45,22,18,25,55,25,14,45,45,14,18,16,22,18,12,25,18,40],
+        "col_widths": [10,45,22,18,25,55,25,14,45,45,30,35,35,40,40,14,18,16,22,18,12,25,18,40],
         "skip_row_if": lambda row: not row.get("actividade"),
         "row_builder": "hiv",
     },
@@ -224,15 +264,24 @@ PROGRAMS = {
 def load_catalog(path, cfg):
     wb = openpyxl.load_workbook(path, data_only=True)
     sheet_name = cfg["catalog_sheet"]
-    ws = (wb[sheet_name] if sheet_name in wb.sheetnames
-          else next((wb[s] for s in wb.sheetnames
-                     if "revis" not in s.lower()), wb.worksheets[0]))
+    ws = None
+    if sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+    else:
+        # Try case-insensitive / prefix match (e.g. "SMI" matches "SMI (2)" and vice versa)
+        sheet_name_lower = sheet_name.lower().split("(")[0].strip()
+        for s in wb.sheetnames:
+            if s.lower().split("(")[0].strip() == sheet_name_lower and "revis" not in s.lower():
+                ws = wb[s]
+                break
+    if ws is None:
+        ws = next((wb[s] for s in wb.sheetnames if "revis" not in s.lower()), wb.worksheets[0])
 
     col_map   = cfg["col_map"]
     key_field = cfg["key_field"]
 
     # Locate header row: contains the key field label
-    key_labels = {"Intervenção", "Actividade"}
+    key_labels = {"Intervenção", "Actividade", "Actividade/ Descricao"}
     header_row_idx, headers = None, []
     for i, row in enumerate(ws.iter_rows(values_only=True), 1):
         if any(str(c).strip() in key_labels for c in row if c):
@@ -370,6 +419,9 @@ def _row_hiv(idx, rec, cfg, interventions):
         rec.get("actividade"), rec.get("implementador"),
         rec.get("nivel"),
         rec.get("descricao"), rec.get("objectivos"),
+        rec.get("alcance"), rec.get("recursos"),
+        rec.get("etapas"),
+        rec.get("riscos"), rec.get("factores"),
         sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
         sv(rec.get("pop_elegivel")), rec.get("fonte_eligibilidade"),
         sv(rec.get("num_alcancado")), fmt_coverage(rec.get("cobertura")),
@@ -389,7 +441,7 @@ ROW_BUILDERS = {
 SECTION_SPANS = {
     "standard": [("A1","C1"),("D1","G1"),("H1","J1"),("K1","M1"),("N1","R1")],
     "tb":       [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","R1")],
-    "hiv":      [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","S1")],
+    "hiv":      [("A1","C1"),("D1","G1"),("H1","O1"),("P1","R1"),("S1","X1")],
 }
 SECTION_LABELS = {
     "standard": ["Gerado pelo Script",None,None,
@@ -404,9 +456,9 @@ SECTION_LABELS = {
                  "Cobertura e Custos",None,None,None,None],
     "hiv":      ["Gerado pelo Script",None,None,
                  "Identificação",None,None,None,
-                 "Descrição",None,None,
-                 "Financiamento",None,
-                 "Cobertura, Implementação e Custos",None,None,None,None,None,None],
+                 "Descrição e Implementação",None,None,None,None,None,None,None,
+                 "Financiamento",None,None,
+                 "Cobertura, Implementação e Custos",None,None,None,None,None],
 }
 
 def build_catalogo(wb, interventions, cfg):
@@ -464,9 +516,9 @@ def _questions(topic_label):
          "Mostrado uma vez no início","Não repetido por intervenção"],
         ["Q01","Identificação","select_one codes","expert_code",
          "Código do Especialista",
-         "Utilize o código atribuído (ex: 035PM). Use o mesmo em todas as oficinas.",
-         "yes",None,"regex(., '^[0-9]{3}(PM|XX)$')",
-         "Código deve ter 3 números seguidos por PM ou XX.","codes","minimal",
+         f"Utilize o código atribuído (ex: {EXPERT_CODE_COUNT:03d}{EXPERT_CODE_SUFFIX}). Use o mesmo em todas as oficinas.",
+         "yes",None,f"regex(., '^[0-9]{{3}}({EXPERT_CODE_SUFFIX}|{ADMIN_CODE_SUFFIX})$')",
+         f"Código deve ter 3 números seguidos por {EXPERT_CODE_SUFFIX} ou {ADMIN_CODE_SUFFIX}.","codes","minimal",
          "Perguntado uma vez","Chave de ligação entre W1, W2, W3"],
         ["S01","Estrutura","begin_group","grp_{CODE}",
          "Intervenção {N}/{TOTAL}: {LABEL}",
@@ -599,10 +651,10 @@ def build_listas(wb, interventions, cfg):
         ["intervention_list","— gerado automaticamente pelo script —",
          "Uma entrada por intervenção + 'other' no final","Não editar manualmente"],
     ]
-    for n in range(1, N_PM_CODES + 1):
-        c = f"{n:03d}PM"; rows.append(["codes", c, c, None])
-    for n in range(1, N_XX_CODES + 1):
-        c = f"{n:03d}XX"; rows.append(["codes", c, c, None])
+    for n in range(1, EXPERT_CODE_COUNT + 1):
+        c = f"{n:03d}{EXPERT_CODE_SUFFIX}"; rows.append(["codes", c, c, None])
+    for n in range(1, ADMIN_CODE_COUNT + 1):
+        c = f"{n:03d}{ADMIN_CODE_SUFFIX}"; rows.append(["codes", c, c, None])
     for idx, rec in enumerate(interventions):
         code  = f"{pfx}_{idx+1:02d}"
         label = str(rec.get(kf, code)).strip()
@@ -707,7 +759,7 @@ def build_dictionary(program_key, catalog_path, output_dir):
 DEFAULT_CATALOGS = {
     "malaria": "Cata_logo_de_intervenc_o_es___Mala_ria__EG.xlsx",
     "tb":      "Catalogo_de_intervencoes_TB_rev1_revPN21012026.xlsx",
-    "hiv":     "Catalogo_de_intervencoes_HIVv_30122025_rev1_04022026.xlsx",
+    "hiv":     "Catalogo_de_intervencoes_HIVv_30122025_rev1_11032026_1_.xlsx",
     "smi":     "Cata_logo_de_Intervenc_o_es_SMI-06_02_2026_UV_16h.xlsx",
 }
 
@@ -718,7 +770,10 @@ DEFAULT_CATALOGS = {
 def main():
     program    = None
     catalog    = None
-    output_dir = "."
+    # Default output dir: directory of INPUT_FILE from config.env (e.g. "dict/"),
+    # falling back to current directory if not set.
+    _input_file = _get("INPUT_FILE", "")
+    output_dir  = str(pathlib.Path(_input_file).parent) if _input_file else "."
     run_all    = False
 
     i = 1

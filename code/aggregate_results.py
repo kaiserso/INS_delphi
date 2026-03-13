@@ -77,9 +77,11 @@ def load_config(path="config.env"):
             cfg[k.strip()] = v.strip()
     return cfg
 
-cfg       = load_config()
-TOPIC     = cfg.get("TOPIC_CODE", "malaria")
-OUT_FILE  = cfg.get("RESULTS_FILE", f"delphi_w1_{TOPIC}_results.xlsx")
+cfg         = load_config()
+deployed_cfg = load_config("deployed_forms.env")
+TOPIC       = cfg.get("TOPIC_CODE", "malaria")
+TOPIC_LABEL = cfg.get("TOPIC_LABEL", "")   # human-readable label used in asset names
+OUT_FILE    = cfg.get("RESULTS_FILE", f"delphi_w1_{TOPIC}_results.xlsx")
 DICT_FILE = cfg.get("INPUT_FILE", "")  # Dictionary file path from config
 KOBO_SERVER  = cfg.get("KOBO_SERVER", "https://eu.kobotoolbox.org")
 KOBO_TOKEN   = cfg.get("KOBO_TOKEN",  "")
@@ -189,20 +191,30 @@ def list_assets():
 
 def get_configured_assets():
     """
-    Read SUBFORM_ASSET_<slug> = <uid> entries from config.env.
+    Read SUBFORM_ASSET_<slug> = <uid> entries from env files.
+    Priority: deployed_forms.env first, then config.env fallback.
     Returns list of dicts with keys: uid, slug.
     """
     assets = []
-    for k, v in cfg.items():
-        if k.upper().startswith("SUBFORM_ASSET_") and v.strip():
-            slug = k[len("SUBFORM_ASSET_"):].strip()
-            assets.append({"uid": v.strip(), "slug": slug})
+    seen = set()
+    sources = [
+        ("deployed_forms.env", deployed_cfg),
+        ("config.env", cfg),
+    ]
+    for source_name, source_cfg in sources:
+        for k, v in source_cfg.items():
+            if k.upper().startswith("SUBFORM_ASSET_") and v.strip():
+                slug = k[len("SUBFORM_ASSET_"):].strip()
+                if slug in seen:
+                    continue
+                seen.add(slug)
+                assets.append({"uid": v.strip(), "slug": slug, "source": source_name})
     return assets
 
 def find_delphi_assets():
     """
     Return assets to fetch, in priority order:
-    1. SUBFORM_ASSET_* UIDs from config.env  (set by deploy_kobo_forms.py)
+    1. SUBFORM_ASSET_* UIDs from deployed_forms.env (or config.env fallback)
     2. Fallback: search account assets by name pattern (requires list_assets())
     Each returned dict has at minimum: uid, name, deployment__active, has_deployment.
     """
@@ -210,7 +222,8 @@ def find_delphi_assets():
 
     configured = get_configured_assets()
     if configured:
-        print(f"  Using {len(configured)} asset UID(s) from config.env")
+        sources_used = sorted({entry.get("source", "config.env") for entry in configured})
+        print(f"  Using {len(configured)} asset UID(s) from {', '.join(sources_used)}")
         assets = []
         for entry in configured:
             r = requests.get(
@@ -228,27 +241,29 @@ def find_delphi_assets():
         return assets
 
     # Fallback: search by name pattern
-    print(f"  No SUBFORM_ASSET_* entries in config.env — searching account assets by name…")
+    print(f"  No SUBFORM_ASSET_* entries in deployed_forms.env/config.env — searching account assets by name…")
     all_assets = list_assets()
     print(f"  Found {len(all_assets)} total asset(s) on account. Filtering…")
 
     # Try progressively looser matches
-    topic_word = TOPIC.lower()   # e.g. "malaria"
+    topic_word  = TOPIC.lower()        # e.g. "smi"
+    label_words = TOPIC_LABEL.lower()  # e.g. "saúde materna e infantil"
     matched = []
     for a in all_assets:
         name = a.get("name", "").lower()
         id_str = ((a.get("settings") or {}).get("id_string") or "").lower()
         if (topic_word in name or
                 topic_word in id_str or
+                (label_words and label_words in name) or
                 re.search(r"delphi", name)):
             matched.append(a)
 
     if not matched:
-        print(f"\n  ⚠️  No assets matched topic='{TOPIC}' or keyword 'delphi'.")
+        print(f"\n  ⚠️  No assets matched topic='{TOPIC}' / label='{TOPIC_LABEL}' or keyword 'delphi'.")
         print(f"  All assets on this account:")
         for a in all_assets:
             print(f"    uid={a['uid']}  name={a.get('name','(unnamed)')}")
-        print(f"\n  To fix: add SUBFORM_ASSET_<slug> = <uid> lines to config.env")
+        print(f"\n  To fix: add SUBFORM_ASSET_<slug> = <uid> lines to deployed_forms.env")
         print(f"  using the UIDs printed above, then re-run.")
 
     return matched
@@ -270,7 +285,7 @@ def list_all_assets_diagnostic():
         print(f"  uid={a['uid']}  [{status:8}]  subs={n_subs:>4}  {a.get('name','')}")
     print(f"{'─'*80}")
     print(f"  Total: {len(assets)} asset(s)")
-    print(f"\n  To use specific assets, add to config.env:")
+    print(f"\n  To use specific assets, add to deployed_forms.env (or config.env):")
     print(f"    SUBFORM_ASSET_<slug> = <uid>")
     print()
 
@@ -330,7 +345,7 @@ def fetch_all(asset_filter=None):
     assets = find_delphi_assets()
     if not assets:
         print(f"❌  No assets found.")
-        print(f"    Either add SUBFORM_ASSET_<slug> = <uid> entries to config.env")
+        print(f"    Either add SUBFORM_ASSET_<slug> = <uid> entries to deployed_forms.env")
         print(f"    (run deploy_kobo_forms.py first), or check KOBO_TOKEN is valid.")
         sys.exit(1)
 
@@ -1028,7 +1043,7 @@ def main():
                         help="Output xlsx path (default: results/delphi_w1_<topic>_results_<timestamp>.xlsx)")
     parser.add_argument("--list-assets", action="store_true",
                         help="List all assets on the KoboToolbox account and exit "
-                             "(useful for finding UIDs to add to config.env)")
+                            "(useful for finding UIDs to add to deployed_forms.env)")
     parser.add_argument("--assets",   nargs="*", metavar="UID",
                         help="Restrict fetch to specific asset UIDs (only with API fetch)")
     parser.add_argument("--qc-only",  action="store_true",

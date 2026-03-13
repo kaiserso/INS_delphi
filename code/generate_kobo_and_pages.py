@@ -249,11 +249,37 @@ for row in cat_ws.iter_rows(min_row=3, values_only=True):
     intv["URL da Ficha"] = f"{BASE_URL}/{intv['Código']}.html"
     interventions.append(intv)
 
+
+def _pick(intv, *keys):
+    """Return first non-empty value for the provided keys."""
+    for k in keys:
+        v = intv.get(k, "")
+        if v not in (None, "", "None", "nan"):
+            return str(v)
+    return ""
+
+
+def _normalise_intervention_record(intv):
+    """Normalise schema differences across program dictionaries."""
+    label = _pick(intv, "Intervenção", "Actividade")
+    if label:
+        intv["Intervenção"] = label
+        intv.setdefault("Actividade", label)
+
+    objective = _pick(intv, "Objectivo(s)", "Objetivo(s)")
+    if objective:
+        intv["Objectivo(s)"] = objective
+
+    return intv
+
+
+interventions = [_normalise_intervention_record(intv) for intv in interventions]
+
 # ── Normalise numeric columns ─────────────────────────────────
 # Columns that should be formatted as integers (thousands sep = ".")
-INT_COLS   = ["Pop. elegível", "Número alcançado"]
-# Columns that may have decimal places (thousands sep = ".", decimal = ",")
-FLOAT_COLS = ["Gastos em 2024 (MZN)"]
+INT_COLS   = ["Pop. elegível", "Número alcançado", "Número alcançado (Dez 2024)",
+              "Gastos em 2024 (USD)", "Gastos em 2024 (MZN)"]
+FLOAT_COLS = []
 
 def _try_parse_number(raw):
     """
@@ -375,7 +401,7 @@ for intv in interventions:
     intv_choices.append({
         "list_name": "intervention_list",
         "name":      intv["Código"],
-        "label":     intv["Intervenção"],
+    "label":     _pick(intv, "Intervenção", "Actividade", "Código"),
     })
 # Add 'other' at end
 intv_choices.append({
@@ -457,8 +483,8 @@ def substitute(text, intv, n, total, group_label=""):
     text = text.replace("{GROUP_LABEL}", group_label)
     if intv:
         text = text.replace("{CODE}",      intv["Código"])
-        text = text.replace("{LABEL}",     intv["Intervenção"])
-        text = text.replace("{OBJECTIVE}", intv["Objectivo(s)"])
+        text = text.replace("{LABEL}",     _pick(intv, "Intervenção", "Actividade", "Código"))
+        text = text.replace("{OBJECTIVE}", _pick(intv, "Objectivo(s)", "Objetivo(s)"))
         text = text.replace("{URL}",       intv["URL da Ficha"])
         text = text.replace("{N}",         str(n))
         text = text.replace("{TOTAL}",     str(total))
@@ -586,7 +612,7 @@ def generate_xlsform(group_interventions, group_label, group_slug):
     # not just the interventions in this sub-form.
     group_intv_choices = [
         {"list_name": "intervention_list",
-         "name": intv["Código"], "label": intv["Intervenção"]}
+       "name": intv["Código"], "label": _pick(intv, "Intervenção", "Actividade", "Código")}
         for intv in interventions
     ]
     group_intv_choices.append(
@@ -848,23 +874,30 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     area   = intv.get("Área", "")
     prog   = intv.get("Programa", "")
     comp   = intv.get("Componente", "")
-    label  = intv["Intervenção"]
+    label  = _pick(intv, "Intervenção", "Actividade", "Código")
     level  = intv.get("Nível", "")
     desc   = intv.get("Descrição (o que inclui)", "")
     obj    = intv.get("Objectivo(s)", "")
+    # Exact column names from generated HIV dictionary
     geo    = intv.get("Alcance geográfico da intervenção", "")
     res    = intv.get("Recursos necessários para a implementação", "")
-    steps  = intv.get("Etapas chave para a implementação", "")
-    risks  = intv.get("Riscos e limitações", "")
-    causes = intv.get("Possíveis factores associados aos riscos", "")
+    steps  = intv.get("Etapas chave para a implementação da intervenção", "")
+    risks  = intv.get("Descrição dos riscos e limitações que comprometem a implementação da intervenção", "")
+    causes = intv.get("Possiveis factores associados aos riscos e limitações descritas", "")
     year   = intv.get("Ano de início", "")
-    spend  = intv.get("Gastos em 2024 (MZN)", "")
+    spend  = intv.get("Gastos em 2024 (USD)", "")
     funder = intv.get("Fonte(s) de financiamento", "")
     pop    = intv.get("Pop. elegível", "")
     reached= intv.get("Número alcançado", "")
     cover  = intv.get("Cobertura", "")
     cost   = intv.get("Custo por unidade", "")
     notes  = intv.get("Notas", "")
+    # HIV-specific fields (empty for other programs)
+    implementador = intv.get("Implementador", "")
+    fonte_elegibilidade = intv.get("Fonte de elegibilidade", "")
+    # Handle typo in HIV column: "Num de US com implementatcao"
+    num_us = _pick(intv, "Nº US com implementação", "Num de US com implementação", "Num de US com implementatcao (Dez 2024)")
+    reached_specific = intv.get("Número alcançado (Dez 2024)", "") or reached  # HIV sometimes has date suffix
 
     nav_prev = (f'<a href="{e(prev_url)}">← Anterior</a>'
                 if prev_url else '<span style="color:#aaa">← Anterior</span>')
@@ -887,6 +920,16 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
             f'<div class="stub-notice">&#9888; Página de demonstração — '
             f'URL provisório: <code>{e(url)}</code>. '
             f'Actualize BASE_URL no script quando as páginas forem publicadas.</div>')
+
+    # HIV-specific section (only shown if implementador is present)
+    hiv_section = ""
+    if implementador or fonte_elegibilidade or num_us:
+        hiv_fields = ""
+        hiv_fields += field_row("Implementador", implementador) if implementador and implementador not in ("None", "nan", "") else ""
+        hiv_fields += field_row("Fonte de Elegibilidade", fonte_elegibilidade) if fonte_elegibilidade and fonte_elegibilidade not in ("None", "nan", "") else ""
+        hiv_fields += field_row("Nº US com Implementação", num_us) if num_us and num_us not in ("None", "nan", "") else ""
+        if hiv_fields:
+            hiv_section = f"<div class='section-title'>Implementação (HIV)</div><div class='field-grid'>{hiv_fields}</div>"
 
     notes_block = (f"<div class='section-title'>Notas</div>"
                    f"<div class='field-grid'>{field_row('Notas', notes)}</div>"
@@ -952,13 +995,15 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     <div class="section-title">Financiamento e Cobertura</div>
     <div class="field-grid">
       {field_row("Ano de Início", year)}
-      {field_row("Gastos em 2024 (MZN)", spend)}
+      {field_row("Gastos em 2024 (USD)", spend)}
       {field_row("Fonte(s) de Financiamento", funder)}
       {field_row("Pop. Elegível", pop)}
-      {field_row("Número Alcançado", reached)}
+      {field_row("Número Alcançado", reached_specific)}
       {field_row("Cobertura", cover)}
       {field_row("Custo por Unidade", cost)}
     </div>
+
+    {hiv_section}
 
     {notes_block}
 
@@ -985,7 +1030,7 @@ def build_index_page(interventions):
     rows = ""
     for i, intv in enumerate(interventions, 1):
         code  = intv["Código"]
-        label = intv["Intervenção"]
+        label = _pick(intv, "Intervenção", "Actividade", "Código")
         obj   = intv.get("Objectivo(s)", "")
         prog  = intv.get("Programa", "")
         comp  = intv.get("Componente", "")
@@ -1086,7 +1131,7 @@ EXPORT_COLS = [
     "Recursos necessários para a implementação",
     "Etapas chave para a implementação",
     "Riscos e limitações", "Possíveis factores associados aos riscos",
-    "Ano de início", "Gastos em 2024 (MZN)", "Fonte(s) de financiamento",
+    "Ano de início", "Gastos em 2024 (USD)", "Fonte(s) de financiamento",
     "Pop. elegível", "Número alcançado", "Cobertura", "Custo por unidade",
     "Notas", "URL da Ficha",
 ]
@@ -1129,7 +1174,7 @@ def generate_catalogue_xlsx(interventions, out_path):
         "Etapas chave para a implementação": 40,
         "Riscos e limitações": 35,
         "Possíveis factores associados aos riscos": 35,
-        "Ano de início": 12, "Gastos em 2024 (MZN)": 20,
+        "Ano de início": 12, "Gastos em 2024 (USD)": 20,
         "Fonte(s) de financiamento": 25,
         "Pop. elegível": 16, "Número alcançado": 16,
         "Cobertura": 12, "Custo por unidade": 22, "Notas": 35,
