@@ -44,6 +44,7 @@ SMI    : Column structure identical to Malária except "Descrição" (with accen
 import sys
 import os
 import math
+import pathlib
 from datetime import datetime
 
 try:
@@ -54,12 +55,40 @@ except ImportError:
     sys.exit("Install openpyxl:  pip install openpyxl")
 
 # ─────────────────────────────────────────────────────────────────
+# CONFIG
+# ─────────────────────────────────────────────────────────────────
+
+def load_config(path="config.env"):
+    cfg = {}
+    cwd_path   = pathlib.Path.cwd() / path
+    script_dir = pathlib.Path(__file__).parent / path
+    config_path = cwd_path if cwd_path.exists() else (script_dir if script_dir.exists() else None)
+    if not config_path:
+        return cfg
+    with open(config_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            cfg[k.strip()] = v.strip()
+    return cfg
+
+_cfg = load_config()
+
+def _get(key, default=""):
+    return _cfg.get(key, default)
+
+EXPERT_CODE_SUFFIX = _get("EXPERT_CODE_SUFFIX", "PM")
+EXPERT_CODE_COUNT  = int(_get("EXPERT_CODE_COUNT", "25") or "25")
+ADMIN_CODE_SUFFIX  = _get("ADMIN_CODE_SUFFIX",  "XX")
+ADMIN_CODE_COUNT   = int(_get("ADMIN_CODE_COUNT",  "15") or "15")
+
+# ─────────────────────────────────────────────────────────────────
 # PROGRAM CONFIGURATIONS
 # ─────────────────────────────────────────────────────────────────
 
 GROUP_SIZE  = 7
-N_PM_CODES  = 25
-N_XX_CODES  = 15
 
 PROGRAMS = {
     "malaria": {
@@ -180,7 +209,7 @@ PROGRAMS = {
             "Etapas chave para a implementação da intervenção",
             "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
             "Possiveis factores associados aos riscos e limitações descritas",
-            "Ano de início","Total Gastos 2024","Pop. elegível",
+            "Ano de início","Gastos em 2024 (USD)","Pop. elegível",
             "Fonte de elegibilidade","Número alcançado (Dez 2024)","Cobertura",
             "Custo por unidade","Nº US com implementação","Notas",
         ],
@@ -487,9 +516,9 @@ def _questions(topic_label):
          "Mostrado uma vez no início","Não repetido por intervenção"],
         ["Q01","Identificação","select_one codes","expert_code",
          "Código do Especialista",
-         "Utilize o código atribuído (ex: 035PM). Use o mesmo em todas as oficinas.",
-         "yes",None,"regex(., '^[0-9]{3}(PM|XX)$')",
-         "Código deve ter 3 números seguidos por PM ou XX.","codes","minimal",
+         f"Utilize o código atribuído (ex: {EXPERT_CODE_COUNT:03d}{EXPERT_CODE_SUFFIX}). Use o mesmo em todas as oficinas.",
+         "yes",None,f"regex(., '^[0-9]{{3}}({EXPERT_CODE_SUFFIX}|{ADMIN_CODE_SUFFIX})$')",
+         f"Código deve ter 3 números seguidos por {EXPERT_CODE_SUFFIX} ou {ADMIN_CODE_SUFFIX}.","codes","minimal",
          "Perguntado uma vez","Chave de ligação entre W1, W2, W3"],
         ["S01","Estrutura","begin_group","grp_{CODE}",
          "Intervenção {N}/{TOTAL}: {LABEL}",
@@ -622,10 +651,10 @@ def build_listas(wb, interventions, cfg):
         ["intervention_list","— gerado automaticamente pelo script —",
          "Uma entrada por intervenção + 'other' no final","Não editar manualmente"],
     ]
-    for n in range(1, N_PM_CODES + 1):
-        c = f"{n:03d}PM"; rows.append(["codes", c, c, None])
-    for n in range(1, N_XX_CODES + 1):
-        c = f"{n:03d}XX"; rows.append(["codes", c, c, None])
+    for n in range(1, EXPERT_CODE_COUNT + 1):
+        c = f"{n:03d}{EXPERT_CODE_SUFFIX}"; rows.append(["codes", c, c, None])
+    for n in range(1, ADMIN_CODE_COUNT + 1):
+        c = f"{n:03d}{ADMIN_CODE_SUFFIX}"; rows.append(["codes", c, c, None])
     for idx, rec in enumerate(interventions):
         code  = f"{pfx}_{idx+1:02d}"
         label = str(rec.get(kf, code)).strip()
@@ -741,7 +770,10 @@ DEFAULT_CATALOGS = {
 def main():
     program    = None
     catalog    = None
-    output_dir = "."
+    # Default output dir: directory of INPUT_FILE from config.env (e.g. "dict/"),
+    # falling back to current directory if not set.
+    _input_file = _get("INPUT_FILE", "")
+    output_dir  = str(pathlib.Path(_input_file).parent) if _input_file else "."
     run_all    = False
 
     i = 1

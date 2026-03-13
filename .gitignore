@@ -1,6 +1,6 @@
 __pycache__
 /debug*py
-/gateway*png
+/*png
 /check_metadata.py
 .DS_Store
 old
@@ -17,3 +17,4 @@ kobo
 /results/*
 kobo_gen/*
 /docs
+secrets.toml

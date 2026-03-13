@@ -277,9 +277,9 @@ interventions = [_normalise_intervention_record(intv) for intv in interventions]
 
 # ── Normalise numeric columns ─────────────────────────────────
 # Columns that should be formatted as integers (thousands sep = ".")
-INT_COLS   = ["Pop. elegível", "Número alcançado"]
-# Columns that may have decimal places (thousands sep = ".", decimal = ",")
-FLOAT_COLS = ["Gastos em 2024 (MZN)"]
+INT_COLS   = ["Pop. elegível", "Número alcançado", "Número alcançado (Dez 2024)",
+              "Gastos em 2024 (USD)", "Gastos em 2024 (MZN)"]
+FLOAT_COLS = []
 
 def _try_parse_number(raw):
     """
@@ -885,7 +885,7 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     risks  = intv.get("Descrição dos riscos e limitações que comprometem a implementação da intervenção", "")
     causes = intv.get("Possiveis factores associados aos riscos e limitações descritas", "")
     year   = intv.get("Ano de início", "")
-    spend  = intv.get("Gastos em 2024 (MZN)", "")
+    spend  = intv.get("Gastos em 2024 (USD)", "")
     funder = intv.get("Fonte(s) de financiamento", "")
     pop    = intv.get("Pop. elegível", "")
     reached= intv.get("Número alcançado", "")
@@ -995,7 +995,7 @@ def build_html_page(intv, idx, total, prev_url, next_url, index_url):
     <div class="section-title">Financiamento e Cobertura</div>
     <div class="field-grid">
       {field_row("Ano de Início", year)}
-      {field_row("Gastos em 2024 (MZN)", spend)}
+      {field_row("Gastos em 2024 (USD)", spend)}
       {field_row("Fonte(s) de Financiamento", funder)}
       {field_row("Pop. Elegível", pop)}
       {field_row("Número Alcançado", reached_specific)}
@@ -1131,7 +1131,7 @@ EXPORT_COLS = [
     "Recursos necessários para a implementação",
     "Etapas chave para a implementação",
     "Riscos e limitações", "Possíveis factores associados aos riscos",
-    "Ano de início", "Gastos em 2024 (MZN)", "Fonte(s) de financiamento",
+    "Ano de início", "Gastos em 2024 (USD)", "Fonte(s) de financiamento",
     "Pop. elegível", "Número alcançado", "Cobertura", "Custo por unidade",
     "Notas", "URL da Ficha",
 ]
@@ -1174,7 +1174,7 @@ def generate_catalogue_xlsx(interventions, out_path):
         "Etapas chave para a implementação": 40,
         "Riscos e limitações": 35,
         "Possíveis factores associados aos riscos": 35,
-        "Ano de início": 12, "Gastos em 2024 (MZN)": 20,
+        "Ano de início": 12, "Gastos em 2024 (USD)": 20,
         "Fonte(s) de financiamento": 25,
         "Pop. elegível": 16, "Número alcançado": 16,
         "Cobertura": 12, "Custo por unidade": 22, "Notas": 35,
