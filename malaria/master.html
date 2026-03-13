@@ -3,38 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex, nofollow">
 <title>Painel de Avaliação — Malária</title>
 
   <!-- Auth guard — Magic.link -->
   <script src="https://cdn.jsdelivr.net/npm/magic-sdk/dist/magic.js"></script>
   <script>
     (async function() {
+      // Hide body until auth check completes to avoid flash of content
       document.documentElement.style.visibility = 'hidden';
-      let redirecting = false;
       try {
-        const magic = new Magic('pk_live_04B22CA3D72C880F');
+        const magic = new Magic('pk_live_YOUR_KEY_HERE');
         const loggedIn = await magic.user.isLoggedIn();
         if (!loggedIn) {
-          redirecting = true;
           window.location.replace(
-            'https://kaiserso.github.io/INS_delphi/malaria/gateway.html?return=' + encodeURIComponent(window.location.href)
+            'https://your-site.github.io/gateway.html?return=' + encodeURIComponent(window.location.href)
           );
           return;
         }
+        // Expose logout helper for the sign-out link
         window._magicLogout = async function() {
           await magic.user.logout();
-          window.location.replace('https://kaiserso.github.io/INS_delphi/malaria/gateway.html');
+          window.location.replace('https://your-site.github.io/gateway.html');
         };
       } catch(e) {
+        // On SDK error fall through and show the page rather than hard-block
         console.warn('Auth check failed:', e);
-      } finally {
-        // Only restore visibility if we are NOT redirecting to the gateway.
-        // If redirecting, keep hidden to avoid a flash of protected content.
-        if (!redirecting) {
-          document.documentElement.style.visibility = '';
-        }
       }
+      document.documentElement.style.visibility = '';
     })();
   </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -234,7 +229,7 @@ body::before {
   <div class="page-header">
     <div class="topic-pill">Malária</div>
     <div class="page-title">Painel de Avaliação</div>
-    <div class="page-subtitle">Malária &nbsp;·&nbsp; 4 formulários &nbsp;·&nbsp; 19 intervenções</div>
+    <div class="page-subtitle">Malária &nbsp;·&nbsp; 7 formulários &nbsp;·&nbsp; 19 intervenções</div>
   </div>
 
   
@@ -242,7 +237,7 @@ body::before {
   <div class="progress-wrap">
     <div class="progress-label">
       <span>Progresso</span>
-      <span id="progressText">0 de 4 formulários submetidos</span>
+      <span id="progressText">0 de 7 formulários submetidos</span>
     </div>
     <div class="progress-bar-bg">
       <div class="progress-bar-fill" id="progressFill"></div>
@@ -257,37 +252,16 @@ body::before {
 
   <div class="page-footer">
     Delphi de Optimização &nbsp;·&nbsp; Malária
-    &nbsp;·&nbsp; Gerado em 10/03/2026
-    &nbsp;&nbsp;|&nbsp;&nbsp;
-    <button onclick="resetProgress()"
-      style="background:none;border:1px solid #B0BEC5;border-radius:4px;
-             padding:2px 10px;font-size:11px;color:#78909C;cursor:pointer;
-             font-family:inherit"
-      title="Apagar progresso guardado localmente e recomeçar">
-      ↺ Reiniciar progresso
-    </button>
-    &nbsp;
-    <button onclick="showDebug()"
-      style="background:none;border:1px solid #B0BEC5;border-radius:4px;
-             padding:2px 10px;font-size:11px;color:#78909C;cursor:pointer;
-             font-family:inherit"
-      title="Mostrar estado de progresso guardado neste dispositivo">
-      🔍 Debug
-    </button>
+    &nbsp;·&nbsp; Gerado em 06/03/2026
   </div>
-
-  <div id="debugPanel" style="display:none;margin:12px auto;max-width:680px;
-       background:#263238;color:#80CBC4;border-radius:6px;
-       padding:14px 18px;font-size:11px;font-family:monospace;
-       white-space:pre-wrap;text-align:left;"></div>
 
 </div>
 
 <script>
 const GROUPS = [
   {
-    "slug": "manejo_de_casos",
-    "label": "manejo de casos",
+    "slug": "manejo_de_casos_1",
+    "label": "Manejo de casos (1)",
     "count": 5,
     "codes": [
       "mal_01",
@@ -296,45 +270,69 @@ const GROUPS = [
       "mal_04",
       "mal_05"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/pkIHAQ5v?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dmanejo_de_casos%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "manejo_de_casos_e_prevencao",
-    "label": "manejo de casos e prevenção",
-    "count": 5,
+    "slug": "manejo_de_casos_2",
+    "label": "Manejo de casos (2)",
+    "count": 2,
     "codes": [
       "mal_06",
-      "mal_07",
-      "mal_08",
-      "mal_09",
-      "mal_10"
+      "mal_07"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/SAdWP9WK?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dmanejo_de_casos_e_prevencao%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "prevencao",
-    "label": "prevenção",
-    "count": 6,
+    "slug": "prevencao_1",
+    "label": "Prevenção (1)",
+    "count": 5,
     "codes": [
+      "mal_08",
+      "mal_09",
+      "mal_10",
       "mal_11",
-      "mal_12",
+      "mal_12"
+    ],
+    "url": ""
+  },
+  {
+    "slug": "prevencao_2",
+    "label": "Prevenção (2)",
+    "count": 4,
+    "codes": [
       "mal_13",
       "mal_14",
       "mal_15",
       "mal_16"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/roOJYV0F?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dprevencao%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+    "url": ""
   },
   {
-    "slug": "prevencao_e_outros",
-    "label": "prevenção e outros",
-    "count": 3,
+    "slug": "mudanca_social_e_de_comportamento",
+    "label": "Mudança Social e de Comportamento",
+    "count": 1,
     "codes": [
-      "mal_17",
-      "mal_18",
+      "mal_17"
+    ],
+    "url": ""
+  },
+  {
+    "slug": "vigilancia_monitoria_e_avaliacao",
+    "label": "Vigilância, Monitoria e Avaliação",
+    "count": 1,
+    "codes": [
+      "mal_18"
+    ],
+    "url": ""
+  },
+  {
+    "slug": "gestao_programatica",
+    "label": "Gestão programática",
+    "count": 1,
+    "codes": [
       "mal_19"
     ],
-    "url": "https://ee-eu.kobotoolbox.org/single/Mf3wKn68?return_url=https%3A%2F%2Fkaiserso.github.io%2FINS_delphi%2Fmalaria%2Frelay.html%3Fslug%3Dprevencao_e_outros%26dest%3Dhttps%253A%252F%252Fkaiserso.github.io%252FINS_delphi%252Fmalaria%252Fmaster.html"
+    "url": ""
   }
 ];
 const STORAGE_KEY = 'delphi_malaria_completed';
@@ -350,65 +348,20 @@ function markCompleted(slug) {
   if (!done.includes(slug)) { done.push(slug); }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
 }
-function resetProgress() {
-  if (confirm('Apagar todo o progresso guardado neste dispositivo e recomeçar?')) {
-    localStorage.removeItem(STORAGE_KEY);
-    renderCards();
-    const panel = document.getElementById('debugPanel');
-    if (panel && panel.style.display !== 'none') showDebug();
-  }
-}
 
-function showDebug() {
-  const panel = document.getElementById('debugPanel');
-  if (!panel) return;
-  if (panel.style.display !== 'none') {
-    panel.style.display = 'none';
-    return;
-  }
-  const completed = getCompleted();
-  const allSlugs = GROUPS.map(g => g.slug);
-  const pending = allSlugs.filter(s => !completed.includes(s));
-  const lines = [
-    '── localStorage key: ' + STORAGE_KEY,
-    '── completed (' + completed.length + '/' + allSlugs.length + '): ' +
-      (completed.length ? completed.join(', ') : '(none)'),
-    '── pending (' + pending.length + '): ' +
-      (pending.length ? pending.join(', ') : '(none)'),
-    '',
-    '── raw value:',
-    localStorage.getItem(STORAGE_KEY) || '(not set)',
-  ];
-  panel.textContent = lines.join('\n');
-  panel.style.display = 'block';
-}
-
-// ── Check for completed=<slug> on page load ──────────────────
-// Uses URL hash (#completed=slug) instead of query string so that
-// GitHub Pages normalisation redirects don't strip the parameter.
-// Also supports legacy ?completed=slug query string as fallback.
+// ── Check ?completed=<slug> on page load ─────────────────────
 (function handleReturn() {
-  let slug = null;
-
-  // Hash-based: master.html#completed=manejo_de_casos_1
-  const hash = window.location.hash.slice(1); // strip leading #
-  if (hash.startsWith('completed=')) {
-    slug = decodeURIComponent(hash.slice('completed='.length));
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('completed');
+  if (slug) {
+    markCompleted(slug);
+    // Clean up URL
     history.replaceState(null, '', window.location.pathname);
   }
-
-  // Query string fallback: master.html?completed=manejo_de_casos_1
-  if (!slug) {
-    const params = new URLSearchParams(window.location.search);
-    slug = params.get('completed');
-    if (slug) history.replaceState(null, '', window.location.pathname);
-  }
-
-  if (slug) markCompleted(slug);
 })();
 
 // ── Render cards ─────────────────────────────────────────────
-function renderCards() {
+function render() {
   const done = getCompleted();
   const doneCount = GROUPS.filter(g => done.includes(g.slug)).length;
   const pct = TOTAL > 0 ? Math.round(doneCount / TOTAL * 100) : 0;
@@ -458,7 +411,7 @@ function renderCards() {
   });
 }
 
-renderCards();
+render();
 </script>
 </body>
 </html>
