@@ -189,6 +189,14 @@ def load_expected_experts(experts_file=None):
 
 EXPECTED_EXPERTS = load_expected_experts()
 N_EXPECTED_EXPERTS = len(EXPECTED_EXPERTS)
+# When experts.txt is not present (e.g. Streamlit Cloud deployment),
+# fall back to the count stored in Streamlit secrets as N_EXPERTS_EXPECTED.
+_N_EXPERTS_SOURCE = "experts.txt"
+if N_EXPECTED_EXPERTS == 0:
+    _secret_n = _secrets_get("N_EXPERTS_EXPECTED", "")
+    if _secret_n.isdigit() and int(_secret_n) > 0:
+        N_EXPECTED_EXPERTS = int(_secret_n)
+        _N_EXPERTS_SOURCE = "secrets (N_EXPERTS_EXPECTED)"
 
 # Page configuration
 st.set_page_config(
@@ -559,7 +567,7 @@ def render_overview_cards(stats):
         )
 
     st.caption(
-        f"Denominador esperado: {stats['n_experts_expected']} especialistas de experts.txt "
+        f"Denominador esperado: {stats['n_experts_expected']} especialistas de {_N_EXPERTS_SOURCE} "
         f"(observados na API: {stats['n_experts_observed']})."
     )
 

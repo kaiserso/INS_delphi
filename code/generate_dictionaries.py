@@ -45,6 +45,7 @@ import sys
 import os
 import math
 import pathlib
+import unicodedata
 from datetime import datetime
 
 try:
@@ -99,6 +100,8 @@ PROGRAMS = {
         "key_field":     "intervencao",   # internal key used as label
         "col_map": {
             "Área":                          "area",
+            "Team":                          "team",
+            "Equipa":                        "team",
             "Programa":                      "programa",
             "Componente":                    "componente",
             "Intervenção":                   "intervencao",
@@ -121,14 +124,14 @@ PROGRAMS = {
         },
         "output_headers": [
             "Código","URL da Ficha","Grupo",
-            "Área","Programa","Componente","Intervenção",
+            "Área","Team","Programa","Componente","Intervenção",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
             "Alcance geográfico","Recursos necessários","Etapas chave",
             "Riscos e limitações","Possíveis factores associados",
             "Ano de início","Gastos em 2024 (MZN)","Fonte(s) de financiamento",
             "Pop. elegível","Número alcançado","Cobertura","Custo por unidade","Notas",
         ],
-        "col_widths": [10,45,22,10,18,20,45,14,40,40,30,35,35,35,35,10,16,20,14,14,10,25,35],
+        "col_widths": [10,45,22,10,14,18,20,45,14,40,40,30,35,35,35,35,10,16,20,14,14,10,25,35],
         "skip_row_if": lambda row: False,  # no rows to skip
         "row_builder": "standard",
     },
@@ -140,6 +143,8 @@ PROGRAMS = {
         "key_field":     "intervencao",
         "col_map": {
             "Área":                      "area",
+            "Team":                      "team",
+            "Equipa":                    "team",
             "Programa":                  "programa",
             "Componente":                "componente",
             "Intervenção":               "intervencao",
@@ -158,12 +163,12 @@ PROGRAMS = {
         },
         "output_headers": [
             "Código","URL da Ficha","Grupo",
-            "Área","Programa","Componente","Intervenção",
+            "Área","Team","Programa","Componente","Intervenção",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
             "Ano de início","Gastos em 2024","Fonte(s) de financiamento",
             "Pop. elegível","Número alcançado","Cobertura","Custo por unidade","Notas",
         ],
-        "col_widths": [10,45,22,10,18,30,55,14,45,45,12,18,22,14,14,12,25,40],
+        "col_widths": [10,45,22,10,14,18,30,55,14,45,45,12,18,22,14,14,12,25,40],
         # Skip the template example row (Área = "Exemplo - HIV")
         "skip_row_if": lambda row: str(row.get("area","")).startswith("Exemplo"),
         "row_builder": "tb",
@@ -176,6 +181,8 @@ PROGRAMS = {
         "key_field":     "actividade",   # "Actividade" used as intervention label
         "col_map": {
             # Note: col A is empty; Programa starts at col B
+            "Team":                         "team",
+            "Equipa":                       "team",
             "Programa":                      "programa",
             "Componente":                    "componente",
             "Actividade":                    "actividade",
@@ -202,7 +209,7 @@ PROGRAMS = {
         },
         "output_headers": [
             "Código","URL da Ficha","Grupo",
-            "Programa","Componente","Actividade","Implementador",
+            "Team","Programa","Componente","Actividade","Implementador",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
             "Alcance geográfico da intervenção",
             "Recursos necessários para a implementação",
@@ -213,7 +220,7 @@ PROGRAMS = {
             "Fonte de elegibilidade","Número alcançado (Dez 2024)","Cobertura",
             "Custo por unidade","Nº US com implementação","Notas",
         ],
-        "col_widths": [10,45,22,18,25,55,25,14,45,45,30,35,35,40,40,14,18,16,22,18,12,25,18,40],
+        "col_widths": [10,45,22,14,18,25,55,25,14,45,45,30,35,35,40,40,14,18,16,22,18,12,25,18,40],
         "skip_row_if": lambda row: not row.get("actividade"),
         "row_builder": "hiv",
     },
@@ -225,6 +232,8 @@ PROGRAMS = {
         "key_field":     "intervencao",
         "col_map": {
             "Área":                          "area",
+            "Team":                          "team",
+            "Equipa":                        "team",
             "Programa":                      "programa",
             "Componente":                    "componente",
             "Intervenção":                   "intervencao",
@@ -232,6 +241,18 @@ PROGRAMS = {
             "Descrição (o que inclui)":      "descricao",   # note accented Descrição
             "Descricao (o que inclui)":      "descricao",   # fallback unaccented
             "Objectivo(s)":                  "objectivos",
+            "Alcance geográfico da intervenção":                "alcance",
+            "Alcance geografico da intervencao":                "alcance",
+            "Recursos necessários para a implementação":        "recursos",
+            "Recursos necessarios para a implementacao":        "recursos",
+            "Etapas chave para a implementação da intervenção": "etapas",
+            "Etapas chave para implementação da intervenção":   "etapas",
+            "Etapas chave para a implementacao da intervencao": "etapas",
+            "Descrição dos riscos e limitações que comprometem a implementação da intervenção": "riscos",
+            "Descricao dos riscos e limitacoes que comprometem a implementacao da intervencao": "riscos",
+            "Descrição dos riscos e limitações que compromentem a implementação da intervenção": "riscos",
+            "Possíveis factores associados aos riscos e limitações descritas": "factores",
+            "Possiveis factores associados aos riscos e limitacoes descritas": "factores",
             "Ano de início":                 "ano_inicio",
             "Gastos em 2024 ":               "gastos_2024", # trailing space in source
             "Gastos em 2024":                "gastos_2024", # fallback
@@ -246,12 +267,14 @@ PROGRAMS = {
         },
         "output_headers": [
             "Código","URL da Ficha","Grupo",
-            "Área","Programa","Componente","Intervenção",
+            "Área","Team","Programa","Componente","Intervenção",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
-            "Ano de início","Gastos em 2024","Fonte(s) de financiamento",
+            "Alcance geográfico","Recursos necessários","Etapas chave",
+            "Riscos e limitações","Possíveis factores associados",
+            "Ano de início","Gastos em 2024 (USD)","Fonte(s) de financiamento",
             "Pop. elegível","Número alcançado","Cobertura","Custo por unidade","Notas",
         ],
-        "col_widths": [10,45,22,10,22,25,50,14,45,45,12,18,22,14,14,12,25,40],
+        "col_widths": [10,45,22,10,14,22,25,50,14,45,45,30,35,35,35,35,12,18,22,14,14,12,25,40],
         "skip_row_if": lambda row: False,
         "row_builder": "standard",
     },
@@ -278,6 +301,10 @@ def load_catalog(path, cfg):
         ws = next((wb[s] for s in wb.sheetnames if "revis" not in s.lower()), wb.worksheets[0])
 
     col_map   = cfg["col_map"]
+    normalized_col_map = {
+        _normalize_header(source_header): target_key
+        for source_header, target_key in col_map.items()
+    }
     key_field = cfg["key_field"]
 
     # Locate header row: contains the key field label
@@ -299,7 +326,7 @@ def load_catalog(path, cfg):
         rec = {}
         for ci, h in enumerate(headers):
             # Use the first matching col_map key (handles duplicate cols like two Gastos)
-            key = col_map.get(h)
+            key = col_map.get(h) or normalized_col_map.get(_normalize_header(h))
             if key and key not in rec:
                 rec[key] = row[ci] if ci < len(row) else None
         if not rec.get(key_field):
@@ -309,7 +336,7 @@ def load_catalog(path, cfg):
         interventions.append(rec)
 
     # Fill down: carry forward area, programa, componente, objectivos when blank
-    _FILLDOWN = ("area", "programa", "componente", "objectivos")
+    _FILLDOWN = ("area", "team", "programa", "componente", "objectivos")
     prev = {}
     for rec in interventions:
         for field in _FILLDOWN:
@@ -343,6 +370,13 @@ def fmt_coverage(val):
 def sv(val):
     """Safe string: convert to str or return None."""
     return str(val) if val is not None else None
+
+def _normalize_header(value):
+    if value is None:
+        return ""
+    text = unicodedata.normalize("NFKD", str(value))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return " ".join(text.strip().lower().split())
 
 def group_label(idx, interventions, cfg):
     """Build a descriptive group label based on Programa values within the batch."""
@@ -394,9 +428,11 @@ def _row_standard(idx, rec, cfg, interventions):
         code,
         f"{cfg['base_url']}/{code}.html",
         group_label(idx, interventions, cfg),
-        rec.get("area"), rec.get("programa"), rec.get("componente"),
+        rec.get("area"), rec.get("team"), rec.get("programa"), rec.get("componente"),
         rec.get("intervencao"), rec.get("nivel"),
         rec.get("descricao"), rec.get("objectivos"),
+        rec.get("alcance"), rec.get("recursos"), rec.get("etapas"),
+        rec.get("riscos"), rec.get("factores"),
         sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
         rec.get("fontes"),
         sv(rec.get("pop_elegivel")), sv(rec.get("num_alcancado")),
@@ -406,7 +442,20 @@ def _row_standard(idx, rec, cfg, interventions):
 
 def _row_tb(idx, rec, cfg, interventions):
     """TB row layout (same fields as SMI/Malária but fewer cols)."""
-    return _row_standard(idx, rec, cfg, interventions)
+    code = f"{cfg['code_prefix']}_{idx+1:02d}"
+    return [
+        code,
+        f"{cfg['base_url']}/{code}.html",
+        group_label(idx, interventions, cfg),
+        rec.get("area"), rec.get("team"), rec.get("programa"), rec.get("componente"),
+        rec.get("intervencao"), rec.get("nivel"),
+        rec.get("descricao"), rec.get("objectivos"),
+        sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
+        rec.get("fontes"),
+        sv(rec.get("pop_elegivel")), sv(rec.get("num_alcancado")),
+        fmt_coverage(rec.get("cobertura")),
+        rec.get("custo_unidade"), rec.get("notas"),
+    ]
 
 def _row_hiv(idx, rec, cfg, interventions):
     """HIV row layout — Actividade + Implementador, no Área."""
@@ -415,7 +464,7 @@ def _row_hiv(idx, rec, cfg, interventions):
         code,
         f"{cfg['base_url']}/{code}.html",
         group_label(idx, interventions, cfg),
-        rec.get("programa"), rec.get("componente"),
+        rec.get("team"), rec.get("programa"), rec.get("componente"),
         rec.get("actividade"), rec.get("implementador"),
         rec.get("nivel"),
         rec.get("descricao"), rec.get("objectivos"),
@@ -439,26 +488,27 @@ ROW_BUILDERS = {
 # ─────────────────────────────────────────────────────────────────
 
 SECTION_SPANS = {
-    "standard": [("A1","C1"),("D1","G1"),("H1","J1"),("K1","M1"),("N1","R1")],
-    "tb":       [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","R1")],
-    "hiv":      [("A1","C1"),("D1","G1"),("H1","O1"),("P1","R1"),("S1","X1")],
+    "standard": [("A1","C1"),("D1","H1"),("I1","K1"),("L1","P1"),("Q1","S1"),("T1","X1")],
+    "tb":       [("A1","C1"),("D1","H1"),("I1","K1"),("L1","M1"),("N1","S1")],
+    "hiv":      [("A1","C1"),("D1","H1"),("I1","P1"),("Q1","S1"),("T1","Y1")],
 }
 SECTION_LABELS = {
     "standard": ["Gerado pelo Script",None,None,
-                 "Identificação",None,None,None,
-                 "Descrição e Implementação",None,None,
+                 "Identificação",None,None,None,None,
+                 "Descrição",None,None,
+                 "Implementação",None,None,None,None,
                  "Financiamento",None,None,
                  "Cobertura e Custos",None,None,None,None],
     "tb":       ["Gerado pelo Script",None,None,
-                 "Identificação",None,None,None,
+                 "Identificação",None,None,None,None,
                  "Descrição",None,None,
                  "Financiamento",None,
-                 "Cobertura e Custos",None,None,None,None],
+                 "Cobertura e Custos",None,None,None,None,None],
     "hiv":      ["Gerado pelo Script",None,None,
-                 "Identificação",None,None,None,
+                 "Identificação",None,None,None,None,
                  "Descrição e Implementação",None,None,None,None,None,None,None,
                  "Financiamento",None,None,
-                 "Cobertura, Implementação e Custos",None,None,None,None,None],
+                 "Cobertura, Implementação e Custos",None,None,None,None,None,None],
 }
 
 def build_catalogo(wb, interventions, cfg):

@@ -1,6 +1,8 @@
 __pycache__
 #.*#
 ~$*
+*.bak
+*.back
 /debug*py
 /*png
 /check_metadata.py

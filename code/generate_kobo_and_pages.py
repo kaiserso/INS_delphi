@@ -84,8 +84,9 @@ BASE_URL      = _get("BASE_URL",     "https://delphi-catalogo.example.org/YOUR_P
 MAGIC_API_KEY = _get("MAGIC_API_KEY","pk_live_YOUR_KEY_HERE")
 GATEWAY_URL   = _get("GATEWAY_URL",  "https://your-site.github.io/gateway.html")
 REQUIRE_AUTH  = _bool("REQUIRE_AUTH", True)
+UPDATE_EMAILS_ONLY = "--update-emails" in sys.argv
 
-if not CATALOG_SHEET:
+if not CATALOG_SHEET and not UPDATE_EMAILS_ONLY:
   sys.exit("Error: define CATALOG_SHEET in config.env or pass --catalog-sheet '<sheet name>'.")
 
 SUBFORM_GROUP_BY = _get("SUBFORM_GROUP_BY", "programa").lower().strip()
@@ -158,6 +159,31 @@ print(f"  Grouping:    by {SUBFORM_GROUP_BY}"
 
 os.makedirs(PAGES_DIR, exist_ok=True)
 os.makedirs(KOBO_DIR, exist_ok=True)
+
+# ── Emails-only mode: update gateway.html and exit ────────────
+if UPDATE_EMAILS_ONLY:
+    def _e(text):
+        import html as _h; return _h.escape(str(text)) if text else ""
+    _vs = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    _gateway_template = pathlib.Path(__file__).parent / "gateway.html"
+    if _gateway_template.exists():
+        _gtpl = _gateway_template.read_text(encoding="utf-8")
+        _hashes_js = _json.dumps(EXPERT_HASHES)
+        _gtpl = _gtpl.replace('@@REQUIRE_AUTH@@',   'true' if REQUIRE_AUTH else 'false')
+        _gtpl = _gtpl.replace('"@@MAGIC_API_KEY@@"', f'"{MAGIC_API_KEY}"')
+        _gtpl = _gtpl.replace('@@ALLOWED_HASHES@@',  _hashes_js)
+        _gtpl = _gtpl.replace('"@@TOPIC@@"',         f'"{_e(TOPIC_LABEL)}"')
+        _gtpl = _gtpl.replace('"@@MASTER_URL@@"',    f'"{MASTER_URL}"')
+        _gtpl = _gtpl.replace('"@@CATALOGUE_URL@@"', f'"{BASE_URL}/index.html"')
+        _gtpl = _gtpl.replace('"@@GENERATED_AT@@"',  f'"{_vs}"')
+        _gw_out = os.path.join(PAGES_DIR, "gateway.html")
+        with open(_gw_out, "w", encoding="utf-8") as _f:
+            _f.write(_gtpl)
+        print(f"\n  {_gw_out}  (gateway updated, {len(EXPERT_HASHES)} authorised emails)")
+    else:
+        print("  ⚠️  gateway.html template not found next to script — skipping")
+    print("\nDone (emails only — questionnaires and pages untouched).")
+    sys.exit(0)
 
 # ── Auth guard snippet (injected into every HTML page) ────────
 # Checks Magic.link session on page load; redirects to gateway if not logged in.
@@ -269,6 +295,64 @@ def _normalise_intervention_record(intv):
     objective = _pick(intv, "Objectivo(s)", "Objetivo(s)")
     if objective:
         intv["Objectivo(s)"] = objective
+
+    aliases = [
+      (
+        (
+          "Alcance geográfico da intervenção",
+          "Alcance geográfico",
+        ),
+        (
+          "Alcance geográfico da intervenção",
+        ),
+      ),
+      (
+        (
+          "Recursos necessários para a implementação",
+          "Recursos necessários",
+        ),
+        (
+          "Recursos necessários para a implementação",
+        ),
+      ),
+      (
+        (
+          "Etapas chave para a implementação da intervenção",
+          "Etapas chave para a implementação",
+          "Etapas chave",
+        ),
+        (
+          "Etapas chave para a implementação da intervenção",
+          "Etapas chave para a implementação",
+        ),
+      ),
+      (
+        (
+          "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
+          "Riscos e limitações",
+        ),
+        (
+          "Descrição dos riscos e limitações que comprometem a implementação da intervenção",
+          "Riscos e limitações",
+        ),
+      ),
+      (
+        (
+          "Possiveis factores associados aos riscos e limitações descritas",
+          "Possíveis factores associados aos riscos",
+          "Possíveis factores associados",
+        ),
+        (
+          "Possiveis factores associados aos riscos e limitações descritas",
+          "Possíveis factores associados aos riscos",
+        ),
+      ),
+    ]
+    for source_keys, target_keys in aliases:
+        value = _pick(intv, *source_keys)
+        if value:
+            for target_key in target_keys:
+                intv[target_key] = value
 
     return intv
 
@@ -420,6 +504,7 @@ print(f"  Built {len(all_choices)} choice rows "
 
 GROUP_FIELD = {
     "area":       "Área",
+  "team":       "Team",
     "programa":   "Programa",
     "componente": "Componente",
     "grupo":      "Grupo",
@@ -441,6 +526,17 @@ def slugify(text):
     text = re.sub(r"\s+", "_", text)
     return text
 
+def unique_slug(base_slug, used):
+    """Return a unique slug by appending _2, _3, ... when needed."""
+    base_slug = (base_slug or "grupo").strip("_") or "grupo"
+    slug = base_slug
+    suffix = 2
+    while slug in used:
+        slug = f"{base_slug}_{suffix}"
+        suffix += 1
+    used.add(slug)
+    return slug
+
 def split_group(label, items, max_size):
     if max_size <= 0 or len(items) <= max_size:
         return [(label, items)]
@@ -458,10 +554,17 @@ for intv in interventions:
     groups_raw.setdefault(key, []).append(intv)
 
 subform_groups = []   # list of (label, slug, [intv, ...])
+used_slugs = set()
 for raw_label, items in groups_raw.items():
     display_label = strip_group_prefix(raw_label)
-    for chunk_label, chunk_items in split_group(display_label, items, SUBFORM_MAX_SIZE):
-        subform_groups.append((chunk_label, slugify(chunk_label), chunk_items))
+    for chunk_index, (chunk_label, chunk_items) in enumerate(
+        split_group(display_label, items, SUBFORM_MAX_SIZE),
+        start=1,
+    ):
+        source_label = raw_label if chunk_index == 1 else f"{raw_label} ({chunk_index})"
+        slug_base = slugify(source_label)
+        group_slug = unique_slug(slug_base, used_slugs)
+        subform_groups.append((chunk_label, group_slug, chunk_items))
 
 print(f"\nSub-form groups ({GROUP_FIELD}, max {SUBFORM_MAX_SIZE or 'unlimited'}):")
 for label, slug, items in subform_groups:
@@ -1231,12 +1334,14 @@ def build_master_page(subform_groups):
             full_url = f"{kobo_url}{sep}return_url={quote(relay_target, safe='')}"
         else:
             full_url = ""
+        team = items[0].get("Team", "").strip() if items else ""
         js_groups.append({
             "slug":  slug,
             "label": label,
             "count": len(items),
             "codes": [intv["Código"] for intv in items],
             "url":   full_url,
+            "team":  team,
         })
 
     groups_json = json.dumps(js_groups, ensure_ascii=False, indent=2)
@@ -1440,6 +1545,23 @@ body::before {{
   padding: 10px 14px;
   font-size: 12px; color: #4527A0;
 }}
+/* ── Team badge ── */
+.team-badge {{
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  font-size: 11px; font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  margin-left: 8px;
+  vertical-align: middle;
+}}
+.team-badge[data-team="A"] {{ color: #1a5c8a; background: #ddeef8; }}
+.team-badge[data-team="B"] {{ color: #2e7d52; background: #d6f0e2; }}
+.team-badge[data-team="C"] {{ color: #b45309; background: #fde8c8; }}
+.team-badge[data-team="D"] {{ color: #6b3fa0; background: #ede7f6; }}
 </style>
 </head>
 <body>
@@ -1610,10 +1732,14 @@ function renderCards() {{
       btn = '<a class="open-btn" href="' + g.url + '">Iniciar →</a>';
     }}
 
+    const teamBadge = g.team
+      ? '<span class="team-badge" data-team="' + g.team + '" title="Equipa ' + g.team + '">' + g.team + '</span>'
+      : '';
+
     card.innerHTML =
       iconBadge +
       '<div class="card-body">' +
-        '<div class="card-label">' + g.label + '</div>' +
+        '<div class="card-label">' + g.label + teamBadge + '</div>' +
         '<div class="card-meta">' + meta + '</div>' +
       '</div>' +
       '<div class="card-action">' + btn + '</div>';
