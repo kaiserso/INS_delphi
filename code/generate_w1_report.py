@@ -60,6 +60,22 @@ try:
 except ImportError:
     sys.exit("Erro: dependências em falta. Execute: pip install pandas openpyxl")
 
+try:
+    from pptx import Presentation as _Prs
+    from pptx.util import Inches as _In, Pt as _Pt
+    from pptx.dml.color import RGBColor as _RGB
+    from pptx.enum.text import PP_ALIGN as _PA
+    import io as _io
+    _PPTX_OK = True
+except ImportError:
+    _PPTX_OK = False
+
+try:
+    import cairosvg as _cairosvg
+    _CAIRO_OK = True
+except ImportError:
+    _CAIRO_OK = False
+
 # ─────────────────────────────────────────────────────────────────────────────
 # EXTRACÇÃO DE METADADOS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1636,6 +1652,485 @@ document.addEventListener('click', function(evt) {{
     return html
 
 # ─────────────────────────────────────────────────────────────────────────────
+# PPTX GENERATION  (requires: pip install python-pptx cairosvg)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Slide canvas — 16:9 widescreen
+_SW = _In(13.33) if _PPTX_OK else 0
+_SH = _In(7.5)   if _PPTX_OK else 0
+
+# Brand colours matching the HTML report
+_C = {
+    "accent":  _RGB(0xC0, 0x39, 0x2B),
+    "accent2": _RGB(0x1A, 0x52, 0x76),
+    "green":   _RGB(0x2E, 0x7D, 0x52),
+    "ink":     _RGB(0x1A, 0x1A, 0x1A),
+    "muted":   _RGB(0x78, 0x90, 0x9C),
+    "bg":      _RGB(0xF5, 0xF7, 0xFA),
+    "white":   _RGB(0xFF, 0xFF, 0xFF),
+    "border":  _RGB(0xEC, 0xEF, 0xF1),
+} if _PPTX_OK else {}
+
+
+def _svg_to_png(svg_str, scale=2.0):
+    """Convert an SVG string to PNG bytes; returns None if cairosvg unavailable."""
+    if not _CAIRO_OK or not svg_str:
+        return None
+    svg_str = (svg_str
+               .replace("DM Sans", "Arial")
+               .replace("DM Serif Display", "Georgia"))
+    try:
+        return _cairosvg.svg2png(bytestring=svg_str.encode("utf-8"), scale=scale)
+    except Exception:
+        return None
+
+
+def _blank(prs):
+    return prs.slides.add_slide(prs.slide_layouts[6])  # fully blank layout
+
+
+def _rect(slide, l, t, w, h, fill=None, line=None):
+    sp = slide.shapes.add_shape(1, l, t, w, h)  # 1 = rectangle autoshape
+    if fill:
+        sp.fill.solid()
+        sp.fill.fore_color.rgb = fill
+    else:
+        sp.fill.background()
+    if line:
+        sp.line.color.rgb = line
+    else:
+        sp.line.fill.background()
+    return sp
+
+
+def _text(slide, text, l, t, w, h, size=13, bold=False,
+          color=None, align=None, wrap=True):
+    tb = slide.shapes.add_textbox(l, t, w, h)
+    tf = tb.text_frame
+    tf.word_wrap = wrap
+    p = tf.paragraphs[0]
+    if align:
+        p.alignment = align
+    run = p.add_run()
+    run.text = str(text)
+    run.font.size = _Pt(size)
+    run.font.bold = bold
+    run.font.name = "Calibri"
+    run.font.color.rgb = color or _C["ink"]
+    return tb
+
+
+def _header_bar(slide, title, subtitle=""):
+    _rect(slide, _In(0), _In(0), _SW, _In(0.75), fill=_C["accent2"])
+    _text(slide, title, _In(0.28), _In(0.07), _In(11.5), _In(0.62),
+          size=18, bold=True, color=_C["white"])
+    if subtitle:
+        _text(slide, subtitle, _In(9.5), _In(0.07), _In(3.5), _In(0.62),
+              size=10, color=_RGB(0xBD, 0xC3, 0xC7), align=_PA.RIGHT)
+
+
+def _picture(slide, png_bytes, l, t, w):
+    if not png_bytes:
+        return
+    try:
+        slide.shapes.add_picture(_io.BytesIO(png_bytes), l, t, width=w)
+    except Exception:
+        pass
+
+
+def _slide_title(prs, title, subtitle=""):
+    slide = _blank(prs)
+    _rect(slide, _In(0), _In(0), _In(0.45), _SH, fill=_C["accent"])
+    _rect(slide, _In(0.45), _In(0), _SW - _In(0.45), _SH, fill=_C["accent2"])
+    _text(slide, title, _In(0.8), _In(2.1), _In(12), _In(1.9),
+          size=34, bold=True, color=_C["white"])
+    if subtitle:
+        _text(slide, subtitle, _In(0.8), _In(4.0), _In(12), _In(1.0),
+              size=14, color=_RGB(0xBD, 0xC3, 0xC7))
+    return slide
+
+
+def _slide_divider(prs, section, note=""):
+    slide = _blank(prs)
+    _rect(slide, _In(0), _In(0), _SW, _SH, fill=_C["bg"])
+    _rect(slide, _In(0), _In(0), _In(0.15), _SH, fill=_C["accent"])
+    _text(slide, section, _In(0.5), _In(2.8), _In(12.5), _In(1.4),
+          size=30, bold=True, color=_C["accent2"])
+    if note:
+        _text(slide, note, _In(0.5), _In(4.15), _In(12.5), _In(0.8),
+              size=13, color=_C["muted"])
+    return slide
+
+
+def _slide_chart(prs, title, png_bytes, note=""):
+    slide = _blank(prs)
+    _rect(slide, _In(0), _In(0), _SW, _SH, fill=_C["bg"])
+    _header_bar(slide, title)
+    _picture(slide, png_bytes, _In(0.2), _In(0.85), _SW - _In(0.4))
+    if note:
+        _text(slide, note, _In(0.2), _In(7.05), _SW - _In(0.4), _In(0.38),
+              size=9, color=_C["muted"])
+    return slide
+
+
+def _slide_two_charts(prs, title, left_png, right_png,
+                      left_lbl="", right_lbl=""):
+    slide = _blank(prs)
+    _rect(slide, _In(0), _In(0), _SW, _SH, fill=_C["bg"])
+    _header_bar(slide, title)
+    half = (_SW - _In(0.5)) / 2
+    for i, (png, lbl) in enumerate([(left_png, left_lbl),
+                                     (right_png, right_lbl)]):
+        x = _In(0.15) + i * (half + _In(0.2))
+        _picture(slide, png, x, _In(0.85), half)
+        if lbl:
+            _text(slide, lbl, x, _In(7.0), half, _In(0.42),
+                  size=9, color=_C["muted"], align=_PA.CENTER)
+    return slide
+
+
+def _slide_table(prs, title, headers, rows, max_rows=20):
+    """Paginated table — creates as many slides as needed."""
+    total = len(rows)
+    for chunk_start in range(0, max(total, 1), max_rows):
+        chunk = rows[chunk_start: chunk_start + max_rows]
+        slide = _blank(prs)
+        _rect(slide, _In(0), _In(0), _SW, _SH, fill=_C["bg"])
+        sfx = (f" [{chunk_start+1}–{min(chunk_start+max_rows, total)}/{total}]"
+               if total > max_rows else "")
+        _header_bar(slide, title + sfx)
+        ncols = len(headers)
+        nrows = len(chunk) + 1
+        tbl = slide.shapes.add_table(
+            nrows, ncols,
+            _In(0.2), _In(0.85),
+            _SW - _In(0.4),
+            min(_In(6.3), _In(0.32 * nrows)),
+        ).table
+        for ci, h in enumerate(headers):
+            cell = tbl.cell(0, ci)
+            cell.text = str(h)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = _C["accent2"]
+            p = cell.text_frame.paragraphs[0]
+            run = p.runs[0] if p.runs else p.add_run()
+            run.font.size = _Pt(9)
+            run.font.bold = True
+            run.font.color.rgb = _C["white"]
+        for ri, row in enumerate(chunk, 1):
+            bg = _C["white"] if ri % 2 else _C["bg"]
+            for ci, val in enumerate(row):
+                cell = tbl.cell(ri, ci)
+                cell.text = str(val)
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = bg
+                p = cell.text_frame.paragraphs[0]
+                run = p.runs[0] if p.runs else p.add_run()
+                run.font.size = _Pt(8)
+                run.font.color.rgb = _C["ink"]
+
+
+def _slide_text(prs, title, body_lines):
+    """Text-content slide with a title bar and bulleted lines."""
+    slide = _blank(prs)
+    _rect(slide, _In(0), _In(0), _SW, _SH, fill=_C["bg"])
+    _header_bar(slide, title)
+    y = _In(0.92)
+    for line in body_lines[:18]:
+        _text(slide, line, _In(0.5), y, _SW - _In(0.7), _In(0.38),
+              size=12, color=_C["ink"])
+        y += _In(0.36)
+    return slide
+
+
+def build_pptx(results, stats, interventions, results_path,
+               univariate, include_xyplot=True, include_scoring=True):
+    """
+    Generate a PowerPoint presentation mirroring the HTML report content.
+    Returns a Presentation object, or None if python-pptx is unavailable.
+    Chart images require cairosvg; without it slides are created but charts
+    will be blank (text and tables are always included).
+    """
+    if not _PPTX_OK:
+        print("  ⚠ python-pptx not installed — skipping PPTX.")
+        print("    Run: pip install python-pptx cairosvg")
+        return None
+
+    if not _CAIRO_OK:
+        print("  ⚠ cairosvg not installed — PPTX will be generated without chart images.")
+        print("    Run: pip install cairosvg")
+
+    prs = _Prs()
+    prs.slide_width  = _SW
+    prs.slide_height = _SH
+
+    items = sorted(results.values(), key=lambda r: r.get("s_base", 0), reverse=True)
+    n_inv = stats["n_inv"]
+    n_exp = stats["n_experts"]
+
+    # ── 1: Title ──────────────────────────────────────────────
+    _slide_title(
+        prs,
+        "Delphi W1 — Relatório de Resultados",
+        (f"{n_exp} especialistas  ·  {n_inv} intervenções  ·  "
+         f"Taxa de resposta mediana: {stats['rr_median']}%  ·  "
+         f"{datetime.now().strftime('%d/%m/%Y')}"),
+    )
+
+    # ── 2: Executive summary ──────────────────────────────────
+    sum_slide = _blank(prs)
+    _rect(sum_slide, _In(0), _In(0), _SW, _SH, fill=_C["bg"])
+    _header_bar(sum_slide, "Resumo Executivo")
+    metrics = [
+        ("Especialistas",       str(n_exp)),
+        ("Intervenções",        str(n_inv)),
+        ("≥80% optimizáveis",   str(stats["n_inv_80"])),
+        ("Impacto alto (≥2.5)", str(stats["n_imp_high"])),
+        ("Consenso unânime",    str(stats["n_unanimous"])),
+        ("Taxa resp. mediana",  f"{stats['rr_median']}%"),
+    ]
+    bw, bh = _In(1.95), _In(2.4)
+    for i, (lbl, val) in enumerate(metrics):
+        x = _In(0.27) + i * _In(2.17)
+        y = _In(2.0)
+        _rect(sum_slide, x, y, bw, bh, fill=_C["white"], line=_C["border"])
+        _text(sum_slide, val, x, y + _In(0.25), bw, _In(1.1),
+              size=38, bold=True, color=_C["accent2"], align=_PA.CENTER)
+        _text(sum_slide, lbl, x, y + _In(1.45), bw, _In(0.75),
+              size=10, color=_C["muted"], align=_PA.CENTER)
+
+    # ── 3: Response rate table ────────────────────────────────
+    rr_rows = [
+        (d.get("code", ""),
+         str(d.get("label", ""))[:50],
+         f"{d.get('rr', 0)}%",
+         f"{d.get('n_resp', 0)}/{d.get('n_total', 0)}")
+        for d in stats.get("rr_detail", [])
+    ]
+    if rr_rows:
+        _slide_table(prs, "Taxa de Resposta por Intervenção",
+                     ["Código", "Intervenção", "Taxa", "Respostas"],
+                     rr_rows, max_rows=22)
+
+    # ── Section: Univariate Analysis ──────────────────────────
+    _slide_divider(prs, "Análise Univariada",
+                   f"{n_inv} intervenções  ·  {n_exp} especialistas")
+
+    gate_agg    = univariate.get("gate_agg", {})
+    sorted_gate = univariate.get("sorted_gate",   items)
+    sorted_imp  = univariate.get("sorted_impact", items)
+    sorted_dup  = univariate.get("sorted_dup",    items)
+    sorted_intg = univariate.get("sorted_intg",   items)
+    sorted_res  = univariate.get("sorted_res",    items)
+    imp_counts  = univariate.get("imp_counts", {})
+    exp_counts  = univariate.get("exp_counts", {})
+
+    # 2a: Gate distribution — donut + stacked bars
+    gate_stacked_rows = [
+        (r["label"][:38], [r["n_sim"], r["n_poss"], r["n_nao"]])
+        for r in sorted_gate
+    ]
+    gate_donut_svg = svg_donut(
+        gate_agg or {"Sim def.": 1, "Possiv.": 1, "Não": 1},
+        ["#2e7d52", "#d4a017", "#e0e0e0"],
+        size=280,
+    )
+    _slide_two_charts(
+        prs, "2a · Distribuição Gate (Optimizabilidade)",
+        _svg_to_png(gate_donut_svg),
+        _svg_to_png(svg_hbar_stacked(gate_stacked_rows, width=580)),
+        "Distribuição global", "Por intervenção",
+    )
+
+    # 2b: Expected impact — donut + bars
+    max_imp = max((r["avg_impact"] for r in items), default=3.0) or 3.0
+    impact_rows = [(r["label"][:38], r["avg_impact"], max_imp) for r in sorted_imp]
+    if imp_counts and any(imp_counts.values()):
+        imp_labels = {1: "Baixo", 2: "Médio", 3: "Alto"}
+        imp_donut_svg = svg_donut(
+            {imp_labels.get(k, str(k)): v
+             for k, v in sorted(imp_counts.items()) if v},
+            ["#b91c1c", "#b45309", "#2e7d52"], size=280,
+        )
+        imp_donut_png = _svg_to_png(imp_donut_svg)
+    else:
+        imp_donut_png = None
+    _slide_two_charts(
+        prs, "2b · Impacto Esperado",
+        imp_donut_png,
+        _svg_to_png(svg_hbar_single(impact_rows, width=580)),
+        "Distribuição global", "Impacto médio por intervenção",
+    )
+
+    # 2c: Expertise distribution
+    if exp_counts and any(exp_counts.values()):
+        exp_labels = {1: "Baixa", 2: "Média", 3: "Alta"}
+        exp_donut_svg = svg_donut(
+            {exp_labels.get(k, str(k)): v
+             for k, v in sorted(exp_counts.items()) if v},
+            ["#f59e0b", "#3b82f6", "#2e7d52"], size=340,
+        )
+        _slide_chart(prs, "2c · Nível de Experiência dos Especialistas",
+                     _svg_to_png(exp_donut_svg))
+
+    # 2d–2f: Duplication, Integration, Resource reduction
+    for slide_title, field, src in [
+        ("2d · % Sobreposição com Outras Intervenções", "dup_pct",  sorted_dup),
+        ("2e · % Potencial de Integração",              "intg_pct", sorted_intg),
+        ("2f · % Possibilidade de Redução de Recursos", "res_pct",  sorted_res),
+    ]:
+        bar_rows = [(r["label"][:38], r[field], 100) for r in src]
+        _slide_chart(prs, slide_title,
+                     _svg_to_png(svg_hbar_single(bar_rows, width=900)))
+
+    # 2g: Scatter plot
+    if include_xyplot:
+        _slide_chart(
+            prs, "2g · Dispersão: Optimizabilidade × Impacto Esperado",
+            _svg_to_png(svg_scatter_optim_impact_exp(items), scale=1.3),
+        )
+
+    # ── Section: Scoring ──────────────────────────────────────
+    if include_scoring:
+        _slide_divider(prs, "Pontuação e Metodologia")
+
+        _slide_text(prs, "Fórmulas de Pontuação", [
+            "",
+            "S_base  =  média(gate_score_i)  ×  média(impacto_i)",
+            "",
+            "S_pond  =  Σ(gate_i × impacto_i × exp_i)  /  Σ(exp_i)",
+            "",
+            "Onde:",
+            "   gate_score:  Sim definitivamente = 1,  Possivelmente = 0.5,  Não = 0",
+            "   impacto:     Baixo = 1,  Médio = 2,  Alto = 3",
+            "   exp (ponderação):  Baixa = 1,  Média = 2,  Alta = 3",
+        ])
+
+        s_max = max(
+            max((r["s_base"] for r in items), default=1.0),
+            max((r["s_pond"] for r in items), default=1.0),
+        ) or 1.0
+        sbase_rows = [(r["label"][:38], r["s_base"], s_max)
+                      for r in sorted(items, key=lambda r: r["s_base"], reverse=True)]
+        spond_rows = [(r["label"][:38], r["s_pond"], s_max)
+                      for r in sorted(items, key=lambda r: r["s_pond"], reverse=True)]
+        _slide_two_charts(
+            prs, "Pontuações S_base e S_pond",
+            _svg_to_png(svg_hbar_single(sbase_rows, width=560, color="#1a5276")),
+            _svg_to_png(svg_hbar_single(spond_rows, width=560, color="#2e7d52")),
+            "S_base (não ponderado)", "S_pond (ponderado por experiência)",
+        )
+
+        _slide_chart(
+            prs, "Transição de Rankings: Optimizabilidade → S_base → S_pond",
+            _svg_to_png(svg_alluvial_weighting(items), scale=1.2),
+        )
+
+        score_rows = [
+            (r.get("rank_base", "—"),
+             r["label"][:42],
+             r.get("component", "")[:22] or "—",
+             f"{r['s_base']:.3f}",
+             f"{r['s_pond']:.3f}",
+             (f"+{r.get('rank_delta',0)}"
+              if r.get("rank_delta", 0) > 0 else str(r.get("rank_delta", 0))),
+             f"{r.get('avg_impact',0):.2f}",
+             f"{r.get('exp_mean',0):.2f}")
+            for r in sorted(items, key=lambda r: r.get("rank_base", 999))
+        ]
+        _slide_table(prs, "Tabela de Pontuações",
+                     ["#", "Intervenção", "Componente",
+                      "S_base", "S_pond", "Δrank", "Impacto", "Exp."],
+                     score_rows, max_rows=22)
+
+    # ── Section: Priority Ranking ─────────────────────────────
+    _slide_divider(prs, "Tabela de Priorização",
+                   "Ordenado por S_base (pontuação composta)")
+
+    priority_rows = [
+        (r.get("rank_base", "—"),
+         r["label"][:44],
+         r.get("component", "")[:22] or "—",
+         f"{r['pct_optimizable']}%",
+         f"{r.get('avg_impact',0):.1f}",
+         f"{r['dup_pct']}%",
+         f"{r['intg_pct']}%")
+        for r in sorted(items, key=lambda r: r.get("rank_base", 999))
+    ]
+    _slide_table(prs, "Ranking de Prioridades",
+                 ["#", "Intervenção", "Componente",
+                  "% Optim.", "Impacto", "% Dup.", "% Integr."],
+                 priority_rows, max_rows=20)
+
+    # ── Section: Next Steps ───────────────────────────────────
+    sorted_inv = sorted(results.values(),
+                        key=lambda r: r.get("composite", 0), reverse=True)
+    for idx, r in enumerate(sorted_inv, 1):
+        r["display_idx"] = idx
+    med_gate = statistics.median([r.get("gate_mean", 0) for r in sorted_inv]) if sorted_inv else 0
+    med_imp  = statistics.median([r.get("avg_impact", 0) for r in sorted_inv]) if sorted_inv else 0
+
+    def _tier(r):
+        hg = r.get("gate_mean", 0) > med_gate
+        hi = r.get("avg_impact", 0) > med_imp
+        if hg and hi:  return "alta"
+        if hg or hi:   return "media"
+        return "baixa"
+
+    alta  = [f"{r.get('display_idx','-')}. {r['label']}"
+             for r in sorted_inv if _tier(r) == "alta"]
+    media = [f"{r.get('display_idx','-')}. {r['label']}"
+             for r in sorted_inv if _tier(r) == "media"]
+    baixa = [f"{r.get('display_idx','-')}. {r['label']}"
+             for r in sorted_inv if _tier(r) == "baixa"]
+
+    _slide_divider(prs, "Próximos Passos", "Classificação por prioridade")
+    for tier_title, tier_items in [
+        ("Alta Prioridade — Optimizar e reforçar",    alta),
+        ("Prioridade Média — Avaliar caso a caso",    media),
+        ("Baixa Prioridade — Manter ou desinvestir",  baixa),
+    ]:
+        if tier_items:
+            _slide_text(prs, tier_title, tier_items)
+
+    # ── Section: Intervention Details by Component ────────────
+    _slide_divider(prs, "Fichas por Componente",
+                   "Resumo detalhado por intervenção")
+
+    from collections import OrderedDict as _OD
+    by_comp = _OD()
+    for intv in interventions:
+        comp = intv.get("component", "") or "Outros"
+        by_comp.setdefault(comp, []).append(intv)
+
+    for comp, comp_intvs in by_comp.items():
+        comp_rows = []
+        for intv in comp_intvs:
+            r = results.get(intv["code"])
+            if not r:
+                continue
+            comp_rows.append((
+                intv["code"],
+                intv["label"][:38],
+                f"{r['pct_optimizable']}%",
+                f"{r['pct_definitely']}%",
+                f"{r.get('avg_impact',0):.1f}",
+                f"{r['dup_pct']}%",
+                f"{r['intg_pct']}%",
+                str(r["n_total"]),
+            ))
+        if comp_rows:
+            _slide_table(
+                prs, f"Componente: {comp}",
+                ["Cód.", "Intervenção", "Optim.", "Sim def.",
+                 "Impacto", "Dup.", "Integr.", "N resp."],
+                comp_rows, max_rows=20,
+            )
+
+    return prs
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1651,6 +2146,7 @@ def main():
     exclude_file = None
     config_path = None
     simple_sections = False
+    generate_pptx = False
 
     # Parse optional arguments
     i = 2
@@ -1703,6 +2199,11 @@ def main():
 
       if arg in ("--simple-sections", "--compact-report"):
         simple_sections = True
+        i += 1
+        continue
+
+      if arg == "--pptx":
+        generate_pptx = True
         i += 1
         continue
 
@@ -1821,7 +2322,20 @@ def main():
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"\n✓ Relatório guardado em: {out_path}")
+    print(f"\n✓ Relatório HTML guardado em: {out_path}")
+
+    if generate_pptx:
+        print("\nA gerar apresentação PowerPoint...")
+        prs = build_pptx(
+            results, stats, interventions, results_path,
+            univariate,
+            include_xyplot=not simple_sections,
+            include_scoring=not simple_sections,
+        )
+        if prs is not None:
+            pptx_path = os.path.join(output_dir, f"delphi_w1_relatorio_{ts}.pptx")
+            prs.save(pptx_path)
+            print(f"✓ Apresentação PowerPoint guardada em: {pptx_path}")
 
 if __name__ == "__main__":
     main()
