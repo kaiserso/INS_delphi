@@ -35,8 +35,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 try:
     import aggregate_results as aggregate_module
     from aggregate_results import (
-        load_config, fetch_all, build_wide, 
-        detect_intervention_codes, normalise_columns
+        load_config, fetch_all,
     )
 except ImportError as e:
     st.error(f"Failed to import from aggregate_results.py: {e}")
@@ -187,6 +186,117 @@ def load_expected_experts(experts_file=None):
     return sorted(experts)
 
 
+@st.cache_data(show_spinner=False)
+def load_team_mapping(topic=TOPIC):
+    """Load intervention → team mapping from the dictionary Excel file."""
+    dict_path = Path(__file__).resolve().parents[1] / "dict" / f"dicionario_delphi_w1_{topic}.xlsx"
+    if not dict_path.exists():
+        return {}
+    try:
+        xl = pd.ExcelFile(dict_path)
+        # Find the Catalogo sheet (named e.g. "Catalogo_HIV_SIDA")
+        sheet = next((s for s in xl.sheet_names if s.lower().startswith("catalogo")), xl.sheet_names[0])
+        df = pd.read_excel(dict_path, sheet_name=sheet, header=1)
+        if "Código" not in df.columns or "Team" not in df.columns:
+            return {}
+        mapping = (
+            df[["Código", "Team"]]
+            .dropna(subset=["Código"])
+            .set_index("Código")["Team"]
+            .astype(str)
+            .str.strip()
+            .to_dict()
+        )
+        return mapping
+    except Exception:
+        return {}
+
+
+def _slugify(text):
+    """Replicate generate_kobo_and_pages.py slugify for label lookups."""
+    import unicodedata
+    text = unicodedata.normalize("NFKD", str(text))
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", "_", text)
+    return text
+
+
+@st.cache_data(show_spinner=False)
+def load_group_label_mapping(topic=TOPIC):
+    """Return {_group_slug: display_label} using the Programa (or Grupo) column from the dictionary."""
+    dict_path = Path(__file__).resolve().parents[1] / "dict" / f"dicionario_delphi_w1_{topic}.xlsx"
+    if not dict_path.exists():
+        return {}
+    try:
+        xl = pd.ExcelFile(dict_path)
+        sheet = next((s for s in xl.sheet_names if s.lower().startswith("catalogo")), xl.sheet_names[0])
+        df = pd.read_excel(dict_path, sheet_name=sheet, header=1)
+
+        group_by = cfg.get("SUBFORM_GROUP_BY", "programa").lower().strip()
+        col = {"grupo": "Grupo", "programa": "Programa", "team": "Team"}.get(group_by, "Programa")
+        if col not in df.columns:
+            col = next((c for c in ("Programa", "Grupo") if c in df.columns), None)
+        if col is None:
+            return {}
+
+        # Build {base_slug: display_label}
+        base_map = {_slugify(v): str(v) for v in df[col].dropna().unique()}
+        return base_map
+    except Exception:
+        return {}
+
+
+def format_group_label(group_slug, label_map):
+    """Convert a _group slug (e.g. 'ct_adulto_2') to a human display label (e.g. 'C&T ADULTO (2)')."""
+    if not label_map:
+        return group_slug
+    if group_slug in label_map:
+        return label_map[group_slug]
+    # Strip trailing _N chunk suffix
+    m = re.match(r"^(.+)_(\d+)$", group_slug)
+    if m:
+        base, part = m.group(1), m.group(2)
+        if base in label_map:
+            return f"{label_map[base]} ({part})"
+    # Fallback: humanise the slug
+    return group_slug.replace("_", " ").title()
+
+
+@st.cache_data(show_spinner=False)
+def load_group_team_mapping(topic=TOPIC):
+    """Return {group_slug: team} by matching dictionary Grupo names to _group slugs."""
+    dict_path = Path(__file__).resolve().parents[1] / "dict" / f"dicionario_delphi_w1_{topic}.xlsx"
+    if not dict_path.exists():
+        return {}
+    try:
+        xl = pd.ExcelFile(dict_path)
+        sheet = next((s for s in xl.sheet_names if s.lower().startswith("catalogo")), xl.sheet_names[0])
+        df = pd.read_excel(dict_path, sheet_name=sheet, header=1)
+        if "Grupo" not in df.columns or "Team" not in df.columns:
+            return {}
+        # Dominant team per Grupo name
+        grupo_team = (
+            df[["Grupo", "Team"]].dropna()
+            .groupby("Grupo")["Team"]
+            .agg(lambda x: x.mode().iloc[0])
+            .to_dict()
+        )
+        # Normalise both keys for matching: strip non-alphanumeric, lowercase
+        def _norm(s):
+            return re.sub(r"[^a-z0-9]", "", str(s).lower())
+        return {_norm(g): team for g, team in grupo_team.items()}
+    except Exception:
+        return {}
+
+
+def _group_to_team(group_slug, norm_map):
+    """Map a _group slug to a team letter using the normalised dictionary map."""
+    key = re.sub(r"[^a-z0-9]", "", str(group_slug).lower())
+    return norm_map.get(key)
+
+
 EXPECTED_EXPERTS = load_expected_experts()
 N_EXPECTED_EXPERTS = len(EXPECTED_EXPERTS)
 # When experts.txt is not present (e.g. Streamlit Cloud deployment),
@@ -197,6 +307,13 @@ if N_EXPECTED_EXPERTS == 0:
     if _secret_n.isdigit() and int(_secret_n) > 0:
         N_EXPECTED_EXPERTS = int(_secret_n)
         _N_EXPERTS_SOURCE = "secrets (N_EXPERTS_EXPECTED)"
+
+# Per-team expected expert counts (from secrets: N_EXPERTS_TEAM_A … _D)
+N_EXPERTS_PER_TEAM: dict = {}
+for _team in ("A", "B", "C", "D"):
+    _val = _secrets_get(f"N_EXPERTS_TEAM_{_team}", "")
+    if _val.isdigit() and int(_val) > 0:
+        N_EXPERTS_PER_TEAM[_team] = int(_val)
 
 # Page configuration
 st.set_page_config(
@@ -368,163 +485,142 @@ def fetch_and_process_data(
     asset_entries=(),
 ):
     """
-    Fetch submissions from Kobo API and build coverage matrices.
+    Fetch submissions from Kobo API at questionnaire (form group) level.
+    Only needs expert_code, _group, and _submitted_at — no build_wide.
     Cached to avoid redundant API calls.
-    
-    Parameters:
-        excluded_experts: frozenset of expert codes (lowercase) to filter out
     """
     try:
         import requests
     except ImportError:
         st.error("requests library not installed. Run: pip install requests")
         return None
-    
+
     if not kobo_token:
         st.error("KOBO_TOKEN não configurado (Secrets, variável de ambiente, input manual ou config.env)")
         return None
 
     sync_kobo_runtime_config(kobo_server, kobo_token, asset_entries=asset_entries)
-    
-    # Fetch data
+
+    # Fetch data — keep only the columns we need for questionnaire-level tracking
     raw = fetch_all(asset_filter=None)
     raw = raw.fillna("")
-    
+
     if raw.empty:
         return {
             "timestamp": datetime.now(),
             "raw": raw,
-            "wide": pd.DataFrame(),
             "experts": [],
-            "interventions": [],
             "groups": [],
             "n_submissions": 0,
             "n_experts": 0,
             "n_submissions_before_exclusion": 0,
         }
-    
+
     n_before = len(raw)
-    
+
     # Apply expert exclusions if provided
     if excluded_experts:
         excluded_lc = {str(c).strip().lower() for c in excluded_experts}
         raw = raw[
             ~raw["expert_code"].fillna("").astype(str).str.strip().str.lower().isin(excluded_lc)
         ].copy()
-    
-    # Build wide table
-    wide = build_wide(raw)
-    
-    # Extract unique values
+
     experts = sorted(raw["expert_code"].dropna().unique())
     groups = sorted(raw["_group"].dropna().unique())
-    interventions = sorted(wide["intervention"].dropna().unique()) if not wide.empty else []
-    
+    label_map = load_group_label_mapping()
+    group_labels = {g: format_group_label(g, label_map) for g in groups}
+
     return {
         "timestamp": datetime.now(),
         "raw": raw,
-        "wide": wide,
         "experts": experts,
-        "interventions": interventions,
         "groups": groups,
+        "group_labels": group_labels,
         "n_submissions": len(raw),
         "n_experts": len(experts),
         "n_submissions_before_exclusion": n_before,
     }
 
 
-def build_coverage_matrix(wide, experts, interventions):
-    """Build expert × intervention completion matrix."""
-    if wide.empty or not experts or not interventions:
-        return pd.DataFrame()
-    
-    matrix = []
-    for expert in experts:
-        row = {"Expert": expert}
-        expert_data = wide[wide["expert_code"] == expert]
-        for intv in interventions:
-            intv_rows = expert_data[expert_data["intervention"] == intv]
-            if len(intv_rows) > 0:
-                gate = intv_rows.iloc[0].get("gate", "")
-                row[intv] = "✓" if gate and str(gate).strip() else "—"
-            else:
-                row[intv] = "—"
-        matrix.append(row)
-    
-    return pd.DataFrame(matrix)
-
-
-def build_group_coverage(raw, experts, groups):
-    """Build expert × group submission matrix."""
+def build_group_coverage(raw, experts, groups, group_labels=None):
+    """Build expert × group submission matrix using display labels as column names."""
     if raw.empty or not experts or not groups:
         return pd.DataFrame()
-    
-    matrix = []
+
     counts = raw.groupby(["expert_code", "_group"]).size().to_dict()
+    matrix = []
     for expert in experts:
         row = {"Expert": expert}
         for group in groups:
+            label = (group_labels or {}).get(group, group)
             n = counts.get((expert, group), 0)
-            row[group] = "✓" if n == 1 else (f"×{n}" if n > 1 else "—")
+            row[label] = "✓" if n == 1 else (f"×{n}" if n > 1 else "—")
         matrix.append(row)
-    
     return pd.DataFrame(matrix)
 
 
 def compute_stats(data):
-    """Compute summary statistics."""
-    if not data or data["wide"].empty:
-        return {
-            "response_rate": 0,
-            "completed_interventions": 0,
-            "total_possible": 0,
-            "by_intervention": pd.DataFrame(),
-            "by_expert": pd.DataFrame(),
-        }
-    
-    wide = data["wide"]
+    """Compute questionnaire-level summary statistics."""
+    raw = data.get("raw", pd.DataFrame())
     n_experts_observed = data["n_experts"]
     n_experts_expected = N_EXPECTED_EXPERTS if N_EXPECTED_EXPERTS > 0 else n_experts_observed
-    n_interventions = len(data["interventions"])
-    
-    # Overall completion
-    total_possible = n_experts_expected * n_interventions
-    completed = len(wide[wide["gate"].apply(lambda x: bool(x and str(x).strip()))])
+    groups = data["groups"]
+    n_groups = len(groups)
+
+    if raw.empty or not groups:
+        return {
+            "response_rate": 0,
+            "completed_submissions": 0,
+            "total_possible": 0,
+            "n_experts_expected": n_experts_expected,
+            "n_experts_observed": n_experts_observed,
+            "by_group": pd.DataFrame(),
+            "by_expert": pd.DataFrame(),
+        }
+
+    submitted = set(zip(
+        raw["expert_code"].astype(str).str.strip(),
+        raw["_group"].astype(str).str.strip(),
+    ))
+
+    total_possible = n_experts_expected * n_groups
+    completed = sum(1 for (e, g) in submitted if e and g)
     response_rate = (completed / total_possible * 100) if total_possible > 0 else 0
-    
-    # By intervention
-    by_intv = []
-    for intv in data["interventions"]:
-        intv_data = wide[wide["intervention"] == intv]
-        answered = len(intv_data[intv_data["gate"].apply(lambda x: bool(x and str(x).strip()))])
+
+    # By questionnaire group
+    by_group = []
+    group_labels = data.get("group_labels", {})
+    group_counts = raw.groupby("_group")["expert_code"].nunique().to_dict()
+    for group in groups:
+        answered = group_counts.get(group, 0)
         pct = (answered / n_experts_expected * 100) if n_experts_expected > 0 else 0
-        by_intv.append({
-            "Intervenção": intv,
-            "Respondentes": answered,
+        by_group.append({
+            "Questionário": group_labels.get(group, group),
+            "Submetido por": answered,
             "Total Especialistas": n_experts_expected,
-            "Taxa (%)": round(pct, 1)
+            "Taxa (%)": round(pct, 1),
         })
-    
+
     # By expert
+    expert_counts = raw.groupby("expert_code")["_group"].nunique().to_dict()
     by_exp = []
     for expert in data["experts"]:
-        expert_data = wide[wide["expert_code"] == expert]
-        answered = len(expert_data[expert_data["gate"].apply(lambda x: bool(x and str(x).strip()))])
-        pct = (answered / n_interventions * 100) if n_interventions > 0 else 0
+        answered = expert_counts.get(expert, 0)
+        pct = (answered / n_groups * 100) if n_groups > 0 else 0
         by_exp.append({
             "Especialista": expert,
-            "Respondidas": answered,
-            "Total Intervenções": n_interventions,
-            "Taxa (%)": round(pct, 1)
+            "Questionários submetidos": answered,
+            "Total Questionários": n_groups,
+            "Taxa (%)": round(pct, 1),
         })
-    
+
     return {
         "response_rate": round(response_rate, 1),
-        "completed_interventions": completed,
+        "completed_submissions": completed,
         "total_possible": total_possible,
         "n_experts_expected": n_experts_expected,
         "n_experts_observed": n_experts_observed,
-        "by_intervention": pd.DataFrame(by_intv),
+        "by_group": pd.DataFrame(by_group),
         "by_expert": pd.DataFrame(by_exp),
     }
 
@@ -540,84 +636,83 @@ def render_header():
     st.divider()
 
 
-def render_overview_cards(stats):
-    """Render top-level overview cards."""
+def render_overview_cards(stats, data):
+    """Render top-level overview cards including per-team completion rates."""
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
-        st.metric(
-            label="Taxa Global de Resposta",
-            value=f"{stats['response_rate']}%",
-            delta=None
-        )
-    
+        st.metric(label="Taxa Global de Submissão", value=f"{stats['response_rate']}%")
+
     with col2:
         st.metric(
-            label="Respostas Completas (vs esperadas)",
-            value=f"{stats['completed_interventions']} / {stats['total_possible']}",
-            delta=None
+            label="Submissões Recebidas (vs esperadas)",
+            value=f"{stats['completed_submissions']} / {stats['total_possible']}",
         )
-    
+
     with col3:
-        completion_pct = (stats['completed_interventions'] / stats['total_possible'] * 100) if stats['total_possible'] > 0 else 0
-        st.metric(
-            label="Progresso Global (esperado)",
-            value=f"{round(completion_pct, 1)}%",
-            delta=None
-        )
+        st.metric(label="Especialistas Observados", value=stats['n_experts_observed'])
 
     st.caption(
         f"Denominador esperado: {stats['n_experts_expected']} especialistas de {_N_EXPERTS_SOURCE} "
         f"(observados na API: {stats['n_experts_observed']})."
     )
 
+    # Per-team completion rates (only shown when N_EXPERTS_PER_TEAM secrets are configured)
+    if N_EXPERTS_PER_TEAM and not data["raw"].empty:
+        norm_map = load_group_team_mapping()
+        if norm_map:
+            # Count unique submitting experts per group
+            group_experts = (
+                data["raw"]
+                .groupby("_group")["expert_code"]
+                .nunique()
+                .to_dict()
+            )
+            # Aggregate by team
+            team_submitted: dict = {}
+            team_n_groups: dict = {}
+            for group in data["groups"]:
+                team = _group_to_team(group, norm_map)
+                if team:
+                    team_submitted[team] = team_submitted.get(team, 0) + group_experts.get(group, 0)
+                    team_n_groups[team] = team_n_groups.get(team, 0) + 1
+
+            team_colors = {"A": "#1a5c8a", "B": "#2e7d52", "C": "#b45309", "D": "#6b3fa0"}
+            teams_to_show = sorted(set(N_EXPERTS_PER_TEAM) | set(team_submitted))
+            cols = st.columns(len(teams_to_show))
+            for col, team in zip(cols, teams_to_show):
+                n_exp = N_EXPERTS_PER_TEAM.get(team, stats['n_experts_expected'])
+                n_grp = team_n_groups.get(team, 0)
+                submitted = team_submitted.get(team, 0)
+                total = n_exp * n_grp
+                pct = round(submitted / total * 100, 1) if total > 0 else 0
+                color = team_colors.get(team, "#78909C")
+                col.markdown(
+                    f"<div style='background:#ffffff;border:1px solid #ECEFF1;border-radius:8px;"
+                    f"padding:12px 16px;text-align:center;border-top:3px solid {color}'>"
+                    f"<div style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;"
+                    f"color:#78909C;font-weight:600'>Equipa {team}</div>"
+                    f"<div style='font-size:1.6rem;font-weight:700;color:{color}'>{pct}%</div>"
+                    f"<div style='font-size:0.75rem;color:#78909C'>{submitted}/{total} submissões</div>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+
 
 def render_coverage_heatmap(data):
-    """Render expert × intervention coverage heatmap."""
-    st.header("🗂️ Matriz de Cobertura: Especialista × Intervenção")
-    
-    if data["wide"].empty:
-        st.info("Sem dados para mostrar")
-        return
-    
-    coverage = build_coverage_matrix(data["wide"], data["experts"], data["interventions"])
-    
-    if coverage.empty:
-        st.info("Sem dados para mostrar")
-        return
-    
-    # Style the dataframe
-    def highlight_cells(val):
-        if val == "✓":
-            return "background-color: #e8f5ee; color: #2e7d52; font-weight: 700"
-        elif val == "—":
-            return "background-color: #f5f5f5; color: #90A4AE"
-        return ""
-    
-    styled = coverage.style.applymap(highlight_cells, subset=coverage.columns[1:])
-    st.dataframe(styled, use_container_width=True, height=400)
-    
-    # Summary stats
-    total_cells = len(data["experts"]) * len(data["interventions"])
-    completed_cells = (coverage.iloc[:, 1:] == "✓").sum().sum()
-    st.caption(f"Células preenchidas: {completed_cells} / {total_cells} ({round(completed_cells/total_cells*100, 1)}%)")
+    """Render expert × group submission matrix."""
+    st.header("🗂️ Matriz de Cobertura: Especialista × Questionário")
 
-
-def render_group_coverage(data):
-    """Render expert × group coverage matrix."""
-    st.header("📋 Cobertura por Grupo de Formulário")
-    
     if data["raw"].empty:
         st.info("Sem dados para mostrar")
         return
-    
-    coverage = build_group_coverage(data["raw"], data["experts"], data["groups"])
-    
+
+    coverage = build_group_coverage(data["raw"], data["experts"], data["groups"], data.get("group_labels"))
+
     if coverage.empty:
         st.info("Sem dados para mostrar")
         return
-    
-    # Style the dataframe
+
     def highlight_cells(val):
         if val == "✓":
             return "background-color: #e8f5ee; color: #2e7d52; font-weight: 700"
@@ -626,62 +721,84 @@ def render_group_coverage(data):
         elif str(val).startswith("×"):
             return "background-color: #fef9e7; color: #7a5c00; font-weight: 700"
         return ""
-    
+
     styled = coverage.style.applymap(highlight_cells, subset=coverage.columns[1:])
-    st.dataframe(styled, use_container_width=True, height=300)
+    st.dataframe(styled, use_container_width=True, height=400)
+
+    total_cells = len(data["experts"]) * len(data["groups"])
+    completed_cells = (coverage.iloc[:, 1:] == "✓").sum().sum()
+    st.caption(f"Submissões recebidas: {completed_cells} / {total_cells} ({round(completed_cells/total_cells*100, 1)}%)")
+
+
+def _make_chart(chart_data, x_field, x_title, color, tooltip_fields, height=380, bottom_pad=80):
+    """Build a standard bar chart with explicit light background so labels show on Streamlit Cloud."""
+    return (
+        alt.Chart(chart_data)
+        .mark_bar(color=color)
+        .encode(
+            x=alt.X(
+                x_field,
+                sort="-y",
+                axis=alt.Axis(
+                    labelAngle=-45,
+                    title=x_title,
+                    labelColor="#1a1a1a",
+                    titleColor="#1a1a1a",
+                    labelOverlap=False,
+                    labelLimit=0,
+                ),
+            ),
+            y=alt.Y(
+                "Taxa (%):Q",
+                scale=alt.Scale(domain=[0, 100]),
+                title="Taxa (%)",
+                axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a"),
+            ),
+            tooltip=tooltip_fields,
+        )
+        .properties(height=height, padding={"left": 5, "right": 5, "top": 5, "bottom": bottom_pad})
+        .configure_view(fill="#f5f7fa", stroke=None)
+        .configure(background="#f5f7fa")
+    )
 
 
 def render_response_rates(stats):
-    """Render response rate charts."""
+    """Render questionnaire-level response rate charts."""
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        st.subheader("📊 Taxa de Resposta por Intervenção")
-        if not stats["by_intervention"].empty:
-            chart_data = stats["by_intervention"].sort_values("Taxa (%)", ascending=False)
+        st.subheader("📊 Taxa de Submissão por Questionário")
+        if not stats["by_group"].empty:
+            chart_data = stats["by_group"].sort_values("Taxa (%)", ascending=False)
             if alt is not None:
-                chart = (
-                    alt.Chart(chart_data)
-                    .mark_bar(color="#1a5276")
-                    .encode(
-                        x=alt.X(
-                            "Intervenção:N",
-                            sort="-y",
-                            axis=alt.Axis(labelAngle=-45, title="Código da Intervenção", labelColor="#1a1a1a", titleColor="#1a1a1a"),
-                        ),
-                        y=alt.Y("Taxa (%):Q", scale=alt.Scale(domain=[0, 100]), title="Taxa (%)", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
-                        tooltip=["Intervenção", "Respondentes", "Total Especialistas", "Taxa (%)"],
-                    )
-                    .properties(height=400, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
+                chart = _make_chart(
+                    chart_data,
+                    x_field="Questionário:N",
+                    x_title="Questionário",
+                    color="#1a5276",
+                    tooltip_fields=["Questionário", "Submetido por", "Total Especialistas", "Taxa (%)"],
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
-                st.bar_chart(chart_data.set_index("Intervenção")["Taxa (%)"], height=400)
+                st.bar_chart(chart_data.set_index("Questionário")["Taxa (%)"], height=380)
         else:
             st.info("Sem dados")
-    
+
     with col2:
-        st.subheader("👥 Taxa de Resposta por Especialista")
+        st.subheader("👥 Taxa de Submissão por Especialista")
         if not stats["by_expert"].empty:
             chart_data = stats["by_expert"].sort_values("Taxa (%)", ascending=False)
             if alt is not None:
-                chart = (
-                    alt.Chart(chart_data)
-                    .mark_bar(color="#c0392b")
-                    .encode(
-                        x=alt.X(
-                            "Especialista:N",
-                            sort="-y",
-                            axis=alt.Axis(labelAngle=-45, title="Código do Especialista", labelColor="#1a1a1a", titleColor="#1a1a1a"),
-                        ),
-                        y=alt.Y("Taxa (%):Q", scale=alt.Scale(domain=[0, 100]), title="Taxa (%)", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
-                        tooltip=["Especialista", "Respondidas", "Total Intervenções", "Taxa (%)"],
-                    )
-                    .properties(height=400, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
+                chart = _make_chart(
+                    chart_data,
+                    x_field="Especialista:N",
+                    x_title="Código do Especialista",
+                    color="#c0392b",
+                    tooltip_fields=["Especialista", "Questionários submetidos", "Total Questionários", "Taxa (%)"],
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
-                st.bar_chart(chart_data.set_index("Especialista")["Taxa (%)"], height=400)
+                st.bar_chart(chart_data.set_index("Especialista")["Taxa (%)"], height=380)
         else:
             st.info("Sem dados")
 
@@ -732,11 +849,13 @@ def render_submission_timeline(data):
             alt.Chart(ts_df)
             .mark_bar(color="#b7860b")
             .encode(
-                x=alt.X(f"{time_unit}(submitted_at):T", title=x_title, axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
+                x=alt.X(f"{time_unit}(submitted_at):T", title=x_title, axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a", labelOverlap=False)),
                 y=alt.Y("count():Q", title="Número de Submissões", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
                 tooltip=[alt.Tooltip("count():Q", title="Submissões")],
             )
             .properties(height=260, padding={"left": 5, "right": 5, "top": 5, "bottom": 40})
+            .configure_view(fill="#f5f7fa", stroke=None)
+            .configure(background="#f5f7fa")
         )
         st.altair_chart(hist, use_container_width=True)
     else:
@@ -747,26 +866,26 @@ def render_submission_timeline(data):
 
 def render_detailed_tables(stats):
     """Render detailed response rate tables."""
-    st.header("📋 Detalhes de Resposta")
-    
-    tab1, tab2 = st.tabs(["Por Intervenção", "Por Especialista"])
-    
+    st.header("📋 Detalhes de Submissão")
+
+    tab1, tab2 = st.tabs(["Por Questionário", "Por Especialista"])
+
     with tab1:
-        if not stats["by_intervention"].empty:
+        if not stats["by_group"].empty:
             st.dataframe(
-                stats["by_intervention"].sort_values("Taxa (%)", ascending=False),
+                stats["by_group"].sort_values("Taxa (%)", ascending=False),
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
             )
         else:
             st.info("Sem dados")
-    
+
     with tab2:
         if not stats["by_expert"].empty:
             st.dataframe(
                 stats["by_expert"].sort_values("Taxa (%)", ascending=False),
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
             )
         else:
             st.info("Sem dados")
@@ -904,37 +1023,32 @@ def main():
         
         # Summary stats
         st.header("📈 Resumo")
-        if data and not data["wide"].empty:
+        if data and data["n_submissions"] > 0:
             st.metric("Especialistas (esperados)", stats["n_experts_expected"])
             st.metric("Especialistas (observados)", stats["n_experts_observed"])
-            st.metric("Submissões", data["n_submissions"])
-            st.metric("Taxa de Resposta", f"{stats['response_rate']}%")
-            st.metric("Intervenções", len(data["interventions"]))
-            st.metric("Grupos", len(data["groups"]))
-            
+            st.metric("Submissões recebidas", data["n_submissions"])
+            st.metric("Taxa de Submissão", f"{stats['response_rate']}%")
+            st.metric("Questionários", len(data["groups"]))
+
             st.divider()
             st.caption(f"Última actualização: {data['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
         else:
             st.warning("Sem dados disponíveis")
-    
+
     # Main content
-    if data["wide"].empty:
+    if data["n_submissions"] == 0:
         st.warning("⚠️ Nenhuma submissão encontrada ainda.")
         st.info("O painel será actualizado automaticamente quando houver dados disponíveis.")
         st.stop()
-    
-    # Overview cards
-    render_overview_cards(stats)
+
+    # Overview cards (includes team completion)
+    render_overview_cards(stats, data)
     st.divider()
-    
-    # Coverage heatmap
+
+    # Coverage heatmap (expert × questionnaire)
     render_coverage_heatmap(data)
     st.divider()
-    
-    # Group coverage
-    render_group_coverage(data)
-    st.divider()
-    
+
     # Response rate charts
     render_response_rates(stats)
     st.divider()
@@ -942,7 +1056,7 @@ def main():
     # Submission timeline
     render_submission_timeline(data)
     st.divider()
-    
+
     # Detailed tables
     render_detailed_tables(stats)
 
