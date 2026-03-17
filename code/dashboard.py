@@ -635,11 +635,13 @@ def compute_stats(data):
     by_group = []
     group_labels = data.get("group_labels", {})
     group_counts = raw.groupby("_group")["expert_code"].nunique().to_dict()
+    norm_map = load_group_team_mapping()
     for group in groups:
         answered = group_counts.get(group, 0)
         pct = (answered / n_experts_expected * 100) if n_experts_expected > 0 else 0
         by_group.append({
             "Questionário": group_labels.get(group, group),
+            "Equipa": _group_to_team(group, norm_map) or "?",
             "Submetido por": answered,
             "Total Especialistas": n_experts_expected,
             "Taxa (%)": round(pct, 1),
@@ -820,7 +822,7 @@ def render_response_rates(stats):
                     x_field="Questionário:N",
                     x_title="Questionário",
                     color="#1a5276",
-                    tooltip_fields=["Questionário", "Submetido por", "Total Especialistas", "Taxa (%)"],
+                    tooltip_fields=["Questionário", "Equipa", "Submetido por", "Total Especialistas", "Taxa (%)"],
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
@@ -845,6 +847,58 @@ def render_response_rates(stats):
                 st.bar_chart(chart_data.set_index("Especialista")["Taxa (%)"], height=380)
         else:
             st.info("Sem dados")
+
+    # Team-grouped questionnaire chart (only shown when team mapping is available)
+    if not stats["by_group"].empty and alt is not None:
+        team_data = stats["by_group"][stats["by_group"]["Equipa"] != "?"].copy()
+        if not team_data.empty:
+            st.subheader("📊 Taxa de Submissão por Questionário e Equipa")
+            team_colors = {"A": "#1a5c8a", "B": "#2e7d52", "C": "#b45309", "D": "#6b3fa0"}
+            team_order = [t for t in ["A", "B", "C", "D"] if t in team_data["Equipa"].unique()]
+            base = (
+                alt.Chart(team_data)
+                .mark_bar()
+                .encode(
+                    x=alt.X(
+                        "Questionário:N",
+                        sort=alt.EncodingSortField(field="Taxa (%)", op="mean", order="descending"),
+                        axis=alt.Axis(
+                            labelAngle=-45, labelLimit=0, labelOverlap=False,
+                            labelColor="#1a1a1a", titleColor="#1a1a1a", title=None,
+                        ),
+                    ),
+                    y=alt.Y(
+                        "Taxa (%):Q",
+                        scale=alt.Scale(domain=[0, 100]),
+                        title="Taxa (%)",
+                        axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a"),
+                    ),
+                    color=alt.Color(
+                        "Equipa:N",
+                        scale=alt.Scale(domain=list(team_colors.keys()), range=list(team_colors.values())),
+                        legend=None,
+                    ),
+                    tooltip=["Equipa:N", "Questionário:N", "Submetido por:Q", "Total Especialistas:Q", "Taxa (%):Q"],
+                )
+                .properties(height=300, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
+            )
+            faceted = (
+                base.facet(
+                    column=alt.Column(
+                        "Equipa:N",
+                        sort=team_order,
+                        header=alt.Header(
+                            title=None,
+                            labelFontSize=14,
+                            labelFontWeight="bold",
+                            labelColor="#1a1a1a",
+                        ),
+                    )
+                )
+                .configure_view(fill="#f5f7fa", stroke=None)
+                .configure(background="#f5f7fa")
+            )
+            st.altair_chart(faceted, use_container_width=True)
 
 
 def _extract_submission_timestamps(raw):
