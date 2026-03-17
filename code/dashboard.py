@@ -880,7 +880,7 @@ def render_response_rates(stats):
                     ),
                     tooltip=["Equipa:N", "Questionário:N", "Submetido por:Q", "Total Especialistas:Q", "Taxa (%):Q"],
                 )
-                .properties(height=300, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
+                .properties(height=300)
             )
             faceted = (
                 base.facet(
@@ -895,6 +895,7 @@ def render_response_rates(stats):
                         ),
                     )
                 )
+                .properties(padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
                 .configure_view(fill="#f5f7fa", stroke=None)
                 .configure(background="#f5f7fa")
             )
