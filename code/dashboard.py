@@ -647,13 +647,12 @@ def render_response_rates(stats):
                         x=alt.X(
                             "Intervenção:N",
                             sort="-y",
-                            axis=alt.Axis(labelAngle=-45, title="Código da Intervenção"),
+                            axis=alt.Axis(labelAngle=-45, title="Código da Intervenção", labelColor="#1a1a1a", titleColor="#1a1a1a"),
                         ),
-                        y=alt.Y("Taxa (%):Q", scale=alt.Scale(domain=[0, 100]), title="Taxa (%)"),
+                        y=alt.Y("Taxa (%):Q", scale=alt.Scale(domain=[0, 100]), title="Taxa (%)", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
                         tooltip=["Intervenção", "Respondentes", "Total Especialistas", "Taxa (%)"],
                     )
-                    .properties(height=400)
-                    .configure_axis(labelColor="#1a1a1a", titleColor="#1a1a1a")
+                    .properties(height=400, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
@@ -673,13 +672,12 @@ def render_response_rates(stats):
                         x=alt.X(
                             "Especialista:N",
                             sort="-y",
-                            axis=alt.Axis(labelAngle=-45, title="Código do Especialista"),
+                            axis=alt.Axis(labelAngle=-45, title="Código do Especialista", labelColor="#1a1a1a", titleColor="#1a1a1a"),
                         ),
-                        y=alt.Y("Taxa (%):Q", scale=alt.Scale(domain=[0, 100]), title="Taxa (%)"),
+                        y=alt.Y("Taxa (%):Q", scale=alt.Scale(domain=[0, 100]), title="Taxa (%)", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
                         tooltip=["Especialista", "Respondidas", "Total Intervenções", "Taxa (%)"],
                     )
-                    .properties(height=400)
-                    .configure_axis(labelColor="#1a1a1a", titleColor="#1a1a1a")
+                    .properties(height=400, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
                 )
                 st.altair_chart(chart, use_container_width=True)
             else:
@@ -734,12 +732,11 @@ def render_submission_timeline(data):
             alt.Chart(ts_df)
             .mark_bar(color="#b7860b")
             .encode(
-                x=alt.X(f"{time_unit}(submitted_at):T", title=x_title),
-                y=alt.Y("count():Q", title="Número de Submissões"),
+                x=alt.X(f"{time_unit}(submitted_at):T", title=x_title, axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
+                y=alt.Y("count():Q", title="Número de Submissões", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
                 tooltip=[alt.Tooltip("count():Q", title="Submissões")],
             )
-            .properties(height=260)
-            .configure_axis(labelColor="#1a1a1a", titleColor="#1a1a1a")
+            .properties(height=260, padding={"left": 5, "right": 5, "top": 5, "bottom": 40})
         )
         st.altair_chart(hist, use_container_width=True)
     else:

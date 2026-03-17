@@ -66,6 +66,8 @@ streamlit run code/dashboard.py
 - Response rate charts (by intervention and expert)
 - Summary metrics
 
+Note: the dashboard for each workshop is checked in on the worktree branch. Streamlit.io autodeploys from this branch. For the deployed version to work properly, you must manually update the secrets on the streamlit dashboard to include the correct asset IDs from kobo. There is a tool, code/make_secrets_toml.py that you can run to update the secrets needed for streamlit.
+
 ### generate_qrcode.py
 
 Generate QR code for the gateway URL to share with experts.
