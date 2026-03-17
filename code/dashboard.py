@@ -895,6 +895,7 @@ def render_response_rates(stats):
                         ),
                     )
                 )
+                .resolve_scale(x="independent")
                 .properties(padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
                 .configure_view(fill="#f5f7fa", stroke=None)
                 .configure(background="#f5f7fa")
