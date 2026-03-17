@@ -315,7 +315,7 @@ def update_deployed_env(slug, url, env_path=None, key_prefix="SUBFORM_URL_"):
             lines = f.readlines()
     new_lines = []
     for line in lines:
-        if line.strip().startswith(key):
+        if re.match(rf'^{re.escape(key)}\s*=', line.strip()):
             new_lines.append(f"{key} = {url}\n")
             found = True
         else:

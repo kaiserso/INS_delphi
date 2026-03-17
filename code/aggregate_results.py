@@ -225,6 +225,7 @@ def find_delphi_assets():
         sources_used = sorted({entry.get("source", "config.env") for entry in configured})
         print(f"  Using {len(configured)} asset UID(s) from {', '.join(sources_used)}")
         assets = []
+        validation_rows = []  # (slug, uid, status_str)
         for entry in configured:
             r = requests.get(
                 f"{KOBO_SERVER.rstrip('/')}/api/v2/assets/{entry['uid']}/",
@@ -254,9 +255,30 @@ def find_delphi_assets():
                     program_label = form_title.strip()
                 a["_program_label"] = program_label
                 assets.append(a)
+                active = a.get("deployment__active")
+                n_subs = a.get("deployment__submission_count", 0) or 0
+                if active is True:
+                    status = f"✓ active  ({n_subs} submissions)"
+                elif active is False:
+                    status = "⚠  archived"
+                else:
+                    status = "⚠  not deployed"
+                validation_rows.append((entry["slug"], entry["uid"], status))
             else:
-                print(f"  ⚠️  Could not fetch asset {entry['uid']} "
-                      f"(slug={entry['slug']}): {r.status_code}")
+                validation_rows.append((entry["slug"], entry["uid"], f"✗ NOT FOUND ({r.status_code})"))
+
+        # Print validation summary
+        print(f"\n  Asset validation ({len(configured)} configured):")
+        ok_count = sum(1 for _, _, s in validation_rows if s.startswith("✓"))
+        warn_count = len(validation_rows) - ok_count
+        slug_w = max(len(s) for s, _, _ in validation_rows)
+        for slug, uid, status in validation_rows:
+            print(f"    {slug:<{slug_w}}  {uid}  {status}")
+        if warn_count:
+            print(f"\n  ⚠️  {warn_count} asset(s) need attention — check UIDs in deployed_forms.env")
+        else:
+            print(f"  All {ok_count} assets verified.\n")
+
         return assets
 
     # Fallback: search by name pattern
