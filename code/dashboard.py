@@ -527,8 +527,23 @@ def fetch_and_process_data(
 
     experts = sorted(raw["expert_code"].dropna().unique())
     groups = sorted(raw["_group"].dropna().unique())
-    label_map = load_group_label_mapping()
-    group_labels = {g: format_group_label(g, label_map) for g in groups}
+
+    # Prefer _group_label from the API (always available); fall back to local dict
+    if "_group_label" in raw.columns:
+        group_labels = (
+            raw.dropna(subset=["_group", "_group_label"])
+            .groupby("_group")["_group_label"]
+            .first()
+            .to_dict()
+        )
+        # Fill any gaps with the local mapping
+        label_map = load_group_label_mapping()
+        for g in groups:
+            if g not in group_labels:
+                group_labels[g] = format_group_label(g, label_map)
+    else:
+        label_map = load_group_label_mapping()
+        group_labels = {g: format_group_label(g, label_map) for g in groups}
 
     return {
         "timestamp": datetime.now(),

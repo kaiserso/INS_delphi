@@ -233,7 +233,26 @@ def find_delphi_assets():
             )
             if r.ok:
                 a = r.json()
-                a.setdefault("name", entry["slug"])
+                # Use the SUBFORM_ASSET_<slug> key as the authoritative name so that
+                # fetch_submissions derives a clean _group slug (e.g. "apss_1") regardless
+                # of however Kobo stores the asset's display name.
+                a["name"] = entry["slug"]
+                # Extract human-readable program label from form_title in XLSForm settings.
+                # The generator sets form_title to "W1 – <program> | <topic_label>".
+                # We strip the wrapping to get just the program name (e.g. "APSS").
+                form_title = ""
+                settings = a.get("content", {}).get("settings", [])
+                if isinstance(settings, list) and settings:
+                    form_title = settings[0].get("form_title", "")
+                elif isinstance(settings, dict):
+                    form_title = settings.get("form_title", "")
+                if "–" in form_title:
+                    program_label = form_title.split("–", 1)[1].split("|")[0].strip()
+                elif "|" in form_title:
+                    program_label = form_title.split("|")[0].strip()
+                else:
+                    program_label = form_title.strip()
+                a["_program_label"] = program_label
                 assets.append(a)
             else:
                 print(f"  ⚠️  Could not fetch asset {entry['uid']} "
@@ -289,11 +308,12 @@ def list_all_assets_diagnostic():
     print(f"    SUBFORM_ASSET_<slug> = <uid>")
     print()
 
-def fetch_submissions(asset_uid, asset_name):
+def fetch_submissions(asset_uid, asset_name, program_label=""):
     """
     Fetch all submissions for one asset via the data endpoint.
     Returns a DataFrame with one row per submission.
     Handles pagination automatically.
+    program_label: human-readable program name extracted from the form_title (e.g. "APSS").
     """
     import requests
     base = f"{KOBO_SERVER.rstrip('/')}/api/v2/assets/{asset_uid}/data/"
@@ -327,11 +347,32 @@ def fetch_submissions(asset_uid, asset_name):
     else:
         df["_submitted_at"] = ""
 
-    # Derive group slug from asset name or id_string
+    # Derive group slug from asset name.
+    # When called from find_delphi_assets with configured assets, asset_name is the
+    # SUBFORM_ASSET_<slug> key (e.g. "apss_1"), so the regex strips nothing and slug = "apss_1".
     slug = re.sub(rf"^delphi_w1_{TOPIC}_", "",
                   asset_name.lower().replace(" ", "_").replace("|","_"))
     slug = re.sub(r"[^a-z0-9_]", "_", slug).strip("_")
-    df["_group"]       = slug
+    df["_group"] = slug
+
+    # Human-readable label: combine program_label from form_title with chunk number from slug.
+    # e.g. program_label="APSS", slug="apss_1" → "APSS (1)"
+    #      program_label="C&T GERAL", slug="ct_geral" → "C&T GERAL"
+    if program_label:
+        chunk_match = re.search(r"_(\d+)$", slug)
+        if chunk_match:
+            label = f"{program_label} ({chunk_match.group(1)})"
+        else:
+            label = program_label
+    else:
+        # Fallback: humanise the slug (no form_title available)
+        base = re.sub(r"_\d+$", "", slug)
+        chunk_match = re.search(r"_(\d+)$", slug)
+        label = base.replace("_", " ").title()
+        if chunk_match:
+            label += f" ({chunk_match.group(1)})"
+    df["_group_label"] = label
+
     df["_source_file"] = f"API:{asset_uid}"
     print(f"  Fetched: {asset_name}  ({len(df)} submissions, group={slug})")
     return df
@@ -367,7 +408,7 @@ def fetch_all(asset_filter=None):
         if not has_deployment or active is None:
             print(f"  Skipping {a['name']} (never deployed — no active deployment)")
             continue
-        df = fetch_submissions(a["uid"], a["name"])
+        df = fetch_submissions(a["uid"], a["name"], program_label=a.get("_program_label", ""))
         if not df.empty:
             frames.append(df)
 
