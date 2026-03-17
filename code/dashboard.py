@@ -266,7 +266,31 @@ def format_group_label(group_slug, label_map):
 
 @st.cache_data(show_spinner=False)
 def load_group_team_mapping(topic=TOPIC):
-    """Return {group_slug: team} by matching dictionary Grupo names to _group slugs."""
+    """Return {base_programa_slug: team} from secrets (TEAM_GROUPS_JSON) or local xlsx fallback.
+
+    Secrets format (store as TEAM_GROUPS_JSON):
+        '{"A": ["laboratorio", "apss"], "B": ["ats", "prevencao"], ...}'
+
+    The keys are base Programa slugs (without trailing _N chunk suffix).
+    Falls back to reading the dictionary xlsx (Programa column) when available locally.
+    """
+    import json
+
+    # 1. Prefer secrets — works on Streamlit Cloud without any local files
+    raw_json = _secrets_get("TEAM_GROUPS_JSON", "")
+    if raw_json:
+        try:
+            mapping = json.loads(raw_json)
+            # Invert: {base_slug: team}
+            result = {}
+            for team, slugs in mapping.items():
+                for s in slugs:
+                    result[str(s).strip().lower()] = str(team).strip().upper()
+            return result
+        except Exception:
+            pass
+
+    # 2. Fallback: local dictionary xlsx (only available in dev environment)
     dict_path = Path(__file__).resolve().parents[1] / "dict" / f"dicionario_delphi_w1_{topic}.xlsx"
     if not dict_path.exists():
         return {}
@@ -274,27 +298,32 @@ def load_group_team_mapping(topic=TOPIC):
         xl = pd.ExcelFile(dict_path)
         sheet = next((s for s in xl.sheet_names if s.lower().startswith("catalogo")), xl.sheet_names[0])
         df = pd.read_excel(dict_path, sheet_name=sheet, header=1)
-        if "Grupo" not in df.columns or "Team" not in df.columns:
+        if "Programa" not in df.columns or "Team" not in df.columns:
             return {}
-        # Dominant team per Grupo name
-        grupo_team = (
-            df[["Grupo", "Team"]].dropna()
-            .groupby("Grupo")["Team"]
+        # Dominant team per Programa slug
+        programa_team = (
+            df[["Programa", "Team"]].dropna()
+            .groupby("Programa")["Team"]
             .agg(lambda x: x.mode().iloc[0])
             .to_dict()
         )
-        # Normalise both keys for matching: strip non-alphanumeric, lowercase
-        def _norm(s):
-            return re.sub(r"[^a-z0-9]", "", str(s).lower())
-        return {_norm(g): team for g, team in grupo_team.items()}
+        return {_slugify(p): str(t).strip().upper() for p, t in programa_team.items()}
     except Exception:
         return {}
 
 
-def _group_to_team(group_slug, norm_map):
-    """Map a _group slug to a team letter using the normalised dictionary map."""
-    key = re.sub(r"[^a-z0-9]", "", str(group_slug).lower())
-    return norm_map.get(key)
+def _group_to_team(group_slug, base_slug_map):
+    """Map a _group slug (e.g. 'apss_1') to a team letter.
+
+    Strips the trailing chunk suffix (_N) before looking up the base Programa slug.
+    """
+    slug = str(group_slug).strip().lower()
+    # Try exact match first
+    if slug in base_slug_map:
+        return base_slug_map[slug]
+    # Strip trailing _<digits> chunk suffix
+    base = re.sub(r"_\d+$", "", slug)
+    return base_slug_map.get(base)
 
 
 EXPECTED_EXPERTS = load_expected_experts()
@@ -864,11 +893,14 @@ def render_submission_timeline(data):
             alt.Chart(ts_df)
             .mark_bar(color="#b7860b")
             .encode(
-                x=alt.X(f"{time_unit}(submitted_at):T", title=x_title, axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a", labelOverlap=False)),
+                x=alt.X(f"{time_unit}(submitted_at):T", title=x_title, axis=alt.Axis(
+                    labelColor="#1a1a1a", titleColor="#1a1a1a",
+                    labelAngle=-45, labelOverlap=False, labelLimit=0,
+                )),
                 y=alt.Y("count():Q", title="Número de Submissões", axis=alt.Axis(labelColor="#1a1a1a", titleColor="#1a1a1a")),
                 tooltip=[alt.Tooltip("count():Q", title="Submissões")],
             )
-            .properties(height=260, padding={"left": 5, "right": 5, "top": 5, "bottom": 40})
+            .properties(height=260, padding={"left": 5, "right": 5, "top": 5, "bottom": 80})
             .configure_view(fill="#f5f7fa", stroke=None)
             .configure(background="#f5f7fa")
         )
