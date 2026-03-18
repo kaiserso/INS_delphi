@@ -351,7 +351,7 @@ body::before {
             Não recebeu? Enviar novamente
           </button>
           <p class="info-note" style="margin-top:12px">
-            O código expira em 10 minutos · <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="345a5b19465144584d745955535d571a585d5a5f">[email&#160;protected]</a></strong>
+            O código expira em 10 minutos · <strong>no-reply@magic.link</strong>
           </p>
         </div>
 
@@ -415,7 +415,7 @@ body::before {
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ═══════════════════════════════════════════════════════════════
 // Branding
 // ═══════════════════════════════════════════════════════════════
@@ -557,12 +557,7 @@ if (!CONFIG.REQUIRE_AUTH) {
     }
     showSubpanel('panelVerifying');
     document.querySelector('#panelVerifying .spinner-label').textContent = 'Acesso confirmado. A redirecionar…';
-    var _dest = CONFIG.MASTER_URL;
-    try {
-      var _m = window.location.search.match(/[?&]return=([^&]*)/);
-      if (_m) _dest = decodeURIComponent(_m[1]);
-    } catch(e) {}
-    setTimeout(() => window.location.replace(_dest), 1200);
+    setTimeout(() => window.location.replace(CONFIG.MASTER_URL), 1200);
   }
 
   window.handleSignout = async function() {
@@ -707,4 +702,14 @@ if (!CONFIG.REQUIRE_AUTH) {
   waitForMagic(function() {
     window.magic = new Magic(CONFIG.MAGIC_API_KEY);
     document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').textContent = 
+    document.getElementById('submitBtn').textContent = 'Enviar código de acesso';
+    (async function() {
+      if (await magic.user.isLoggedIn()) { revealChecklist(); return; }
+      showSubpanel('panelLogin');
+    })();
+  });
+
+} // end else (REQUIRE_AUTH)
+</script>
+</body>
+</html>
