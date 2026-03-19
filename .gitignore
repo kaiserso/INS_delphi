@@ -22,3 +22,4 @@ kobo
 kobo_gen/*
 /docs
 secrets.toml
+report_specification.md
