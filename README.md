@@ -6,8 +6,19 @@ Delphi W1 data collection and reporting system for malaria/SMI/HIV/TB interventi
 
 1. Install dependencies:
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+If you are creating a new workshop, consider forking a new worktree to keep things organized:
+
+```bash
+(.venv) pn@Mac INS_delphi_f2 % git worktree add -b f2-branch-tb ../INS_delphi_f2_tb 
+```
+
+This will fork the current branch off, create a new branch, and
+initialize a new folder next to the current one.
 
 2. Configure `config.env`:
    - Set `KOBO_TOKEN` with your KoboToolbox API token

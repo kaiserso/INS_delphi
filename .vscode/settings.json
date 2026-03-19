@@ -1,0 +1,9 @@
+{
+  "workbench.colorTheme": "Quiet Light",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#C8B89A",
+    "titleBar.activeForeground": "#3B2F1E",
+    "statusBar.background": "#C8B89A",
+    "statusBar.foreground": "#3B2F1E"
+  }
+}
