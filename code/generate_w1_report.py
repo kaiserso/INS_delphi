@@ -111,7 +111,12 @@ def _parse_catalogo_sheet(ws):
         if not code or not str(code).strip():
             continue
         code = str(code).strip()
-        label     = row[col["Intervenção"]]     if "Intervenção"  in col else None
+        # Look for either "Actividade" (HIV) or "Intervenção" (other programs)
+        label = None
+        if "Actividade" in col:
+            label = row[col["Actividade"]]
+        elif "Intervenção" in col:
+            label = row[col["Intervenção"]]
         component = row[col["Componente"]]      if "Componente"   in col else None
         url       = row[col["URL da Ficha"]]    if "URL da Ficha" in col else None
         interventions.append({
@@ -933,10 +938,86 @@ def univariate_analysis(results, df):
 def esc(s):
     return str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"','&quot;')
 
+def extract_numeric_code(full_code):
+    """Extract leading numeric component from code (e.g., '01' from 'hiv_01'; '1.1' from '1.1.001')."""
+    import re
+    code_str = str(full_code).strip()
+    
+    # First, try to extract numeric prefix (digits and dots) at the very start
+    match = re.match(r'^([\d.]+)', code_str)
+    if match:
+        return match.group(1)
+    
+    # If code starts with letters/underscores, try to find numeric component after last underscore
+    # E.g., "hiv_01" -> "01"
+    match = re.search(r'_(\d+)$', code_str)
+    if match:
+        return match.group(1)
+    
+    # If code contains numeric component anywhere after non-numeric prefix
+    # E.g., "HIV01" -> "01"
+    match = re.search(r'(\d+)$', code_str)
+    if match:
+        return match.group(1)
+    
+    # Fallback: return the whole code if no numeric component found
+    return code_str
+
+def format_intervention_label(code, label):
+    """Format intervention display as 'numeric_code. label' avoiding duplication."""
+    numeric = extract_numeric_code(code)
+    label_str = str(label).strip()
+    code_str = str(code).strip()
+    # If label is the same as code (no metadata), just return numeric code
+    if label_str == code_str:
+        return numeric
+    # Otherwise show numeric code prefix with label name
+    return f"{numeric}. {label_str}"
+
+def svg_score_strip(all_vals, current_val, color, width=168, height=28):
+    """Horizontal strip showing score distribution with current value marked."""
+    if not all_vals:
+        return ""
+    mn = min(all_vals)
+    mx = max(all_vals)
+    span = (mx - mn) or 1.0
+    pad = 6
+    track_w = width - 2 * pad
+    cy = 10
+    def xp(v):
+        return pad + (v - mn) / span * track_w
+    sv = sorted(all_vals)
+    n = len(sv)
+    q25 = sv[max(0, n // 4)]
+    q75 = sv[min(n - 1, 3 * n // 4)]
+    cur_x = xp(current_val)
+    q25_x = xp(q25)
+    q75_x = xp(q75)
+    out = [f'<svg width="{width}" height="{height}" style="display:inline-block;vertical-align:middle;overflow:visible">']
+    out.append(f'<rect x="{pad}" y="{cy-2}" width="{track_w}" height="4" rx="2" fill="#e5e7eb"/>')
+    iqr_w = max(0.0, q75_x - q25_x)
+    out.append(f'<rect x="{q25_x:.1f}" y="{cy-2}" width="{iqr_w:.1f}" height="4" rx="1" fill="#d1d5db"/>')
+    for v in sv:
+        x = xp(v)
+        out.append(f'<line x1="{x:.1f}" y1="{cy-5}" x2="{x:.1f}" y2="{cy+5}" stroke="#9ca3af" stroke-width="0.8" stroke-opacity="0.5"/>')
+    out.append(f'<circle cx="{cur_x:.1f}" cy="{cy}" r="5" fill="{color}" stroke="white" stroke-width="1.5"/>')
+    out.append(f'<text x="{cur_x:.1f}" y="{cy+18}" text-anchor="middle" font-size="9" fill="{color}" font-weight="600">{current_val:.3f}</text>')
+    out.append('</svg>')
+    return ''.join(out)
+
+
 def render_html(results, stats, interventions, source_file, univariate=None,
-                include_xyplot=True, include_scoring=True):
+                include_xyplot=True, include_scoring=True,
+                alluvial_top=None, priority_order="s_pond"):
     inv_label = {r["code"]: r["label"] for r in interventions}
-    sorted_inv = sorted(results.values(), key=lambda r: r["composite"], reverse=True)
+    # Create display labels with numeric code prefix
+    display_label = {r["code"]: format_intervention_label(r["code"], r["label"]) 
+                     for r in interventions}
+    _sort_key = (lambda r: r["s_base"]) if priority_order == "s_base" else (lambda r: r["s_pond"])
+    sorted_inv = sorted(results.values(), key=_sort_key, reverse=True)
+    all_s_base_vals = sorted(r["s_base"] for r in results.values())
+    all_s_pond_vals = sorted(r["s_pond"] for r in results.values())
+    _sort_label = "S_base (não-ponderado)" if priority_order == "s_base" else "S_pond (ponderado por experiência)"
     for i, r in enumerate(sorted_inv, 1):
         r["display_idx"] = i
     now = datetime.now().strftime("%d/%m/%Y às %H:%M")
@@ -950,9 +1031,9 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         if high_gate or high_imp: return "media"
         return "baixa"
 
-    alta  = [f'{r.get("display_idx", "-")}. {r["label"]}' for r in sorted_inv if tier(r) == "alta"]
-    media = [f'{r.get("display_idx", "-")}. {r["label"]}' for r in sorted_inv if tier(r) == "media"]
-    baixa = [f'{r.get("display_idx", "-")}. {r["label"]}' for r in sorted_inv if tier(r) == "baixa"]
+    alta  = [display_label.get(r["code"], r["label"]) for r in sorted_inv if tier(r) == "alta"]
+    media = [display_label.get(r["code"], r["label"]) for r in sorted_inv if tier(r) == "media"]
+    baixa = [display_label.get(r["code"], r["label"]) for r in sorted_inv if tier(r) == "baixa"]
 
     # ── Response rate section ──────────────────────────────────────────────
     rr_rows = ""
@@ -983,7 +1064,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         imp    = r["avg_impact"]
         imp_cls = "imp-high" if imp >= 2.5 else ("imp-med" if imp >= 1.8 else "imp-low")
         imp_lbl = "Alto" if imp >= 2.5 else ("Médio" if imp >= 1.8 else "Baixo")
-        label_with_idx = f'{r.get("display_idx", i)}. {r["label"]}'
+        label_with_idx = display_label.get(r["code"], r["label"])
         name_cell = (f'<a href="{esc(r["url"])}" target="_blank" class="inv-link">{esc(label_with_idx)}</a>'
                if r["url"] else esc(label_with_idx))
         rank_rows += f"""<tr>
@@ -1031,7 +1112,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             imp_cls = "mc-impact-high" if imp >= 2.5 else ("mc-impact-med" if imp >= 1.8 else "mc-impact-low")
 
             def make_tag(code, cls):
-                lbl = inv_label.get(code, code)
+                lbl = display_label.get(code, inv_label.get(code, code))
                 idx_ref = results.get(code, {}).get("display_idx", "?") if isinstance(results.get(code, {}), dict) else "?"
                 return f'<span class="{cls}">{esc(str(idx_ref) + ". " + lbl)}</span>'
 
@@ -1064,7 +1145,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             missing_note = (f'<div class="missing-note">⚠ {r["n_missing"]} resposta(s) em falta / '
                             f'não aplicável</div>') if r["n_missing"] else ""
 
-            label_with_idx = f'{r.get("display_idx", "-")}. {r["label"]}'
+            label_with_idx = display_label.get(r["code"], r["label"])
             name_cell = (f'<a href="{esc(r["url"])}" target="_blank" class="inv-link">{esc(label_with_idx)}</a>'
                          if r["url"] else esc(label_with_idx))
 
@@ -1089,6 +1170,10 @@ def render_html(results, stats, interventions, source_file, univariate=None,
                 <div class="metric-chip"><div class="mc-val" style="color:var(--ink)">{r["dup_pct"]}%</div><div class="mc-lbl">Duplicação</div></div>
                 <div class="metric-chip"><div class="mc-val" style="color:var(--accent2)">{r["intg_pct"]}%</div><div class="mc-lbl">Integração</div></div>
                 <div class="metric-chip"><div class="mc-val" style="color:var(--muted)">{r["res_pct"]}%</div><div class="mc-lbl">↓ Recursos</div></div>
+              </div>
+              <div class="score-strip-row">
+                <div class="score-strip-item"><span class="score-strip-lbl">S<sub>base</sub></span>{svg_score_strip(all_s_base_vals, r["s_base"], "#1a6b3a")}</div>
+                <div class="score-strip-item"><span class="score-strip-lbl">S<sub>pond</sub></span>{svg_score_strip(all_s_pond_vals, r["s_pond"], "#1a5276")}</div>
               </div>
               {dup_row}{intg_row}
               {cmt_html}
@@ -1124,24 +1209,24 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         ) if any(u["exp_counts"].values()) else ""
 
         gate_bars = svg_hbar_stacked(
-          [(f'{r.get("display_idx", "-")}. {r["label"]}'[:52], [r["n_sim"], r["n_poss"], r["n_nao"]])
+          [(display_label.get(r["code"], r["label"])[:52], [r["n_sim"], r["n_poss"], r["n_nao"]])
              for r in u["sorted_gate"]],
             width=600, bar_h=14, gap=5, colors=GATE_COLORS, label_w=240
         )
         impact_bars = svg_hbar_single(
-          [(f'{r.get("display_idx", "-")}. {r["label"]}'[:52], r["avg_impact"], 3.0) for r in u["sorted_impact"]],
+          [(display_label.get(r["code"], r["label"])[:52], r["avg_impact"], 3.0) for r in u["sorted_impact"]],
             width=600, bar_h=14, gap=5, color="#1a6b3a", label_w=240, fmt=".2f"
         )
         dup_bars  = svg_hbar_single(
-          [(f'{r.get("display_idx", "-")}. {r["label"]}'[:52], r["dup_pct"],  100) for r in u["sorted_dup"]],
+          [(display_label.get(r["code"], r["label"])[:52], r["dup_pct"],  100) for r in u["sorted_dup"]],
             width=600, bar_h=14, gap=5, color="#9b2226", label_w=240, fmt=".0f"
         )
         intg_bars = svg_hbar_single(
-          [(f'{r.get("display_idx", "-")}. {r["label"]}'[:52], r["intg_pct"], 100) for r in u["sorted_intg"]],
+          [(display_label.get(r["code"], r["label"])[:52], r["intg_pct"], 100) for r in u["sorted_intg"]],
             width=600, bar_h=14, gap=5, color="#1a5276", label_w=240, fmt=".0f"
         )
         res_bars  = svg_hbar_single(
-          [(f'{r.get("display_idx", "-")}. {r["label"]}'[:52], r["res_pct"],  100) for r in u["sorted_res"]],
+          [(display_label.get(r["code"], r["label"])[:52], r["res_pct"],  100) for r in u["sorted_res"]],
             width=600, bar_h=14, gap=5, color="#5b5ea6", label_w=240, fmt=".0f"
         )
         scatter_oi = svg_scatter_optim_impact_exp(list(results.values())) if include_xyplot else ""
@@ -1202,15 +1287,13 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             width=480, bar_h=14, gap=5, color="#1a5276", label_w=240, fmt=".3f"
         )
 
-        # Keep the flow readable by limiting to top interventions by S_base rank.
-        _alluvial_cutoff = 20
         _all_by_base = sorted(results.values(), key=lambda r: r.get("rank_base", 10**9))
-        alluvial_items = _all_by_base[:_alluvial_cutoff]
+        alluvial_items = _all_by_base if alluvial_top is None else _all_by_base[:alluvial_top]
         alluvial_svg = svg_alluvial_weighting(alluvial_items)
-        if len(results) > _alluvial_cutoff:
-            _excl = ", ".join(f'{r.get("display_idx", "-")}. {esc(r["label"])}' for r in _all_by_base[_alluvial_cutoff:])
+        if alluvial_top is not None and len(results) > alluvial_top:
+            _excl = ", ".join(esc(display_label.get(r["code"], r["label"])) for r in _all_by_base[alluvial_top:])
             alluvial_note = (f'<div style="font-size:11px;color:var(--muted);margin-top:4px">'
-                            f'<em>Diagrama mostra as {_alluvial_cutoff} intervenções com maior S<sub>base</sub>'
+                            f'<em>Diagrama mostra as {alluvial_top} intervenções com maior S<sub>base</sub>'
                             f' (de {len(results)} no total). Exclu&#237;das: {_excl}.</em></div>')
         else:
             alluvial_note = ""
@@ -1222,7 +1305,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             delta_col = "#1a6b3a" if delta > 0 else ("#c0392b" if delta < 0 else "#6b7280")
             score_table_rows += f"""<tr>
               <td class="rank-num">{r.get("display_idx","")}</td>
-              <td style="font-weight:500;font-size:12px">{esc(str(r.get("display_idx", "-")) + ". " + r["label"])}</td>
+              <td style="font-weight:500;font-size:12px">{esc(display_label.get(r["code"], r["label"]))}</td>
               <td style="text-align:center;font-weight:600;color:#7a5c00">{r.get("gate_mean", 0):.3f}</td>
               <td style="text-align:center;font-weight:600">{r["s_base"]:.3f}</td>
               <td style="text-align:center;font-weight:600;color:#1a5276">{r["s_pond"]:.3f}</td>
@@ -1392,6 +1475,9 @@ body{{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);
 .mc-denom{{font-size:10px;font-family:'DM Sans',sans-serif}}
 .mc-lbl{{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}}
 .mc-impact-high{{color:var(--sim)}}.mc-impact-med{{color:var(--poss)}}.mc-impact-low{{color:#9ca3af}}
+.score-strip-row{{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}}
+.score-strip-item{{display:flex;align-items:center;gap:6px}}
+.score-strip-lbl{{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);width:38px;flex-shrink:0;text-align:right}}
 .tag-row{{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}}
 .tag-label{{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}}
 .dup-label{{color:#9b2226}}
@@ -1536,7 +1622,7 @@ body{{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);
   <!-- ═══ RANKING TABLE ════════════════════════════════════════════════════ -->
   <div class="section-header">
     <h2>Tabela de Prioridade — Todas as Intervenções</h2>
-    <span class="subtitle">Ordenadas por pontuação composta</span>
+    <span class="subtitle">Ordenadas por {_sort_label}</span>
   </div>
 
   <table class="rank-table">
@@ -1860,6 +1946,10 @@ def build_pptx(results, stats, interventions, results_path,
         print("  ⚠ cairosvg not installed — PPTX will be generated without chart images.")
         print("    Run: pip install cairosvg")
 
+    # Create display labels with numeric code prefix
+    display_label = {r["code"]: format_intervention_label(r["code"], r["label"]) 
+                     for r in interventions}
+
     prs = _Prs()
     prs.slide_width  = _SW
     prs.slide_height = _SH
@@ -1927,7 +2017,7 @@ def build_pptx(results, stats, interventions, results_path,
 
     # 2a: Gate distribution — donut + stacked bars
     gate_stacked_rows = [
-        (r["label"][:38], [r["n_sim"], r["n_poss"], r["n_nao"]])
+        (display_label.get(r["code"], r["label"])[:38], [r["n_sim"], r["n_poss"], r["n_nao"]])
         for r in sorted_gate
     ]
     gate_donut_svg = svg_donut(
@@ -1944,7 +2034,7 @@ def build_pptx(results, stats, interventions, results_path,
 
     # 2b: Expected impact — donut + bars
     max_imp = max((r["avg_impact"] for r in items), default=3.0) or 3.0
-    impact_rows = [(r["label"][:38], r["avg_impact"], max_imp) for r in sorted_imp]
+    impact_rows = [(display_label.get(r["code"], r["label"])[:38], r["avg_impact"], max_imp) for r in sorted_imp]
     if imp_counts and any(imp_counts.values()):
         imp_labels = {1: "Baixo", 2: "Médio", 3: "Alto"}
         imp_donut_svg = svg_donut(
@@ -1979,7 +2069,7 @@ def build_pptx(results, stats, interventions, results_path,
         ("2e · % Potencial de Integração",              "intg_pct", sorted_intg),
         ("2f · % Possibilidade de Redução de Recursos", "res_pct",  sorted_res),
     ]:
-        bar_rows = [(r["label"][:38], r[field], 100) for r in src]
+        bar_rows = [(display_label.get(r["code"], r["label"])[:38], r[field], 100) for r in src]
         _slide_chart(prs, slide_title,
                      _svg_to_png(svg_hbar_single(bar_rows, width=900)))
 
@@ -2010,9 +2100,9 @@ def build_pptx(results, stats, interventions, results_path,
             max((r["s_base"] for r in items), default=1.0),
             max((r["s_pond"] for r in items), default=1.0),
         ) or 1.0
-        sbase_rows = [(r["label"][:38], r["s_base"], s_max)
+        sbase_rows = [(display_label.get(r["code"], r["label"])[:38], r["s_base"], s_max)
                       for r in sorted(items, key=lambda r: r["s_base"], reverse=True)]
-        spond_rows = [(r["label"][:38], r["s_pond"], s_max)
+        spond_rows = [(display_label.get(r["code"], r["label"])[:38], r["s_pond"], s_max)
                       for r in sorted(items, key=lambda r: r["s_pond"], reverse=True)]
         _slide_two_charts(
             prs, "Pontuações S_base e S_pond",
@@ -2028,7 +2118,7 @@ def build_pptx(results, stats, interventions, results_path,
 
         score_rows = [
             (r.get("rank_base", "—"),
-             r["label"][:42],
+             display_label.get(r["code"], r["label"])[:42],
              r.get("component", "")[:22] or "—",
              f"{r['s_base']:.3f}",
              f"{r['s_pond']:.3f}",
@@ -2049,7 +2139,7 @@ def build_pptx(results, stats, interventions, results_path,
 
     priority_rows = [
         (r.get("rank_base", "—"),
-         r["label"][:44],
+         display_label.get(r["code"], r["label"])[:44],
          r.get("component", "")[:22] or "—",
          f"{r['pct_optimizable']}%",
          f"{r.get('avg_impact',0):.1f}",
@@ -2077,11 +2167,11 @@ def build_pptx(results, stats, interventions, results_path,
         if hg or hi:   return "media"
         return "baixa"
 
-    alta  = [f"{r.get('display_idx','-')}. {r['label']}"
+    alta  = [display_label.get(r['code'], r['label'])
              for r in sorted_inv if _tier(r) == "alta"]
-    media = [f"{r.get('display_idx','-')}. {r['label']}"
+    media = [display_label.get(r['code'], r['label'])
              for r in sorted_inv if _tier(r) == "media"]
-    baixa = [f"{r.get('display_idx','-')}. {r['label']}"
+    baixa = [display_label.get(r['code'], r['label'])
              for r in sorted_inv if _tier(r) == "baixa"]
 
     _slide_divider(prs, "Próximos Passos", "Classificação por prioridade")
@@ -2111,7 +2201,7 @@ def build_pptx(results, stats, interventions, results_path,
                 continue
             comp_rows.append((
                 intv["code"],
-                intv["label"][:38],
+                display_label.get(intv["code"], intv["label"])[:38],
                 f"{r['pct_optimizable']}%",
                 f"{r['pct_definitely']}%",
                 f"{r.get('avg_impact',0):.1f}",
@@ -2147,6 +2237,8 @@ def main():
     config_path = None
     simple_sections = False
     generate_pptx = False
+    alluvial_top = None
+    priority_order = "s_pond"
 
     # Parse optional arguments
     i = 2
@@ -2204,6 +2296,40 @@ def main():
 
       if arg == "--pptx":
         generate_pptx = True
+        i += 1
+        continue
+
+      if arg in ("--alluvial-top",):
+        if i + 1 >= len(sys.argv):
+          sys.exit("Erro: --alluvial-top requer um número inteiro.")
+        try:
+            alluvial_top = int(sys.argv[i + 1])
+        except ValueError:
+            sys.exit("Erro: --alluvial-top requer um número inteiro.")
+        i += 2
+        continue
+      if arg.startswith("--alluvial-top="):
+        try:
+            alluvial_top = int(arg.split("=", 1)[1])
+        except ValueError:
+            sys.exit("Erro: --alluvial-top requer um número inteiro.")
+        i += 1
+        continue
+
+      if arg == "--priority-order":
+        if i + 1 >= len(sys.argv):
+          sys.exit("Erro: --priority-order requer um valor (s_base ou s_pond).")
+        pord = sys.argv[i + 1].lower()
+        if pord not in ("s_base", "s_pond"):
+            sys.exit("Erro: --priority-order deve ser 's_base' ou 's_pond'.")
+        priority_order = pord
+        i += 2
+        continue
+      if arg.startswith("--priority-order="):
+        pord = arg.split("=", 1)[1].lower()
+        if pord not in ("s_base", "s_pond"):
+            sys.exit("Erro: --priority-order deve ser 's_base' ou 's_pond'.")
+        priority_order = pord
         i += 1
         continue
 
@@ -2315,6 +2441,8 @@ def main():
       univariate,
       include_xyplot=not simple_sections,
       include_scoring=not simple_sections,
+      alluvial_top=alluvial_top,
+      priority_order=priority_order,
     )
 
     ts       = datetime.now().strftime("%Y%m%d_%H%M")
