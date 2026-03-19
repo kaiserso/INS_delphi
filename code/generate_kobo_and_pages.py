@@ -8,9 +8,12 @@ Reads dicionario_delphi_w1_<program>.xlsx and produces:
 Usage:
   python generate_kobo_and_pages.py
   python generate_kobo_and_pages.py --catalog-sheet "Catalogo_SMI"
+  python generate_kobo_and_pages.py --config tests/fixtures/hiv/config.env
 
 Required:
   Define CATALOG_SHEET in config.env or pass --catalog-sheet on command line.
+  Pass --config <path> to load a specific config file instead of searching for
+  config.env in the current directory or script directory (useful for testing).
 """
 
 import os
@@ -28,18 +31,36 @@ import html as html_module
 
 import pathlib
 
+def _get_cli_config_path(argv):
+    """Return the value of --config <path> from argv, or empty string."""
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--config" and i + 1 < len(argv):
+            return argv[i + 1]
+        if arg.startswith("--config="):
+            return arg.split("=", 1)[1]
+        i += 1
+    return ""
+
 def load_config(path="config.env"):
     cfg = {}
-    import pathlib
-    # Current working directory takes priority over script directory,
-    # so a local config.env overrides the template next to the script.
-    cwd_path   = pathlib.Path.cwd() / path
-    script_dir = pathlib.Path(__file__).parent / path
-    if cwd_path.exists():
-        config_path = cwd_path
-    elif script_dir.exists():
-        config_path = script_dir
+    p = pathlib.Path(path)
+    # If caller passed an explicit path (absolute or has a directory component),
+    # use it directly rather than searching cwd / script dir.
+    if p.is_absolute() or p.parent != pathlib.Path("."):
+        config_path = p if p.exists() else None
     else:
+        # Bare filename: cwd takes priority over script directory.
+        cwd_path   = pathlib.Path.cwd() / path
+        script_dir = pathlib.Path(__file__).parent / path
+        if cwd_path.exists():
+            config_path = cwd_path
+        elif script_dir.exists():
+            config_path = script_dir
+        else:
+            config_path = None
+    if not config_path:
         return cfg
     with open(config_path, encoding="utf-8") as f:
         for line in f:
@@ -50,8 +71,16 @@ def load_config(path="config.env"):
             cfg[k.strip()] = v.strip()
     return cfg
 
-_cfg = load_config()
-_deployed_cfg = load_config("deployed_forms.env")
+_cli_config = _get_cli_config_path(sys.argv)
+if _cli_config and not pathlib.Path(_cli_config).exists():
+  sys.exit(f"Error: config file not found: {_cli_config}")
+_cfg = load_config(_cli_config or "config.env")
+# When --config names an explicit file, look for deployed_forms.env in the same
+# directory first so fixture directories are fully self-contained.
+_CONFIG_DIR = pathlib.Path(_cli_config).resolve().parent if _cli_config else None
+_deployed_cfg = load_config(
+    str(_CONFIG_DIR / "deployed_forms.env") if _CONFIG_DIR else "deployed_forms.env"
+)
 
 def _get(key, default=""):
     return _cfg.get(key, default)
@@ -73,10 +102,23 @@ def _get_cli_catalog_sheet(argv):
     i += 1
   return ""
 
-INPUT_FILE    = _get("INPUT_FILE",   "dicionario_delphi_w1_YOUR_PROGRAM_CODE.xlsx")
-OUTPUT_KOBO   = _get("OUTPUT_KOBO",  "delphi_w1_YOUR_PROGRAM_CODE_kobo.xlsx")
-KOBO_DIR      = _get("KOBO_DIR",     "kobo_gen")
-PAGES_DIR     = _get("PAGES_DIR",    "docs/YOUR_PROGRAM_CODE")
+def _resolve_path(val):
+    """Resolve a config-derived path relative to the config file directory.
+
+    When --config is used, relative paths in the config file are resolved
+    relative to that file's directory rather than the process cwd.  This
+    makes test fixture directories fully self-contained.  Has no effect when
+    --config is not used (_CONFIG_DIR is None) or when val is already absolute.
+    """
+    if not val or not _CONFIG_DIR:
+        return val
+    p = pathlib.Path(val)
+    return val if p.is_absolute() else str(_CONFIG_DIR / val)
+
+INPUT_FILE    = _resolve_path(_get("INPUT_FILE",   "dicionario_delphi_w1_YOUR_PROGRAM_CODE.xlsx"))
+OUTPUT_KOBO   = _resolve_path(_get("OUTPUT_KOBO",  "delphi_w1_YOUR_PROGRAM_CODE_kobo.xlsx"))
+KOBO_DIR      = _resolve_path(_get("KOBO_DIR",     "kobo_gen"))
+PAGES_DIR     = _resolve_path(_get("PAGES_DIR",    "docs/YOUR_PROGRAM_CODE"))
 TOPIC_LABEL   = _get("TOPIC_LABEL",  "YOUR_PROGRAM_NAME")
 TOPIC_CODE    = _get("TOPIC_CODE",   "YOUR_PROGRAM_CODE")
 CATALOG_SHEET = _get_cli_catalog_sheet(sys.argv) or _get("CATALOG_SHEET", "").strip()
@@ -118,9 +160,17 @@ import hashlib, json as _json
 def load_expert_hashes(path="experts.txt"):
     """Read experts.txt, normalise emails, return list of SHA-256 hex hashes."""
     import pathlib
+    cfg_path   = (_CONFIG_DIR / path) if _CONFIG_DIR else None
     cwd_path   = pathlib.Path.cwd() / path
     script_dir = pathlib.Path(__file__).parent / path
-    fpath = cwd_path if cwd_path.exists() else (script_dir if script_dir.exists() else None)
+    if cfg_path and cfg_path.exists():
+        fpath = cfg_path
+    elif cwd_path.exists():
+        fpath = cwd_path
+    elif script_dir.exists():
+        fpath = script_dir
+    else:
+        fpath = None
     if not fpath:
         return []
     hashes = []
@@ -144,7 +194,7 @@ print(f"  Experts:     {len(EXPERT_HASHES)} email(s) loaded from experts.txt"
       if EXPERT_HASHES else "  Experts:     experts.txt not found or empty — "
                             "auth will allow any Magic-verified email")
 
-print(f"Config loaded from config.env")
+print(f"Config loaded from: {pathlib.Path(_cli_config).resolve() if _cli_config else 'config.env (auto-discovered)'}")
 print(f"Deploy map:  deployed_forms.env")
 print(f"  Topic:       {TOPIC_LABEL} ({TOPIC_CODE})")
 print(f"  Input:       {INPUT_FILE}")
@@ -163,7 +213,8 @@ os.makedirs(KOBO_DIR, exist_ok=True)
 # ── Emails-only mode: update gateway.html and exit ────────────
 if UPDATE_EMAILS_ONLY:
     def _e(text):
-        import html as _h; return _h.escape(str(text)) if text else ""
+        import html as _h
+        return _h.escape(str(text)) if text else ""
     _vs = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     _gateway_template = pathlib.Path(__file__).parent / "gateway.html"
     if _gateway_template.exists():
@@ -257,6 +308,7 @@ cat_ws = wb_in[CATALOG_SHEET]
 # Row 1 = zone headers (merged), row 2 = column headers, row 3+ = data
 cat_headers = [str(c.value).strip() if c.value else ""
                for c in cat_ws[2]]
+HAS_TEAM_COLUMN = any(h.strip().lower() in ("team", "equipa") for h in cat_headers)
 
 def col_idx(headers, name):
     """Return 0-based index of column by header name."""
@@ -358,6 +410,10 @@ def _normalise_intervention_record(intv):
 
 
 interventions = [_normalise_intervention_record(intv) for intv in interventions]
+
+if not HAS_TEAM_COLUMN and SUBFORM_GROUP_BY == "team":
+  print("  Aviso: coluna Team ausente no dicionário; a agrupar por Programa.")
+  SUBFORM_GROUP_BY = "programa"
 
 # ── Normalise numeric columns ─────────────────────────────────
 # Columns that should be formatted as integers (thousands sep = ".")
@@ -504,7 +560,7 @@ print(f"  Built {len(all_choices)} choice rows "
 
 GROUP_FIELD = {
     "area":       "Área",
-  "team":       "Team",
+    "team":       "Team",
     "programa":   "Programa",
     "componente": "Componente",
     "grupo":      "Grupo",
@@ -548,7 +604,7 @@ def split_group(label, items, max_size):
 from collections import OrderedDict
 groups_raw = OrderedDict()
 for intv in interventions:
-    key = intv.get(GROUP_FIELD, "").strip()
+    key = str(intv.get(GROUP_FIELD, "") or "").strip()
     if not key or key in ("None", "nan"):
         key = "Outros"
     groups_raw.setdefault(key, []).append(intv)
@@ -1334,15 +1390,22 @@ def build_master_page(subform_groups):
             full_url = f"{kobo_url}{sep}return_url={quote(relay_target, safe='')}"
         else:
             full_url = ""
-        team = items[0].get("Team", "").strip() if items else ""
-        js_groups.append({
+        team = ""
+        if HAS_TEAM_COLUMN and items:
+          team = (
+            str(items[0].get("Team", "") or items[0].get("Equipa", "") or "")
+            .strip()
+          )
+        group_info = {
             "slug":  slug,
             "label": label,
             "count": len(items),
             "codes": [intv["Código"] for intv in items],
             "url":   full_url,
-            "team":  team,
-        })
+        }
+        if HAS_TEAM_COLUMN and team:
+          group_info["team"] = team
+        js_groups.append(group_info)
 
     groups_json = json.dumps(js_groups, ensure_ascii=False, indent=2)
     stub = ("" if "example.org" not in MASTER_URL else
@@ -1545,8 +1608,8 @@ body::before {{
   padding: 10px 14px;
   font-size: 12px; color: #4527A0;
 }}
-/* ── Team badge ── */
-.team-badge {{
+{'''/* ── Team badge ── */
+.team-badge {
   display: inline-flex;
   align-items: center; justify-content: center;
   width: 22px; height: 22px;
@@ -1557,11 +1620,11 @@ body::before {{
   border: 2px solid currentColor;
   margin-left: 8px;
   vertical-align: middle;
-}}
-.team-badge[data-team="A"] {{ color: #1a5c8a; background: #ddeef8; }}
-.team-badge[data-team="B"] {{ color: #2e7d52; background: #d6f0e2; }}
-.team-badge[data-team="C"] {{ color: #b45309; background: #fde8c8; }}
-.team-badge[data-team="D"] {{ color: #6b3fa0; background: #ede7f6; }}
+}
+.team-badge[data-team="A"] { color: #1a5c8a; background: #ddeef8; }
+.team-badge[data-team="B"] { color: #2e7d52; background: #d6f0e2; }
+.team-badge[data-team="C"] { color: #b45309; background: #fde8c8; }
+.team-badge[data-team="D"] { color: #6b3fa0; background: #ede7f6; }''' if HAS_TEAM_COLUMN else ''}
 </style>
 </head>
 <body>
@@ -1732,9 +1795,7 @@ function renderCards() {{
       btn = '<a class="open-btn" href="' + g.url + '">Iniciar →</a>';
     }}
 
-    const teamBadge = g.team
-      ? '<span class="team-badge" data-team="' + g.team + '" title="Equipa ' + g.team + '">' + g.team + '</span>'
-      : '';
+    const teamBadge = {"g.team ? '<span class=\"team-badge\" data-team=\"' + g.team + '\" title=\"Equipa ' + g.team + '\">' + g.team + '</span>' : ''" if HAS_TEAM_COLUMN else "''"};
 
     card.innerHTML =
       iconBadge +

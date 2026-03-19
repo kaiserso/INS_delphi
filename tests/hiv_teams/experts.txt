@@ -1,0 +1,14 @@
+# experts.txt — one email per line
+# Lines starting with # are comments
+# Emails are normalised (lowercase, trimmed) and SHA-256 hashed at build time
+# The plaintext emails are never embedded in any generated file
+
+# facilitators - currently fictitious, # ignore means leave out of stats
+facilitator-1123324@yahoo.com    # ignore
+
+# experts for HIV - currently fictitious
+participant-1233243@gmail.com
+participant-2273434@gmail.com
+
+
+

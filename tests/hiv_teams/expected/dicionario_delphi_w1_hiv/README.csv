@@ -1,0 +1,36 @@
+DICIONÁRIO DE DADOS — Delphi W1 | HIV/SIDA  (gerado 2026-03-19 16:51)
+""
+CATÁLOGO (Catalogo_HIV_SIDA)
+"  Col 1  Código — gerado automaticamente: hiv_01, hiv_02, …"
+  Col 2  URL da Ficha — gerado a partir de base_url no script.
+  Col 3  Grupo — 22 grupo(s) de ~7 intervenções cada.
+  Restantes = colunas do catálogo original (Revisao excluída).
+""
+CAMPOS DO CATÁLOGO
+  Ver cabeçalhos da folha Catalogo para lista completa de campos.
+""
+SKIP LOGIC (resumo)
+  Q05 gate = 'nao'    → Q06-Q15 ocultas
+  Q06 dup = 'sim'     → Q07 visível
+  Q07 inclui 'other'  → Q08 visível
+  Q09 intg = 'sim'    → Q10 visível
+  Q10 inclui 'other'  → Q11 visível
+  Q13 outro = 'sim'   → Q14 visível
+  Q07/Q10 constraint impede selecção da própria intervenção
+""
+GRUPOS DE FORMULÁRIO
+  22 grupo(s) de ~7 intervenções. Cada especialista recebe 22 ficha(s) Kobo.
+""
+USO
+  1. Actualizar catálogo com dados reais.
+  2. Actualizar base_url no script (PROGRAMS['hiv']['base_url']).
+  3. python generate_dictionaries.py --program hiv --catalog <catalog.xlsx>
+  4. Saída: dicionario_delphi_w1_hiv.xlsx
+"
+NOTA HIV: Este catálogo tem estrutura diferente dos outros programas.
+  • Sem coluna 'Área'; Programa começa na coluna B.
+  • Usa 'Actividade' em vez de 'Intervenção'.
+  • Inclui coluna 'Implementador' (financiador/parceiro).
+  • Tem duas colunas de Gastos; o dicionário usa 'Total Gastos 2024'.
+  • 177 linhas = actividades × implementadores (não intervenções distintas).
+  • Considere consolidar linhas por actividade antes de usar no formulário."

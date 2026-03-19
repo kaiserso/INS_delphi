@@ -1,0 +1,5 @@
+# tests/.gitignore
+!config.env
+!*.xlsx
+!*.html
+out/

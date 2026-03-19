@@ -24,6 +24,10 @@ Usage:
     # Optional: set output directory
     python generate_dictionaries.py --all --output-dir ./dicionarios
 
+    # Use a specific config file instead of searching for config.env (useful for testing):
+    python generate_dictionaries.py --program hiv --catalog path/to/HIV.xlsx \
+        --config tests/fixtures/hiv/config.env
+
 Notes on catalog structure differences
 ---------------------------------------
 TB     : Columns identical to Malária. Row 3 contains a template example row
@@ -59,11 +63,30 @@ except ImportError:
 # CONFIG
 # ─────────────────────────────────────────────────────────────────
 
+def _get_cli_config_path(argv):
+    """Return the value of --config <path> from argv, or empty string."""
+    i = 1
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--config" and i + 1 < len(argv):
+            return argv[i + 1]
+        if arg.startswith("--config="):
+            return arg.split("=", 1)[1]
+        i += 1
+    return ""
+
 def load_config(path="config.env"):
     cfg = {}
-    cwd_path   = pathlib.Path.cwd() / path
-    script_dir = pathlib.Path(__file__).parent / path
-    config_path = cwd_path if cwd_path.exists() else (script_dir if script_dir.exists() else None)
+    p = pathlib.Path(path)
+    # If caller passed an explicit path (absolute or has a directory component),
+    # use it directly rather than searching cwd / script dir.
+    if p.is_absolute() or p.parent != pathlib.Path("."):
+        config_path = p if p.exists() else None
+    else:
+        # Bare filename: cwd takes priority over script directory.
+        cwd_path   = pathlib.Path.cwd() / path
+        script_dir = pathlib.Path(__file__).parent / path
+        config_path = cwd_path if cwd_path.exists() else (script_dir if script_dir.exists() else None)
     if not config_path:
         return cfg
     with open(config_path, encoding="utf-8") as f:
@@ -75,7 +98,7 @@ def load_config(path="config.env"):
             cfg[k.strip()] = v.strip()
     return cfg
 
-_cfg = load_config()
+_cfg = load_config(_get_cli_config_path(sys.argv) or "config.env")
 
 def _get(key, default=""):
     return _cfg.get(key, default)
@@ -516,10 +539,20 @@ def build_catalogo(wb, interventions, cfg):
     variant  = cfg["row_builder"]
     ws       = wb.active
     ws.title = f"Catalogo_{cfg['topic_label'].replace('/','_').replace(' ','_')}"
+    has_team = any("team" in rec for rec in interventions)
+    output_headers = list(cfg["output_headers"])
+    col_widths = list(cfg["col_widths"])
 
     # Row 1: section super-headers
-    labels = SECTION_LABELS.get(variant, SECTION_LABELS["standard"])
-    ws.append(labels + [None] * (len(cfg["output_headers"]) - len(labels)))
+    labels = list(SECTION_LABELS.get(variant, SECTION_LABELS["standard"]))
+    if not has_team and "Team" in output_headers:
+        team_idx = output_headers.index("Team")
+        output_headers.pop(team_idx)
+        if team_idx < len(col_widths):
+            col_widths.pop(team_idx)
+        if team_idx < len(labels):
+            labels.pop(team_idx)
+    ws.append(labels + [None] * (len(output_headers) - len(labels)))
     for c1, c2 in SECTION_SPANS.get(variant, SECTION_SPANS["standard"]):
         try:
             ws.merge_cells(f"{c1}:{c2}")
@@ -530,16 +563,18 @@ def build_catalogo(wb, interventions, cfg):
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
     # Row 2: column headers
-    ws.append(cfg["output_headers"])
+    ws.append(output_headers)
     style_hdr(ws, 2, bg="1A5276")
 
     builder = ROW_BUILDERS[variant]
     for idx, rec in enumerate(interventions):
         row = builder(idx, rec, cfg, interventions)
+        if not has_team and "Team" in cfg["output_headers"]:
+            row.pop(cfg["output_headers"].index("Team"))
         ws.append(row)
         style_data(ws, idx + 3, even=(idx % 2 == 0))
 
-    for i, w in enumerate(cfg["col_widths"], 1):
+    for i, w in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "D3"
     ws.row_dimensions[1].height = 18

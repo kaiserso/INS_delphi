@@ -1,0 +1,32 @@
+ID,Secção,Tipo Kobo,"Sufixo Variável
+(+_{CODE})",Etiqueta (Português),Dica / Orientação,Obrigatório,"Condição de Visibilidade
+({CODE} = código da intervenção)",Validação,Mensagem de Erro,Lista de Opções,Aparência Kobo,Nota sobre Skip Logic,Notas para Metodologia
+Q00,Identificação,note,intro_note,Exercício de Optimização — 1ª Oficina | HIV/SIDA,Será apresentado com TODAS as intervenções do catálogo. Por favor avalie cada uma.,,,,,,,Mostrado uma vez no início,Não repetido por intervenção
+Q01,Identificação,select_one codes,expert_code,Código do Especialista,Utilize o código atribuído (ex: 025PM). Use o mesmo em todas as oficinas.,yes,,"regex(., '^[0-9]{3}(PM|XX)$')",Código deve ter 3 números seguidos por PM ou XX.,codes,minimal,Perguntado uma vez,"Chave de ligação entre W1, W2, W3"
+S01,Estrutura,begin_group,grp_{CODE},Intervenção {N}/{TOTAL}: {LABEL},,,,,,,field-list,Abre grupo. field-list = todas as perguntas no mesmo ecrã.,Repetido para cada intervenção.
+Q03,Cabeçalho,note,hdr_{CODE},"{LABEL}
+
+[↗ Ver ficha completa]({URL})",{OBJECTIVE},,,,,,,Sempre visível dentro do grupo,URL renderizado como link markdown no label do note
+Q04,W1-G Expertise,select_one expertise,exp_{CODE},M1. Nível de expertise — {LABEL},"Reflita:
+• Tenho envolvimento directo nesta intervenção?
+• Já participei no desenho ou implementação?
+• Sou responsável programático?",yes,,,,expertise,,"Sempre obrigatório, sem skip",Usado para ponderação no Resumo W1
+Q05,W1-H Gating,select_one optimizability,gate_{CODE},M2. Esta intervenção precisa de optimização?,"Indique se o modelo actual tem espaço relevante para melhoria em eficiência, qualidade, cobertura ou custo.",yes,,,,optimizability,,GATE: controla visibilidade de Q06-Q15,"Score: Sim def=2, Possiv=1, Não=0"
+Q06,W1-I Duplicação,select_one yes_no,dup_{CODE},M3. Existe duplicação com outro programa?,A intervenção realiza actividades semelhantes às de outra intervenção?,yes,${gate_{CODE}} != 'nao',,,yes_no,,Visível se gate != 'nao',
+Q07,W1-I Duplicação,select_multiple intervention_list,which_dup_{CODE},M4. Quais as intervenções com duplicação?,Seleccione todas as intervenções com actividades semelhantes. Pode seleccionar várias.,yes,${dup_{CODE}} = 'sim' and ${gate_{CODE}} != 'nao',"not(selected(${which_dup_{CODE}}, '{CODE}'))",Não seleccione a intervenção que está actualmente a avaliar ({LABEL}).,intervention_list,,Visível se dup=sim AND gate!=nao. Constraint impede auto-selecção.,
+Q08,W1-I Duplicação,text,which_dup_other_{CODE},M5. Especifique a outra intervenção com duplicação,Descreva a intervenção não listada.,yes,"selected(${which_dup_{CODE}}, 'other') and ${gate_{CODE}} != 'nao'",,,,,Visível apenas se 'Outro' seleccionado em Q07,
+Q09,W1-J Integração,select_one yes_no,intg_{CODE},M6. Pode ser integrada com outra intervenção?,"É possível combinar actividades para melhorar eficiência?
+Ex: supervisão conjunta, insumos partilhados.",yes,${gate_{CODE}} != 'nao',,,yes_no,,Visível se gate != 'nao',
+Q10,W1-J Integração,select_multiple intervention_list,which_intg_{CODE},M7. Com que intervenção(ões) deve ser integrada?,"Seleccione as intervenções com as quais esta poderia ser integrada.
+Nota: supervisão, logística ou dados partilhados contam.",yes,${intg_{CODE}} = 'sim' and ${gate_{CODE}} != 'nao',"not(selected(${which_intg_{CODE}}, '{CODE}'))",Não seleccione a intervenção que está actualmente a avaliar ({LABEL}).,intervention_list,,Visível se intg=sim AND gate!=nao. Constraint impede auto-selecção.,
+Q11,W1-J Integração,text,which_intg_other_{CODE},M8. Especifique a outra intervenção para integração,Descreva a intervenção não listada.,yes,"selected(${which_intg_{CODE}}, 'other') and ${gate_{CODE}} != 'nao'",,,,,Visível apenas se 'Outro' seleccionado em Q10,
+Q12,W1-K Recursos,select_one yes_no,res_{CODE},M9. Pode reduzir recursos sem comprometer impacto?,Existem áreas onde é possível racionalizar recursos sem afectar resultados?,yes,${gate_{CODE}} != 'nao',,,yes_no,,Visível se gate != 'nao',
+Q13,W1-L Outro motivo,select_one yes_no,oth_{CODE},M10. Existe outro motivo de optimização não identificado?,Outro motivo relevante não capturado nas perguntas anteriores?,yes,${gate_{CODE}} != 'nao',,,yes_no,,Visível se gate != 'nao',
+Q14,W1-L Outro motivo,text,oth_reason_{CODE},M11. Descreva o outro motivo de optimização,Descreva o motivo de optimização não capturado nas categorias anteriores.,yes,${oth_{CODE}} = 'sim' and ${gate_{CODE}} != 'nao',,,,,Visível se oth=sim AND gate!=nao,Campo de texto livre
+Q15,W1-M Impacto,select_one impact,impact_{CODE},M12. Impacto provável da optimização,"Se esta intervenção for optimizada, qual o impacto esperado?
+
+1 – Baixo: melhoria marginal
+2 – Médio: melhoria moderada
+3 – Alto: melhoria significativa / potencialmente transformadora",yes,${gate_{CODE}} != 'nao',,,impact,,Visível se gate != 'nao',Score 1-3 para agregação
+Q16,Comentário,text,cmt_{CODE},M13. Como acha que a intervenção pode ser optimizada?,Uma descrição breve de como acha que a intervenção pode ser optimizada.,yes,${gate_{CODE}} != 'nao',,,,,Visível se gate != 'nao',
+S02,Estrutura,end_group,grp_{CODE},,,,,,,,,Fecha grupo da intervenção,
