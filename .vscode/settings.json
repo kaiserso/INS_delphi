@@ -5,4 +5,5 @@
     "titleBar.activeForeground": "#ffffff",
     "statusBar.background": "#1F4E79"
   }
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
 }
