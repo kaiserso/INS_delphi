@@ -18,13 +18,13 @@
         if (!loggedIn) {
           redirecting = true;
           window.location.replace(
-            'https://kaiserso.github.io/INS_delphi/malaria/gateway.html?return=' + encodeURIComponent(window.location.href)
+            'https://delphi-w1.pages.dev/malaria/gateway.html?return=' + encodeURIComponent(window.location.href)
           );
           return;
         }
         window._magicLogout = async function() {
           await magic.user.logout();
-          window.location.replace('https://kaiserso.github.io/INS_delphi/malaria/gateway.html');
+          window.location.replace('https://delphi-w1.pages.dev/malaria/gateway.html');
         };
       } catch(e) {
         console.warn('Auth check failed:', e);
@@ -445,7 +445,7 @@ Avaliar os …</div>
        style="color:#1565C0;text-decoration:none;font-weight:600">
       ⬇ Descarregar em Excel</a>
     &nbsp;&nbsp;|&nbsp;&nbsp;
-    <a href="https://kaiserso.github.io/INS_delphi/malaria/master.html"
+    <a href="https://delphi-w1.pages.dev/malaria/master.html"
        style="color:#1565C0;text-decoration:none;font-weight:600">
       ↩ Voltar ao painel de avaliação</a>
   </div>
