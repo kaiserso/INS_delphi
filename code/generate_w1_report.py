@@ -236,31 +236,36 @@ def load_data(path, sheet="Responses"):
 
 
 def load_expected_experts(experts_file=None):
-    """Load unique expected experts from experts.txt, ignoring comments/blank lines."""
-    if experts_file is None:
-        experts_file = Path(__file__).resolve().parents[1] / "experts.txt"
+  """Load unique expected experts from experts.txt, ignoring comments/blank lines."""
+  if experts_file is not None:
+    selected_file = Path(experts_file)
+  else:
+    # Default to experts.txt in the current working directory only.
+    selected_file = Path.cwd() / "experts.txt"
 
-    experts = set()
-    try:
-        with open(experts_file, "r", encoding="utf-8") as f:
-            for line in f:
-                raw_line = line.strip()
-                lower_line = raw_line.lower()
-                if (
-                    not raw_line
-                    or raw_line.startswith("#")
-                    or "# test" in lower_line
-                    or "# ignore" in lower_line
-                ):
-                    continue
-                # Support optional inline comments after '#'
-                entry = raw_line.split("#", 1)[0].strip().lower()
-                if entry:
-                    experts.add(entry)
-    except FileNotFoundError:
-        return []
+  if selected_file is None:
+    return []
+  if not selected_file.exists():
+    return []
 
-    return sorted(experts)
+  experts = set()
+  with open(selected_file, "r", encoding="utf-8") as f:
+    for line in f:
+      raw_line = line.strip()
+      lower_line = raw_line.lower()
+      if (
+        not raw_line
+        or raw_line.startswith("#")
+        or "# test" in lower_line
+        or "# ignore" in lower_line
+      ):
+        continue
+      # Support optional inline comments after '#'
+      entry = raw_line.split("#", 1)[0].strip().lower()
+      if entry:
+        experts.add(entry)
+
+  return sorted(experts)
 
 
 def _split_codes(value):
