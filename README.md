@@ -104,12 +104,70 @@ python code/generate_kobo_and_pages.py
 - Script fails if any row has blank value in the selected grouping column
    (example: if `SUBFORM_GROUP_BY=grupo`, all `Grupo` cells must be filled)
 
+### deploy_kobo_forms.py
+
+Upload/redeploy generated sub-form XLSForms to KoboToolbox and persist
+`SUBFORM_URL_*` + `SUBFORM_ASSET_*` mappings in `deployed_forms.env`.
+
+**Usage:**
+```bash
+python code/deploy_kobo_forms.py            # fresh upload/create assets
+python code/deploy_kobo_forms.py --redeploy # update existing mapped assets
+python code/deploy_kobo_forms.py --list     # list account assets
+```
+
+**Important behavior:**
+- `--redeploy` expects stable slug-to-asset mapping (`SUBFORM_ASSET_*`)
+- after deploy, script rewrites `deployed_forms.env` and regenerates pages
+- this is the preferred path when grouping/slugs are unchanged
+
 ## Workflow
 
 1. **Before data collection:** Run `generate_qrcode.py` to create QR code for expert access
 2. **During data collection:** Run `dashboard.py` to monitor progress in real-time
 3. **Generate results:** Run `aggregate_results.py` to create archival results file
 4. **Create report:** Run `generate_w1_report.py` on results file to generate formatted HTML
+
+## Form deployment reset modes
+
+Use one of the two reset modes below depending on whether form grouping changed.
+
+### A) Soft reset (preferred)
+
+Use when grouping output is unchanged (same subform slugs / same number of forms):
+
+```bash
+python code/generate_dictionaries.py --all
+python code/generate_kobo_and_pages.py
+python code/deploy_kobo_forms.py --redeploy
+```
+
+This preserves asset UIDs and updates form content in place.
+
+### B) Hard reset (recommended when regrouping changes assets)
+
+Use when you changed `SUBFORM_GROUP_BY`, `SUBFORM_MAX_SIZE`, dictionary structure,
+or otherwise produced a different slug set (more/fewer/renamed subforms).
+
+1. Archive or export any submissions you need to keep.
+2. In KoboToolbox, delete old W1 subform assets for the topic.
+3. Remove `deployed_forms.env` (or clear all `SUBFORM_URL_*` and `SUBFORM_ASSET_*` lines).
+4. Regenerate files:
+   ```bash
+   python code/generate_dictionaries.py --all
+   python code/generate_kobo_and_pages.py
+   ```
+5. Deploy fresh assets (without `--redeploy`):
+   ```bash
+   python code/deploy_kobo_forms.py
+   ```
+6. If using Streamlit Cloud secrets, regenerate and paste secrets:
+   ```bash
+   python code/make_secrets_toml.py
+   ```
+
+Why hard reset in this case: old asset mappings can become stale when slug names
+or counts change, which can leave orphaned forms or mismatched URLs.
 
 ## Pending issues
 

@@ -136,16 +136,16 @@ PROGRAMS = {
     "tb": {
         "topic_label":   "TB",
         "code_prefix":   "tb",
-        "base_url":      "https://kaiserso.github.io/INS_delphi/tb",
+        "base_url":      _get("BASE_URL", ""),
         "catalog_sheet": "TB",
         "key_field":     "intervencao",
         "col_map": {
             "Área":                      "area",
             "Programa":                  "programa",
             "Componente":                "componente",
-            "Intervenção":               "intervencao",
+            "Intervenção":               "descricao",
             "Nível":                     "nivel",
-            "Descricao (o que inclui)":  "descricao",
+            "Descricao (o que inclui)":  "intervencao",
             "Objectivo(s)":              "objectivos",
             "Ano de início":             "ano_inicio",
             "Gastos em 2024":            "gastos_2024",
@@ -413,12 +413,16 @@ def style_data(ws, row_n, even):
 # ROW BUILDERS  (one per catalog structure variant)
 # ─────────────────────────────────────────────────────────────────
 
+def _ficha_url(base_url, code):
+    """Return full URL if base_url is set, otherwise a relative path."""
+    return f"{base_url}/{code}.html" if base_url else f"{code}.html"
+
 def _row_standard(idx, rec, cfg, interventions):
     """Malária / SMI row layout."""
     code = f"{cfg['code_prefix']}_{idx+1:02d}"
     return [
         code,
-        f"{cfg['base_url']}/{code}.html",
+        _ficha_url(cfg["base_url"], code),
         group_label(idx, interventions, cfg),
         rec.get("area"), rec.get("programa"), rec.get("componente"),
         rec.get("intervencao"), rec.get("nivel"),
@@ -437,7 +441,7 @@ def _row_tb(idx, rec, cfg, interventions):
     code = f"{cfg['code_prefix']}_{idx+1:02d}"
     return [
         code,
-        f"{cfg['base_url']}/{code}.html",
+        _ficha_url(cfg["base_url"], code),
         group_label(idx, interventions, cfg),
         rec.get("area"), rec.get("programa"), rec.get("componente"),
         rec.get("intervencao"), rec.get("nivel"),
@@ -454,7 +458,7 @@ def _row_hiv(idx, rec, cfg, interventions):
     code = f"{cfg['code_prefix']}_{idx+1:02d}"
     return [
         code,
-        f"{cfg['base_url']}/{code}.html",
+        _ficha_url(cfg["base_url"], code),
         group_label(idx, interventions, cfg),
         rec.get("programa"), rec.get("componente"),
         rec.get("actividade"), rec.get("implementador"),
