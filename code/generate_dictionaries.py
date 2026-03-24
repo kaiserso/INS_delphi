@@ -143,10 +143,15 @@ PROGRAMS = {
             "Área":                      "area",
             "Programa":                  "programa",
             "Componente":                "componente",
-            "Intervenção":               "descricao",
+            "Intervenção":               "intervencao",
             "Nível":                     "nivel",
-            "Descricao (o que inclui)":  "intervencao",
+            "Descricao (o que inclui)":  "descricao",
             "Objectivo(s)":              "objectivos",
+            "Alcance geográfico da intervenção":                "alcance",
+            "Recursos necessários para a implementação":        "recursos",
+            "Etapas chave para a implementação da intervenção": "etapas",
+            "Descrição dos riscos e limitações que compromentem a implementação da intervenção": "riscos",
+            "Possiveis factores associados aos riscos e limitações descritas": "factores",
             "Ano de início":             "ano_inicio",
             "Gastos em 2024":            "gastos_2024",
             "Fonte(s) de financiamento": "fontes",
@@ -161,10 +166,12 @@ PROGRAMS = {
             "Código","URL da Ficha","Grupo",
             "Área","Programa","Componente","Intervenção",
             "Nível","Descrição (o que inclui)","Objectivo(s)",
+            "Alcance geográfico","Recursos necessários","Etapas chave",
+            "Riscos e limitações","Possíveis factores associados",
             "Ano de início","Gastos em 2024","Fonte(s) de financiamento",
             "Pop. elegível","Número alcançado","Cobertura","Custo por unidade","Notas",
         ],
-        "col_widths": [10,45,22,10,18,30,55,14,45,45,12,18,22,14,14,12,25,40],
+        "col_widths": [10,45,22,10,18,30,55,14,45,45,30,35,35,35,35,12,18,22,14,14,12,25,40],
         # Skip the template example row (Área = "Exemplo - HIV")
         "skip_row_if": lambda row: str(row.get("area","")).startswith("Exemplo"),
         "row_builder": "tb",
@@ -245,6 +252,7 @@ PROGRAMS = {
             "Descrição dos riscos e limitações que compromentem a implementação da intervenção": "riscos",
             "Possíveis factores associados aos riscos e limitações descritas": "factores",
             "Possiveis factores associados aos riscos e limitacoes descritas": "factores",
+            "Possiveis factores associados aos riscos e limitações descritas": "factores",
             "Ano de início":                 "ano_inicio",
             "Gastos em 2024 ":               "gastos_2024", # trailing space in source
             "Gastos em 2024":                "gastos_2024", # fallback
@@ -437,7 +445,7 @@ def _row_standard(idx, rec, cfg, interventions):
     ]
 
 def _row_tb(idx, rec, cfg, interventions):
-    """TB row layout (same fields as SMI/Malária but fewer cols)."""
+    """TB row layout (same fields as SMI/Malária)."""
     code = f"{cfg['code_prefix']}_{idx+1:02d}"
     return [
         code,
@@ -446,6 +454,8 @@ def _row_tb(idx, rec, cfg, interventions):
         rec.get("area"), rec.get("programa"), rec.get("componente"),
         rec.get("intervencao"), rec.get("nivel"),
         rec.get("descricao"), rec.get("objectivos"),
+        rec.get("alcance"), rec.get("recursos"), rec.get("etapas"),
+        rec.get("riscos"), rec.get("factores"),
         sv(rec.get("ano_inicio")), sv(rec.get("gastos_2024")),
         rec.get("fontes"),
         sv(rec.get("pop_elegivel")), sv(rec.get("num_alcancado")),
@@ -485,7 +495,7 @@ ROW_BUILDERS = {
 
 SECTION_SPANS = {
     "standard": [("A1","C1"),("D1","G1"),("H1","J1"),("K1","O1"),("P1","R1"),("S1","W1")],
-    "tb":       [("A1","C1"),("D1","G1"),("H1","J1"),("K1","L1"),("M1","R1")],
+    "tb":       [("A1","C1"),("D1","G1"),("H1","J1"),("K1","O1"),("P1","R1"),("S1","W1")],
     "hiv":      [("A1","C1"),("D1","G1"),("H1","O1"),("P1","R1"),("S1","X1")],
 }
 SECTION_LABELS = {
@@ -498,7 +508,8 @@ SECTION_LABELS = {
     "tb":       ["Gerado pelo Script",None,None,
                  "Identificação",None,None,None,
                  "Descrição",None,None,
-                 "Financiamento",None,
+                 "Implementação",None,None,None,None,
+                 "Financiamento",None,None,
                  "Cobertura e Custos",None,None,None,None],
     "hiv":      ["Gerado pelo Script",None,None,
                  "Identificação",None,None,None,
