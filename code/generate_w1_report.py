@@ -375,6 +375,7 @@ def aggregate(df, interventions):
         # For scoring diagnostics
         gate_scores = []   # (gate_score, impact, exp_weight) per respondent
         gate_only_scores = []  # gate_score only (unweighted), includes nao=0 when gate answered
+        all_exp_vals = []      # experience weight for ALL gate-answered respondents (for S_pond denominator)
 
         GATE_SCORE = {"sim_def": 1.0, "possivelmente": 0.5, "nao": 0.0}
 
@@ -390,6 +391,7 @@ def aggregate(df, interventions):
                 exp = safe_int(row.get("exp", None))
                 exp = exp if exp and 1 <= exp <= 3 else 1  # neutral weight if missing
                 gate_only_scores.append(gs)
+                all_exp_vals.append(exp)
 
             if g in ("sim_def", "possivelmente"):
                 imp = safe_int(row.get("impact", None))
@@ -425,16 +427,21 @@ def aggregate(df, interventions):
 
         avg_impact = round(sum(impacts) / len(impacts), 2) if impacts else 0
 
-        # S_base = mean(gate_score) × mean(impact)  [range 0–3]
+        # S_base = mean(gate_score over ALL respondents) × mean(impact over POSITIVE respondents)
+        # gate_only_scores includes gs=0 for "não", so mean correctly reflects overall support.
+        # impact mean is only from those who endorsed optimisation (they're the ones who rated impact).
         if gate_scores:
-            gs_vals  = [x[0] for x in gate_scores]
             imp_vals = [x[1] for x in gate_scores]
             exp_vals = [x[2] for x in gate_scores]
-            s_base = round(sum(gs_vals) / len(gs_vals) * sum(imp_vals) / len(imp_vals), 3)
-            # S_pond = Σ(gs × imp × exp) / Σ(exp)  [range 0–3]
-            numerator = sum(gs * imp * exp for gs, imp, exp in gate_scores)
-            denominator = sum(x[2] for x in gate_scores)
-            s_pond = round(numerator / denominator, 3) if denominator else 0
+            mean_gs  = sum(gate_only_scores) / len(gate_only_scores)  # over ALL gate-answered
+            mean_imp = sum(imp_vals) / len(imp_vals)                  # over positive respondents
+            s_base   = round(mean_gs * mean_imp, 3)
+            # S_pond = Σ(gs × imp × exp) / Σ(exp over ALL respondents)
+            # nao respondents contribute gs=0 → numerator unchanged, but their exp weight
+            # belongs in the denominator so high-experience dissenters reduce the score.
+            numerator   = sum(gs * imp * exp for gs, imp, exp in gate_scores)
+            denominator = sum(all_exp_vals)  # all gate-answered respondents
+            s_pond   = round(numerator / denominator, 3) if denominator else 0
             exp_mean = round(sum(exp_vals) / len(exp_vals), 2)
         else:
             s_base = s_pond = exp_mean = 0.0

@@ -10,6 +10,7 @@ Uso:
       [--config config.env]
   [--simple-table]
       [--simple-sections | --compact-report]
+      [--no-next-steps]
 
 Argumentos:
     resultados.xlsx   Ficheiro com os resultados agregados (obrigatório).
@@ -32,6 +33,7 @@ Argumentos:
     --simple-table    Substitui a tabela detalhada de pontuação por uma versão
           simples (Intervenção, S_pond, Índice de eficiência, Grupo 1/2/3),
           ordenável e com ordenação inicial por S_pond.
+    --no-next-steps   Omite a secção "Próximos Passos — Onda 2" do relatório.
 
 Metadados das intervenções (código, nome, componente, URL):
     1. Dicionário externo (se fornecido) — folha Catalogo_*
@@ -293,6 +295,8 @@ def comp_macro_from_raw(component):
     return "Comunicação para Mudança Social e de Comportamento"
   if "supervis" in low:
     return "Supervisão"
+  if "reuni" in low:
+    return "Reuniões"
   # No keyword matched — use the component name itself so any program's
   # catalog components appear as their own groups rather than all collapsing
   # into a single "Outros" row.
@@ -446,6 +450,7 @@ def aggregate(df, interventions):
         n_imp_1 = n_imp_2 = n_imp_3 = 0
         impacts = []
         dup_yes = intg_yes = res_yes = 0
+        pos_exp_sum = res_exp_sum = dup_exp_sum = intg_exp_sum = 0
         which_dup_counts  = defaultdict(int)
         which_intg_counts = defaultdict(int)
         which_dup_other_counts = defaultdict(int)
@@ -473,6 +478,7 @@ def aggregate(df, interventions):
                 all_exp_vals.append(exp)
 
             if g in ("sim_def", "possivelmente"):
+                pos_exp_sum += exp
                 imp = safe_int(row.get("impact", None))
                 if imp and 1 <= imp <= 3:
                     impacts.append(imp)
@@ -483,6 +489,7 @@ def aggregate(df, interventions):
 
                 if norm_yn(row.get("dup", None)) == "sim":
                     dup_yes += 1
+                    dup_exp_sum += exp
                     for t in parse_multi(row.get("which_dup", None)):
                         if t in inv_codes and t != code:
                             which_dup_counts[t] += 1
@@ -491,6 +498,7 @@ def aggregate(df, interventions):
 
                 if norm_yn(row.get("intg", None)) == "sim":
                     intg_yes += 1
+                    intg_exp_sum += exp
                     for t in parse_multi(row.get("which_intg", None)):
                         if t in inv_codes and t != code:
                             which_intg_counts[t] += 1
@@ -499,6 +507,7 @@ def aggregate(df, interventions):
 
                 if norm_yn(row.get("res", None)) == "sim":
                     res_yes += 1
+                    res_exp_sum += exp
 
                 cmt = row.get("cmt", None)
                 if cmt and not pd.isna(cmt):
@@ -539,6 +548,13 @@ def aggregate(df, interventions):
         pct_intg = round(intg_yes / n_positive * 100) if n_positive else 0
         pct_res = round(res_yes / n_positive * 100) if n_positive else 0
         e_score = round((pct_res + pct_dup + pct_intg) / 300, 3) if n_positive else 0.0
+        # E_pond: weighted version of e_score using experience weights over positive respondents
+        if pos_exp_sum > 0:
+            e_pond = round((res_exp_sum / pos_exp_sum
+                            + dup_exp_sum / pos_exp_sum
+                            + intg_exp_sum / pos_exp_sum) / 3, 3)
+        else:
+            e_pond = 0.0
 
         results[code] = {
             "code":      code,
@@ -564,6 +580,7 @@ def aggregate(df, interventions):
           "intg_pct":  pct_intg,
           "res_pct":   pct_res,
           "e_score":   e_score,
+          "e_pond":    e_pond,
             "top_dup":   top_dup,
             "top_intg":  top_intg,
             "dup_counts":  dict(which_dup_counts),
@@ -1088,8 +1105,8 @@ def univariate_analysis(results, df):
     sorted_dup    = sorted(items, key=lambda r: r["dup_pct"],  reverse=True)
     sorted_intg   = sorted(items, key=lambda r: r["intg_pct"], reverse=True)
     sorted_res    = sorted(items, key=lambda r: r["res_pct"],  reverse=True)
-    sorted_e      = sorted(items, key=lambda r: r.get("e_score", 0), reverse=True)
-    e_vals = [r.get("e_score", 0) for r in items]
+    sorted_e      = sorted(items, key=lambda r: r.get("e_pond", 0), reverse=True)
+    e_vals = [r.get("e_pond", 0) for r in items]
 
     return {
         "gate_agg":      {"Sim def.": total_sim, "Possiv.": total_poss, "Não": total_nao},
@@ -1195,29 +1212,30 @@ def svg_score_strip(all_vals, current_val, color, width=168, height=28):
 def build_integration_candidates_html(results):
     """Build the 'Integration Candidates' section.
 
-    For each ordered pair (A, B) where A has B in intg_counts, compute
-    min_mencoes = min(A→B count, B→A count).  Only pairs where both directions
-    have at least one mention are included.  Groups are formed by distinct
-    min_mencoes values; the top 3 distinct values are shown.
+    For each pair (A, B), compute total_mencoes = sum of dup + intg counts in
+    both directions.  Only pairs where both directions have at least one mention
+    (of any type) are included.  Groups are formed by distinct total_mencoes
+    values; the top 3 distinct values are shown.
     """
     import re as _re2
     if not results:
         return ""
 
-    # Collect all bidirectional integration mention counts
+    # Collect all bidirectional dup + intg mention counts
     codes = set(results.keys())
     pairs = {}   # (a, b) with a < b  →  {"a_to_b": int, "b_to_a": int}
     for code, r in results.items():
-        for target, cnt in r.get("intg_counts", {}).items():
-            if target not in codes:
-                continue
-            key = tuple(sorted([code, target]))
-            if key not in pairs:
-                pairs[key] = {"a_to_b": 0, "b_to_a": 0}
-            if code == key[0]:
-                pairs[key]["a_to_b"] += cnt
-            else:
-                pairs[key]["b_to_a"] += cnt
+        for count_key in ("intg_counts", "dup_counts"):
+            for target, cnt in r.get(count_key, {}).items():
+                if target not in codes:
+                    continue
+                key = tuple(sorted([code, target]))
+                if key not in pairs:
+                    pairs[key] = {"a_to_b": 0, "b_to_a": 0}
+                if code == key[0]:
+                    pairs[key]["a_to_b"] += cnt
+                else:
+                    pairs[key]["b_to_a"] += cnt
 
     # Only keep pairs with at least one mention in each direction
     mutual = {}
@@ -1226,15 +1244,14 @@ def build_integration_candidates_html(results):
             mutual[(a, b)] = {
                 "a_to_b": d["a_to_b"],
                 "b_to_a": d["b_to_a"],
-                "min_m":  min(d["a_to_b"], d["b_to_a"]),
                 "total":  d["a_to_b"] + d["b_to_a"],
             }
 
     if not mutual:
         return ""
 
-    # Find top 3 distinct min_mencoes levels
-    distinct_levels = sorted(set(v["min_m"] for v in mutual.values()), reverse=True)[:3]
+    # Find top 3 distinct total-mention levels
+    distinct_levels = sorted(set(v["total"] for v in mutual.values()), reverse=True)[:3]
 
     def _lbl(code):
         r = results.get(code, {})
@@ -1253,29 +1270,29 @@ def build_integration_candidates_html(results):
     html = """
   <div class="section-header">
     <h2>Candidatos à Integração</h2>
-    <span class="subtitle">Pares com menções mútuas mais frequentes (mín. menções em ambas as direcções)</span>
+    <span class="subtitle">Pares com mais menções totais mútuas (duplicação + integração, em ambas as direcções)</span>
   </div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
     Apenas pares em que ambas as intervenções foram identificadas mutuamente pelos especialistas são incluídos.
-    <strong>Mín. menções</strong> = mínimo das contagens nas duas direcções (A→B e B→A).
+    <strong>Total menções</strong> = soma de todas as menções (dup. + integ.) nas duas direcções (A→B e B→A).
   </div>
 """
     tier_colors = ["#1a6b3a", "#1a5276", "#7a5c00"]
-    tier_labels = ["Prioridade 1 — menções mútuas mais altas",
+    tier_labels = ["Prioridade 1 — mais menções totais",
                    "Prioridade 2",
                    "Prioridade 3"]
 
     for tier_idx, level in enumerate(distinct_levels):
         tier_pairs = sorted(
-            [(k, v) for k, v in mutual.items() if v["min_m"] == level],
-            key=lambda x: (-x[1]["total"], x[0])
+            [(k, v) for k, v in mutual.items() if v["total"] == level],
+            key=lambda x: x[0]
         )
         col = tier_colors[tier_idx % len(tier_colors)]
         html += f"""
   <div style="margin-bottom:28px">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
                 color:{col};border-left:3px solid {col};padding-left:8px;margin-bottom:10px">
-      {esc(tier_labels[tier_idx])} &nbsp;·&nbsp; mín. menções = {level}
+      {esc(tier_labels[tier_idx])} &nbsp;·&nbsp; total menções = {level}
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
 """
@@ -1301,7 +1318,7 @@ def build_integration_candidates_html(results):
           <span title="{esc(_lbl(a))} → {esc(_lbl(b))}: {d['a_to_b']} menções">→ {d['a_to_b']}</span>
           <span style="font-size:16px;color:{col};line-height:1">⇄</span>
           <span title="{esc(_lbl(b))} → {esc(_lbl(a))}: {d['b_to_a']} menções">← {d['b_to_a']}</span>
-          <span style="font-weight:700;color:{col}">mín={level}</span>
+          <span style="font-weight:700;color:{col}">tot={level}</span>
         </div>
         <div style="flex:1;min-width:0;text-align:right">
           <div style="font-weight:600;font-size:12px">
@@ -1662,7 +1679,7 @@ def build_network_html(results, topic_label="HIV"):
 def render_html(results, stats, interventions, source_file, univariate=None,
                 include_xyplot=True, include_scoring=True,
                 alluvial_top=None, priority_order="s_pond", programa_nome=None,
-                topic_label="HIV", simple_table=False, logo_data_uri=None):
+                topic_label="HIV", simple_table: bool = False, include_next_steps: bool = True, logo_data_uri: str | None = None):
     if programa_nome is None:
         programa_nome = "Programa Nacional de Controlo do HIV/SIDA"
     inv_label = {r["code"]: r["label"] for r in interventions}
@@ -1712,7 +1729,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
     # Prepare card grouping: programa → component → [results], preserving catalog order.
     by_prog_comp = OrderedDict()   # {programa: OrderedDict({component: [result]})}
     programa_first_anchor = {}     # {programa: anchor_id}  — for summary table links
-    comp_macro_first_anchor = {}   # {comp_macro: anchor_id} — for component table links
+    comp_macro_prog_anchors = {}   # {comp_macro: [(prog, anchor_id), ...]} — for component table links
     for inv in interventions:
       prog = (inv.get("programa", "") or "Outros").strip() or "Outros"
       comp = (inv.get("component", "") or "Outros").strip() or "Outros"
@@ -1727,10 +1744,12 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         row = results[code]
         by_prog_comp[prog][comp].append(row)
         macro = str(row.get("comp_macro", "") or "Outros").strip() or "Outros"
-        if macro not in comp_macro_first_anchor:
-          comp_macro_first_anchor[macro] = f"prog-section-{_safe_anchor(prog)}"
+        anchor_id = f"comp-section-{_safe_anchor(prog)}-{_safe_anchor(macro)}"
+        prog_list = comp_macro_prog_anchors.setdefault(macro, [])
+        if not any(p == prog for p, _ in prog_list):
+            prog_list.append((prog, anchor_id))
 
-    def build_group_summary_rows(group_key, name_links=None):
+    def build_group_summary_rows(group_key, name_links=None, prefix_links=None):
         buckets = OrderedDict()
         for r in results.values():
             gname = str(r.get(group_key, "") or "Outros").strip() or "Outros"
@@ -1742,7 +1761,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             s_pond_m = _mean(s_vals)
             s_pond_max = max(s_vals) if s_vals else 0
             impact_m = _mean([x.get("avg_impact", 0) for x in items_g])
-            e_m = _mean([x.get("e_score", 0) for x in items_g])
+            e_m = _mean([x.get("e_pond", 0) for x in items_g])
             rows.append({
                 "name":      gname,
                 "n":         len(items_g),
@@ -1765,6 +1784,12 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             name_html = esc(row['name'])
             if name_links and row["name"] in name_links:
                 name_html = f'<a href="#{name_links[row["name"]]}" class="inv-link">{esc(row["name"])}</a>'
+            if prefix_links and row["name"] in prefix_links:
+                prog_links_html = ", ".join(
+                    f'<a href="#{anchor}" class="inv-link" style="font-size:10px;font-weight:400">{esc(p)}</a>'
+                    for p, anchor in prefix_links[row["name"]]
+                )
+                name_html = f'{name_html}<span style="color:var(--muted);font-weight:400"> · {prog_links_html}</span>'
             html_rows += f"""<tr>
               <td style=\"font-weight:500\">{name_html}</td>
               <td style=\"text-align:center;color:var(--muted)\" data-val=\"{row['n']}\">{row['n']}</td>
@@ -1790,7 +1815,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         return html_rows
 
     programa_rows = build_group_summary_rows("programa", name_links=programa_first_anchor)
-    comp_rows = build_group_summary_rows("comp_macro", name_links=comp_macro_first_anchor)
+    comp_rows = build_group_summary_rows("comp_macro", prefix_links=comp_macro_prog_anchors)
     _sort_th = 'style="cursor:pointer;user-select:none;white-space:nowrap" onclick="sortSummaryTable(this)"'
     _sort_th_c = 'style="cursor:pointer;user-select:none;white-space:nowrap;text-align:center" onclick="sortSummaryTable(this)"'
     summaries_html = f"""
@@ -1956,7 +1981,9 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         for comp, items in comp_dict.items():
           if not items:
               continue
-          cards_html += f'<div class="comp-label">{esc(comp)}</div>\n<div class="priority-grid">\n'
+          comp_macro_val: str = comp_macro_from_raw(comp)
+          comp_anchor_id = f"comp-section-{_safe_anchor(prog)}-{_safe_anchor(comp_macro_val)}"
+          cards_html += f'<div class="comp-label" id="{comp_anchor_id}">{esc(comp)}</div>\n<div class="priority-grid">\n'
           for r in items:
             sim_p  = round(r["n_sim"]  / r["n_total"] * 100) if r["n_total"] else 0
             poss_p = round(r["n_poss"] / r["n_total"] * 100) if r["n_total"] else 0
@@ -2087,6 +2114,37 @@ def render_html(results, stats, interventions, source_file, univariate=None,
     media_str = _tier_links(media_rows)
     baixa_str = _tier_links(baixa_rows)
 
+    if include_next_steps:
+        next_steps_html = f"""
+  <!-- ═══ NEXT STEPS ══════════════════════════════════════════════════════ -->
+  <div class="section-header">
+    <h2>Próximos Passos — Onda 2</h2>
+  </div>
+  <div class="next-box">
+    <p>Com base nos resultados da W1, o grupo irá <strong>seleccionar colectivamente as intervenções a focar na W2</strong>.
+    Recomenda-se priorizar intervenções estritamente acima da mediana simultaneamente em optimizabilidade e impacto esperado
+    (cutoffs dinâmicos nesta ronda: triagem_média &gt; {med_gate:.3f}; impacto &gt; {med_imp:.3f}).
+    As intervenções seleccionadas serão distribuídas por grupos de trabalho temáticos que irão desenvolver <strong>propostas concretas de optimização</strong>.
+    Essas propostas serão submetidas à avaliação anónima colectiva na Onda 3 (W3).</p>
+    <div class="tier-panels">
+      <div class="tier-panel tier-alta">
+        <div class="tier-heading">Candidatas de Alta Prioridade (N={len(alta_rows)})</div>
+        <p>{alta_str}</p>
+      </div>
+      <div class="tier-panel tier-media">
+        <div class="tier-heading">Candidatas de Prioridade Média (N={len(media_rows)})</div>
+        <p>{media_str}</p>
+      </div>
+      <div class="tier-panel tier-baixa">
+        <div class="tier-heading">Baixa Prioridade / Manter (N={len(baixa_rows)})</div>
+        <p>{baixa_str}</p>
+      </div>
+    </div>
+  </div>
+"""
+    else:
+        next_steps_html = ""
+
     # ── Univariate analysis section ────────────────────────────────────────
     univ_html = ""
     scoring_html = ""
@@ -2147,7 +2205,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             sublabels=[_comp(r) for r in u["sorted_res"]],
         )
         e_bars = svg_hbar_single(
-          [(display_label.get(r["code"], r["label"])[:52], (r.get("e_score", 0) * 100), 100) for r in u["sorted_e"]],
+          [(display_label.get(r["code"], r["label"])[:52], (r.get("e_pond", 0) * 100), 100) for r in u["sorted_e"]],
             width=600, bar_h=14, gap=5, color="#1e7e34", label_w=240, fmt=".0f",
             hrefs=_hrefs(u["sorted_e"]),
             sublabels=[_comp(r) for r in u["sorted_e"]],
@@ -2251,7 +2309,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
             for r in sorted_simple:
                 grp = tier(r)
                 grp_num = 1 if grp == "alta" else (2 if grp == "media" else 3)
-                e_pct = r.get("e_score", 0) * 100
+                e_pct = r.get("e_pond", 0) * 100
                 score_table_rows += f"""<tr>
               <td style="font-weight:500;font-size:12px"><a href="#card-{__import__('re').sub(r'[^A-Za-z0-9_-]', '-', str(r['code']))}" class="inv-link">{esc(display_label.get(r["code"], r["label"]))}</a></td>
               <td style="text-align:center;font-weight:600;color:#1a5276">{r.get("s_pond", 0):.3f}</td>
@@ -2338,7 +2396,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
     else:
       scoring_html = ""
 
-    network_html = build_network_html(results, topic_label=topic_label)
+    network_html = "" if simple_table else build_network_html(results, topic_label=topic_label)
     integration_candidates_html = build_integration_candidates_html(results)
 
     html = f"""<!DOCTYPE html>
@@ -2622,31 +2680,7 @@ body{{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);
 
   {cards_html}
 
-  <!-- ═══ NEXT STEPS ══════════════════════════════════════════════════════ -->
-  <div class="section-header">
-    <h2>Próximos Passos — Onda 2</h2>
-  </div>
-  <div class="next-box">
-    <p>Com base nos resultados da W1, o grupo irá <strong>seleccionar colectivamente as intervenções a focar na W2</strong>.
-    Recomenda-se priorizar intervenções estritamente acima da mediana simultaneamente em optimizabilidade e impacto esperado
-    (cutoffs dinâmicos nesta ronda: triagem_média &gt; {med_gate:.3f}; impacto &gt; {med_imp:.3f}).
-    As intervenções seleccionadas serão distribuídas por grupos de trabalho temáticos que irão desenvolver <strong>propostas concretas de optimização</strong>.
-    Essas propostas serão submetidas à avaliação anónima colectiva na Onda 3 (W3).</p>
-    <div class="tier-panels">
-      <div class="tier-panel tier-alta">
-        <div class="tier-heading">Candidatas de Alta Prioridade (N={len(alta_rows)})</div>
-        <p>{alta_str}</p>
-      </div>
-      <div class="tier-panel tier-media">
-        <div class="tier-heading">Candidatas de Prioridade Média (N={len(media_rows)})</div>
-        <p>{media_str}</p>
-      </div>
-      <div class="tier-panel tier-baixa">
-        <div class="tier-heading">Baixa Prioridade / Manter (N={len(baixa_rows)})</div>
-        <p>{baixa_str}</p>
-      </div>
-    </div>
-  </div>
+  {next_steps_html}
 
 </div>
 
@@ -2994,7 +3028,7 @@ def _slide_intervention_card(prs, title, r, tier_num, tier_name, top_dup_txt, to
     score_y = chip_top + _In(1.02)
     _text(
         slide,
-        f"S_base: {r.get('s_base',0):.3f}   |   S_pond: {r.get('s_pond',0):.3f}   |   Triagem médio: {r.get('gate_mean',0):.3f}   |   Índice eficiência: {r.get('e_score',0)*100:.1f}%",
+        f"S_base: {r.get('s_base',0):.3f}   |   S_pond: {r.get('s_pond',0):.3f}   |   Triagem médio: {r.get('gate_mean',0):.3f}   |   Índice eficiência: {r.get('e_pond',0)*100:.1f}%",
         card_l + _In(0.2), score_y, _In(8.9), _In(0.26), size=10, bold=True, color=_C["accent2"]
     )
 
@@ -3086,7 +3120,7 @@ def build_pptx(results, stats, interventions, results_path,
         n = len(vals)
         spond = sum(x.get("s_pond", 0) for x in vals) / n if n else 0
         imp = sum(x.get("avg_impact", 0) for x in vals) / n if n else 0
-        eff = sum(x.get("e_score", 0) for x in vals) / n if n else 0
+        eff = sum(x.get("e_pond", 0) for x in vals) / n if n else 0
         g1 = sum(1 for x in vals if _tier(x) == "alta")
         g2 = sum(1 for x in vals if _tier(x) == "media")
         g3 = sum(1 for x in vals if _tier(x) == "baixa")
@@ -3286,7 +3320,7 @@ def build_pptx(results, stats, interventions, results_path,
             (
               display_label.get(r["code"], r["label"]),
               f"{r.get('s_pond', 0):.3f}",
-              f"{r.get('e_score', 0)*100:.1f}%",
+              f"{r.get('e_pond', 0)*100:.1f}%",
               str(_tier_num(r)),
             )
             for r in sorted(results.values(), key=lambda x: x.get("s_pond", 0), reverse=True)
@@ -3888,7 +3922,7 @@ body{{background:#1a5276;padding:10px;height:760px;overflow:hidden;}}
       S_base: {r.get('s_base',0):.3f} &nbsp;·&nbsp;
       S_pond: {r.get('s_pond',0):.3f} &nbsp;·&nbsp;
       Triagem médio: {r.get('gate_mean',0):.3f} &nbsp;·&nbsp;
-      Índice ef.: {r.get('e_score',0)*100:.1f}%
+      Índice ef.: {r.get('e_pond',0)*100:.1f}%
     </div>
     <div class="det">Top dup. (cat.): {top_dup_txt}</div>
     <div class="det">Top intg. (cat.): {top_intg_txt}</div>
@@ -4046,7 +4080,7 @@ def build_pptx_template(results, stats, interventions, results_path,
             n     = len(vals)
             spond = sum(x.get("s_pond", 0)      for x in vals) / n if n else 0
             imp   = sum(x.get("avg_impact", 0)  for x in vals) / n if n else 0
-            eff   = sum(x.get("e_score", 0)     for x in vals) / n if n else 0
+            eff   = sum(x.get("e_pond", 0)     for x in vals) / n if n else 0
             g1    = sum(1 for x in vals if _tier(x) == "alta")
             g2    = sum(1 for x in vals if _tier(x) == "media")
             g3    = sum(1 for x in vals if _tier(x) == "baixa")
@@ -4300,7 +4334,7 @@ def build_pptx_template(results, stats, interventions, results_path,
             score_rows = [
                 (_dlbl(r),
                  f"{r.get('s_pond', 0):.3f}",
-                 f"{r.get('e_score', 0)*100:.1f}%",
+                 f"{r.get('e_pond', 0)*100:.1f}%",
                  str(_tier_num(r)))
                 for r in sorted(results.values(), key=lambda x: x.get("s_pond", 0), reverse=True)
             ]
@@ -4456,6 +4490,7 @@ def main():
     config_path = None
     simple_sections = False
     simple_table = False
+    include_next_steps = True
     generate_pptx = False
     pptx_template     = None
     pptx_engine       = "template"
@@ -4520,6 +4555,11 @@ def main():
 
       if arg == "--simple-table":
         simple_table = True
+        i += 1
+        continue
+
+      if arg == "--no-next-steps":
+        include_next_steps = False
         i += 1
         continue
 
@@ -4796,6 +4836,7 @@ def main():
       programa_nome=programa_nome,
       topic_label=topic_label,
       simple_table=simple_table,
+      include_next_steps=include_next_steps,
       logo_data_uri=logo_data_uri,
     )
 
