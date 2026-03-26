@@ -31,7 +31,7 @@ Argumentos:
               "Pontuação e Metodologia", diagrama aluvial e tabela de pontuação.
     --compact-report  Alias para --simple-sections.
     --simple-table    Substitui a tabela detalhada de pontuação por uma versão
-          simples (Intervenção, S_pond, Índice de eficiência, Grupo 1/2/3),
+          simples (Intervenção, S_pond, E_pond, Grupo 1/2/3),
           ordenável e com ordenação inicial por S_pond.
     --no-next-steps   Omite a secção "Próximos Passos — Onda 2" do relatório.
 
@@ -273,6 +273,8 @@ def comp_macro_from_raw(component):
     return "Intervenção"
   if "orma" in low:
     return "Formações/Treinos"
+  if "medicamentos" in low:
+    return "Medicamentos"
   if "suppli" in low or "insumo" in low:
     return "Supplies/Insumos"
   if "rh" in low:
@@ -604,7 +606,7 @@ def aggregate(df, interventions):
 def summary_stats(results, df, n_experts_expected=None, n_experts_per_team=None):
     n_experts_observed = df["expert_code"].nunique()
     n_experts = n_experts_expected if n_experts_expected and n_experts_expected > 0 else n_experts_observed
-    n_inv_80    = sum(1 for r in results.values() if r["pct_optimizable"] >= 80)
+    n_inv_80    = sum(1 for r in results.values() if r["pct_optimizable"] >= 75)
     n_imp_high  = sum(1 for r in results.values() if r["avg_impact"] >= 2.5)
     n_unanimous = sum(1 for r in results.values() if r["pct_optimizable"] == 100)
 
@@ -1831,7 +1833,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         <th {_sort_th}>S<sub>pond</sub> médio ▾</th>
         <th {_sort_th_c}>S<sub>pond</sub> máx</th>
         <th {_sort_th_c}>Impacto pond.</th>
-        <th {_sort_th}>E (eficiência)</th>
+        <th {_sort_th}>E<sub>pond</sub></th>
       </tr>
     </thead>
     <tbody>{programa_rows}</tbody>
@@ -1849,7 +1851,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         <th {_sort_th}>S<sub>pond</sub> médio ▾</th>
         <th {_sort_th_c}>S<sub>pond</sub> máx</th>
         <th {_sort_th_c}>Impacto pond.</th>
-        <th {_sort_th}>E (eficiência)</th>
+        <th {_sort_th}>E<sub>pond</sub></th>
       </tr>
     </thead>
     <tbody>{comp_rows}</tbody>
@@ -2223,6 +2225,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
     <div class="univ-row two-col">
       <div class="univ-col">
         <div class="univ-sub-header">2a · Distribuição da pergunta de triagem</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-bottom:6px">"Esta intervenção pode ser optimizada / necessita de optimização?"</div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px">
           <span style="display:inline-block;width:10px;height:9px;background:#1a6b3a;vertical-align:middle;margin-right:2px"></span>Sim def. <strong>(1,0)</strong>
           &nbsp;<span style="display:inline-block;width:10px;height:9px;background:#d4a017;vertical-align:middle;margin-right:2px"></span>Possiv. <strong>(0,5)</strong>
@@ -2234,6 +2237,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
       </div>
       <div class="univ-col">
         <div class="univ-sub-header">2b · Impacto esperado (escala 1–3)</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-bottom:6px">"Se esta intervenção for optimizada, qual o impacto esperado? (1 = baixo, 2 = médio, 3 = alto)"</div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px">
           <span style="display:inline-block;width:10px;height:9px;background:#1a6b3a;vertical-align:middle;margin-right:2px"></span>Alto
           &nbsp;<span style="display:inline-block;width:10px;height:9px;background:#fef9e7;border:1px solid #d1d5db;vertical-align:middle;margin-right:2px"></span>Médio
@@ -2250,18 +2254,21 @@ def render_html(results, stats, interventions, source_file, univariate=None,
     <div class="univ-row two-col" style="margin-top:28px">
       <div class="univ-col">
         <div class="univ-sub-header">2d · % que identificou duplicação (por intervenção)</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-bottom:6px">"Esta intervenção está a ser duplicada por outra intervenção no programa?"</div>
         <div class="chart-wrap">{dup_bars}</div>
       </div>
       <div class="univ-col">
         <div class="univ-sub-header">2e · % que identificou potencial de integração</div>
+        <div style="font-size:11px;font-style:italic;color:var(--muted);margin-bottom:6px">"Esta intervenção tem potencial de integração com outra intervenção no programa?"</div>
         <div class="chart-wrap">{intg_bars}</div>
       </div>
     </div>
 
     <div class="univ-sub-header" style="margin-top:28px">2f · % que identificou possibilidade de redução de recursos</div>
+    <div style="font-size:11px;font-style:italic;color:var(--muted);margin-bottom:6px">"É possível reduzir os recursos afectos a esta intervenção?"</div>
     <div class="chart-wrap">{res_bars}</div>
 
-    <div class="univ-sub-header" style="margin-top:28px">2g · Índice de Eficiência (E)</div>
+    <div class="univ-sub-header" style="margin-top:28px">2g · E<sub>pond</sub> — Índice de Eficiência ponderado por experiência</div>
     <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:11px;color:var(--muted)">
       <span><strong>Mediana:</strong> {u['e_median']*100:.1f}%</span>
       <span><strong>Mínimo:</strong> {u['e_min']*100:.1f}%</span>
@@ -2351,6 +2358,11 @@ def render_html(results, stats, interventions, source_file, univariate=None,
         <div class="formula-code">S<sub>pond</sub> = Σ(triagem<sub>i</sub> × impact<sub>i</sub> × exp<sub>i</sub>) / Σ(exp<sub>i</sub>)</div>
         <div class="formula-note">exp<sub>i</sub> ∈ {{1, 2, 3}} — nível de experiência declarada (omisso = 1)</div>
       </div>
+      <div>
+        <div class="formula-label">E<sub>pond</sub> — Índice de eficiência ponderado por experiência (intervalo: 0–1)</div>
+        <div class="formula-code">E<sub>pond</sub> = (Σ res<sub>i</sub>·exp<sub>i</sub> + Σ dup<sub>i</sub>·exp<sub>i</sub> + Σ intg<sub>i</sub>·exp<sub>i</sub>) / (3 × Σ exp<sub>i</sub>)</div>
+        <div class="formula-note">somas sobre respondentes positivos · res/dup/intg ∈ {{0,1}} · exp<sub>i</sub> ∈ {{1, 2, 3}}</div>
+      </div>
     </div>
   </div>
   <div class="score-charts-row">
@@ -2378,7 +2390,7 @@ def render_html(results, stats, interventions, source_file, univariate=None,
       <tr>
         {('<th data-sort="text" style="cursor:pointer">Intervenção <span class="sa"></span></th>'
           '<th data-sort="num" style="text-align:center;cursor:pointer">S<sub>pond</sub> <span class="sa"></span></th>'
-          '<th data-sort="num" style="text-align:center;cursor:pointer">Índice de eficiência <span class="sa"></span></th>'
+          '<th data-sort="num" style="text-align:center;cursor:pointer">E_pond <span class="sa"></span></th>'
           '<th data-sort="num" style="text-align:center;cursor:pointer">Grupo Próximos Passos (1/2/3) <span class="sa"></span></th>') if simple_table else
          ('<th data-sort="num" style="cursor:pointer"># <span class="sa"></span></th>'
           '<th data-sort="text" style="cursor:pointer">Intervenção <span class="sa"></span></th>'
@@ -2583,11 +2595,9 @@ body{{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);
   <div class="stat-divider"></div>
   <div class="stat-pill"><span class="num">{stats["n_inv"]}</span><span class="lbl">Intervenções avaliadas</span></div>
   <div class="stat-divider"></div>
-  <div class="stat-pill"><span class="num">{stats["n_inv_80"]}</span><span class="lbl">Com ≥80% a favor de optimização</span></div>
+  <div class="stat-pill"><span class="num">{stats["n_inv_80"]}</span><span class="lbl">Com ≥75% a favor de optimização</span></div>
   <div class="stat-divider"></div>
   <div class="stat-pill"><span class="num">{stats["n_imp_high"]}</span><span class="lbl">Com impacto esperado alto (≥2,5)</span></div>
-  <div class="stat-divider"></div>
-  <div class="stat-pill"><span class="num">{stats["n_unanimous"]}</span><span class="lbl">Com consenso unânime (100%)</span></div>
   <div class="legend-box">
     <div class="legend-item"><div class="legend-dot dot-sim"></div>Sim, definitivamente</div>
     <div class="legend-item"><div class="legend-dot dot-poss"></div>Possivelmente</div>
@@ -2643,6 +2653,22 @@ body{{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);
       </table>
     </details>
     {rr_by_team_html}
+  </div>
+
+  <div class="formula-box" style="margin-bottom:16px">
+    <div class="formula-title">Fórmulas de Pontuação</div>
+    <div class="formula-grid">
+      <div>
+        <div class="formula-label">S<sub>pond</sub> — Pontuação ponderada por experiência (intervalo: 0–3)</div>
+        <div class="formula-code">S<sub>pond</sub> = Σ(triagem<sub>i</sub> × impact<sub>i</sub> × exp<sub>i</sub>) / Σ(exp<sub>i</sub>)</div>
+        <div class="formula-note">triagem: sim_def = 1,0 · possivelmente = 0,5 · não = 0,0 &nbsp;|&nbsp; exp<sub>i</sub> ∈ {{1, 2, 3}}</div>
+      </div>
+      <div>
+        <div class="formula-label">E<sub>pond</sub> — Índice de eficiência ponderado por experiência (intervalo: 0–1)</div>
+        <div class="formula-code">E<sub>pond</sub> = (Σ res<sub>i</sub>·exp<sub>i</sub> + Σ dup<sub>i</sub>·exp<sub>i</sub> + Σ intg<sub>i</sub>·exp<sub>i</sub>) / (3 × Σ exp<sub>i</sub>)</div>
+        <div class="formula-note">somas sobre respondentes positivos · res/dup/intg ∈ {{0,1}} · exp<sub>i</sub> ∈ {{1, 2, 3}}</div>
+      </div>
+    </div>
   </div>
 
   {summaries_html}
@@ -3028,7 +3054,7 @@ def _slide_intervention_card(prs, title, r, tier_num, tier_name, top_dup_txt, to
     score_y = chip_top + _In(1.02)
     _text(
         slide,
-        f"S_base: {r.get('s_base',0):.3f}   |   S_pond: {r.get('s_pond',0):.3f}   |   Triagem médio: {r.get('gate_mean',0):.3f}   |   Índice eficiência: {r.get('e_pond',0)*100:.1f}%",
+        f"S_base: {r.get('s_base',0):.3f}   |   S_pond: {r.get('s_pond',0):.3f}   |   Triagem médio: {r.get('gate_mean',0):.3f}   |   E_pond: {r.get('e_pond',0)*100:.1f}%",
         card_l + _In(0.2), score_y, _In(8.9), _In(0.26), size=10, bold=True, color=_C["accent2"]
     )
 
@@ -3144,9 +3170,8 @@ def build_pptx(results, stats, interventions, results_path,
     metrics = [
         ("Especialistas",       str(n_exp)),
         ("Intervenções",        str(n_inv)),
-        ("≥80% optimizáveis",   str(stats["n_inv_80"])),
+        ("≥75% optimizáveis",   str(stats["n_inv_80"])),
         ("Impacto alto (≥2.5)", str(stats["n_imp_high"])),
-        ("Consenso unânime",    str(stats["n_unanimous"])),
         ("Taxa resp. mediana",  f"{stats['rr_median']}%"),
     ]
     bw, bh = _In(1.95), _In(2.4)
@@ -3187,7 +3212,7 @@ def build_pptx(results, stats, interventions, results_path,
       _slide_table(
         prs,
         "Resumo por Programa",
-        ["Programa", "N", "S_pond médio", "Impacto médio", "Índice eficiência", "G1", "G2", "G3"],
+        ["Programa", "N", "S_pond médio", "Impacto médio", "E_pond", "G1", "G2", "G3"],
         programa_rows,
         max_rows=20,
       )
@@ -3196,7 +3221,7 @@ def build_pptx(results, stats, interventions, results_path,
       _slide_table(
         prs,
         "Resumo por Componente",
-        ["Componente", "N", "S_pond médio", "Impacto médio", "Índice eficiência", "G1", "G2", "G3"],
+        ["Componente", "N", "S_pond médio", "Impacto médio", "E_pond", "G1", "G2", "G3"],
         componente_rows,
         max_rows=20,
       )
@@ -3328,7 +3353,7 @@ def build_pptx(results, stats, interventions, results_path,
           _slide_table(
             prs,
             "Tabela de Pontuações (Simples)",
-            ["Intervenção", "S_pond", "Índice de eficiência", "Grupo Próximos Passos (1/2/3)"],
+            ["Intervenção", "S_pond", "E_pond", "Grupo Próximos Passos (1/2/3)"],
             score_rows,
             max_rows=22,
           )
@@ -3922,7 +3947,7 @@ body{{background:#1a5276;padding:10px;height:760px;overflow:hidden;}}
       S_base: {r.get('s_base',0):.3f} &nbsp;·&nbsp;
       S_pond: {r.get('s_pond',0):.3f} &nbsp;·&nbsp;
       Triagem médio: {r.get('gate_mean',0):.3f} &nbsp;·&nbsp;
-      Índice ef.: {r.get('e_pond',0)*100:.1f}%
+      E_pond: {r.get('e_pond',0)*100:.1f}%
     </div>
     <div class="det">Top dup. (cat.): {top_dup_txt}</div>
     <div class="det">Top intg. (cat.): {top_intg_txt}</div>
@@ -4105,9 +4130,8 @@ def build_pptx_template(results, stats, interventions, results_path,
     metrics = [
         ("Especialistas",       str(n_exp)),
         ("Intervenções",        str(n_inv)),
-        ("≥80% optimizáveis",   str(stats["n_inv_80"])),
+        ("≥75% optimizáveis",   str(stats["n_inv_80"])),
         ("Impacto alto (≥2.5)", str(stats["n_imp_high"])),
-        ("Consenso unânime",    str(stats["n_unanimous"])),
         ("Taxa resp. mediana",  f"{stats['rr_median']}%"),
     ]
     bw = cw // len(metrics)
@@ -4167,7 +4191,7 @@ def build_pptx_template(results, stats, interventions, results_path,
             add_table_slide_from_layout(
                 prs, lay_content, tbl_title,
                 [col_label, "N", "S_pond médio", "Impacto médio",
-                 "Índice eficiência", "G1", "G2", "G3"],
+                 "E_pond", "G1", "G2", "G3"],
                 group_rows, style=style,
             )
 
@@ -4340,7 +4364,7 @@ def build_pptx_template(results, stats, interventions, results_path,
             ]
             add_table_slide_from_layout(
                 prs, lay_content, "Tabela de Pontuações (Simples)",
-                ["Intervenção", "S_pond", "Índice de eficiência",
+                ["Intervenção", "S_pond", "E_pond",
                  "Grupo Próximos Passos (1/2/3)"],
                 score_rows, style=style,
                 col_widths=[5.0, 1.0, 1.5, 1.0],
