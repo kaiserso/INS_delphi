@@ -1115,6 +1115,13 @@ def main():
     if not data:
         st.error("Falha ao carregar dados. Verifique a configuração do KOBO_TOKEN.")
         st.stop()
+    if data.get("n_submissions", 0) == 0 and not resolved_assets:
+        st.error(
+            "Nenhum asset SUBFORM_ASSET_* encontrado. "
+            "Adicione as entradas `SUBFORM_ASSET_<slug> = <uid>` nos Secrets do Streamlit Cloud "
+            "(ou em deployed_forms.env localmente)."
+        )
+        st.stop()
     
     # Compute statistics
     stats = compute_stats(data)
