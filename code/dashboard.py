@@ -70,6 +70,14 @@ if "auto_refresh_enabled" not in st.session_state:
 if "last_auto_refresh_time" not in st.session_state:
     st.session_state.last_auto_refresh_time = 0
 
+# Seed exclusion input from config.env or secrets EXCLUDED_CODES (only on first load)
+_cfg_excluded_codes = (
+    _init_secret_get("EXCLUDED_CODES")
+    or cfg.get("EXCLUDED_CODES", "").strip()
+)
+if "exclusion_input" not in st.session_state:
+    st.session_state.exclusion_input = _cfg_excluded_codes
+
 
 def _secrets_get(key, default=""):
     """Safe wrapper around st.secrets — returns default when no secrets file exists."""
@@ -1087,13 +1095,13 @@ def main():
         
         # Exclusion input
         st.subheader("⛔ Filtrar Especialistas")
-        exclusion_input = st.text_input(
+        st.text_input(
             "Códigos a excluir (separados por vírgula):",
-            value="",
+            key="exclusion_input",
             placeholder="Ex: 001PM, 001XX",
             help="Insira os códigos de especialistas para remover da análise"
         )
-        excluded_experts_from_ui = _split_codes(exclusion_input)
+        excluded_experts_from_ui = _split_codes(st.session_state.exclusion_input)
     
     # Fetch data with loading indicator using the exclusions from UI
     with st.spinner("A carregar dados da API do KoboToolbox..."):
