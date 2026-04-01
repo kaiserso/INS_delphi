@@ -225,6 +225,7 @@ def find_delphi_assets():
         sources_used = sorted({entry.get("source", "config.env") for entry in configured})
         print(f"  Using {len(configured)} asset UID(s) from {', '.join(sources_used)}")
         assets = []
+        validation_rows = []  # (slug, uid, status_str)
         for entry in configured:
             r = requests.get(
                 f"{KOBO_SERVER.rstrip('/')}/api/v2/assets/{entry['uid']}/",
@@ -233,11 +234,51 @@ def find_delphi_assets():
             )
             if r.ok:
                 a = r.json()
-                a.setdefault("name", entry["slug"])
+                # Use the SUBFORM_ASSET_<slug> key as the authoritative name so that
+                # fetch_submissions derives a clean _group slug (e.g. "apss_1") regardless
+                # of however Kobo stores the asset's display name.
+                a["name"] = entry["slug"]
+                # Extract human-readable program label from form_title in XLSForm settings.
+                # The generator sets form_title to "W1 – <program> | <topic_label>".
+                # We strip the wrapping to get just the program name (e.g. "APSS").
+                form_title = ""
+                settings = a.get("content", {}).get("settings", [])
+                if isinstance(settings, list) and settings:
+                    form_title = settings[0].get("form_title", "")
+                elif isinstance(settings, dict):
+                    form_title = settings.get("form_title", "")
+                if "–" in form_title:
+                    program_label = form_title.split("–", 1)[1].split("|")[0].strip()
+                elif "|" in form_title:
+                    program_label = form_title.split("|")[0].strip()
+                else:
+                    program_label = form_title.strip()
+                a["_program_label"] = program_label
                 assets.append(a)
+                active = a.get("deployment__active")
+                n_subs = a.get("deployment__submission_count", 0) or 0
+                if active is True:
+                    status = f"✓ active  ({n_subs} submissions)"
+                elif active is False:
+                    status = "⚠  archived"
+                else:
+                    status = "⚠  not deployed"
+                validation_rows.append((entry["slug"], entry["uid"], status))
             else:
-                print(f"  ⚠️  Could not fetch asset {entry['uid']} "
-                      f"(slug={entry['slug']}): {r.status_code}")
+                validation_rows.append((entry["slug"], entry["uid"], f"✗ NOT FOUND ({r.status_code})"))
+
+        # Print validation summary
+        print(f"\n  Asset validation ({len(configured)} configured):")
+        ok_count = sum(1 for _, _, s in validation_rows if s.startswith("✓"))
+        warn_count = len(validation_rows) - ok_count
+        slug_w = max(len(s) for s, _, _ in validation_rows)
+        for slug, uid, status in validation_rows:
+            print(f"    {slug:<{slug_w}}  {uid}  {status}")
+        if warn_count:
+            print(f"\n  ⚠️  {warn_count} asset(s) need attention — check UIDs in deployed_forms.env")
+        else:
+            print(f"  All {ok_count} assets verified.\n")
+
         return assets
 
     # Fallback: search by name pattern
@@ -289,11 +330,12 @@ def list_all_assets_diagnostic():
     print(f"    SUBFORM_ASSET_<slug> = <uid>")
     print()
 
-def fetch_submissions(asset_uid, asset_name):
+def fetch_submissions(asset_uid, asset_name, program_label=""):
     """
     Fetch all submissions for one asset via the data endpoint.
     Returns a DataFrame with one row per submission.
     Handles pagination automatically.
+    program_label: human-readable program name extracted from the form_title (e.g. "APSS").
     """
     import requests
     base = f"{KOBO_SERVER.rstrip('/')}/api/v2/assets/{asset_uid}/data/"
@@ -327,11 +369,32 @@ def fetch_submissions(asset_uid, asset_name):
     else:
         df["_submitted_at"] = ""
 
-    # Derive group slug from asset name or id_string
+    # Derive group slug from asset name.
+    # When called from find_delphi_assets with configured assets, asset_name is the
+    # SUBFORM_ASSET_<slug> key (e.g. "apss_1"), so the regex strips nothing and slug = "apss_1".
     slug = re.sub(rf"^delphi_w1_{TOPIC}_", "",
                   asset_name.lower().replace(" ", "_").replace("|","_"))
     slug = re.sub(r"[^a-z0-9_]", "_", slug).strip("_")
-    df["_group"]       = slug
+    df["_group"] = slug
+
+    # Human-readable label: combine program_label from form_title with chunk number from slug.
+    # e.g. program_label="APSS", slug="apss_1" → "APSS (1)"
+    #      program_label="C&T GERAL", slug="ct_geral" → "C&T GERAL"
+    if program_label:
+        chunk_match = re.search(r"_(\d+)$", slug)
+        if chunk_match:
+            label = f"{program_label} ({chunk_match.group(1)})"
+        else:
+            label = program_label
+    else:
+        # Fallback: humanise the slug (no form_title available)
+        base = re.sub(r"_\d+$", "", slug)
+        chunk_match = re.search(r"_(\d+)$", slug)
+        label = base.replace("_", " ").title()
+        if chunk_match:
+            label += f" ({chunk_match.group(1)})"
+    df["_group_label"] = label
+
     df["_source_file"] = f"API:{asset_uid}"
     print(f"  Fetched: {asset_name}  ({len(df)} submissions, group={slug})")
     return df
@@ -347,7 +410,7 @@ def fetch_all(asset_filter=None):
         print(f"❌  No assets found.")
         print(f"    Either add SUBFORM_ASSET_<slug> = <uid> entries to deployed_forms.env")
         print(f"    (run deploy_kobo_forms.py first), or check KOBO_TOKEN is valid.")
-        sys.exit(1)
+        return pd.DataFrame()
 
     print(f"  Found {len(assets)} matching asset(s):")
     for a in assets:
@@ -361,13 +424,12 @@ def fetch_all(asset_filter=None):
         has_deployment = a.get("has_deployment", False)
         active         = a.get("deployment__active")  # True=live, False=archived, None=never deployed
 
-        if active is False:
-            print(f"  Skipping {a['name']} (archived — deployment__active=false)")
-            continue
         if not has_deployment or active is None:
             print(f"  Skipping {a['name']} (never deployed — no active deployment)")
             continue
-        df = fetch_submissions(a["uid"], a["name"])
+        if active is False:
+            print(f"  Note: {a['name']} is archived — fetching submissions anyway")
+        df = fetch_submissions(a["uid"], a["name"], program_label=a.get("_program_label", ""))
         if not df.empty:
             frames.append(df)
 

@@ -70,6 +70,14 @@ if "auto_refresh_enabled" not in st.session_state:
 if "last_auto_refresh_time" not in st.session_state:
     st.session_state.last_auto_refresh_time = 0
 
+# Seed exclusion input from config.env or secrets EXCLUDED_CODES (only on first load)
+_cfg_excluded_codes = (
+    _init_secret_get("EXCLUDED_CODES")
+    or cfg.get("EXCLUDED_CODES", "").strip()
+)
+if "exclusion_input" not in st.session_state:
+    st.session_state.exclusion_input = _cfg_excluded_codes
+
 
 def _secrets_get(key, default=""):
     """Safe wrapper around st.secrets — returns default when no secrets file exists."""
@@ -530,8 +538,13 @@ def fetch_and_process_data(
 
     sync_kobo_runtime_config(kobo_server, kobo_token, asset_entries=asset_entries)
 
-    # Fetch data — keep only the columns we need for questionnaire-level tracking
-    raw = fetch_all(asset_filter=None)
+    # Capture stdout from fetch_all (print() calls are suppressed by @st.cache_data on Cloud)
+    import io, contextlib
+    _buf = io.StringIO()
+    with contextlib.redirect_stdout(_buf):
+        raw = fetch_all(asset_filter=None)
+    _fetch_log = _buf.getvalue()
+
     raw = raw.fillna("")
 
     if raw.empty:
@@ -543,6 +556,7 @@ def fetch_and_process_data(
             "n_submissions": 0,
             "n_experts": 0,
             "n_submissions_before_exclusion": 0,
+            "fetch_log": _fetch_log,
         }
 
     n_before = len(raw)
@@ -583,6 +597,7 @@ def fetch_and_process_data(
         "n_submissions": len(raw),
         "n_experts": len(experts),
         "n_submissions_before_exclusion": n_before,
+        "fetch_log": _fetch_log,
     }
 
 
@@ -1087,13 +1102,13 @@ def main():
         
         # Exclusion input
         st.subheader("⛔ Filtrar Especialistas")
-        exclusion_input = st.text_input(
+        st.text_input(
             "Códigos a excluir (separados por vírgula):",
-            value="",
+            key="exclusion_input",
             placeholder="Ex: 001PM, 001XX",
             help="Insira os códigos de especialistas para remover da análise"
         )
-        excluded_experts_from_ui = _split_codes(exclusion_input)
+        excluded_experts_from_ui = _split_codes(st.session_state.exclusion_input)
     
     # Fetch data with loading indicator using the exclusions from UI
     with st.spinner("A carregar dados da API do KoboToolbox..."):
@@ -1106,6 +1121,13 @@ def main():
     
     if not data:
         st.error("Falha ao carregar dados. Verifique a configuração do KOBO_TOKEN.")
+        st.stop()
+    if data.get("n_submissions", 0) == 0 and not resolved_assets:
+        st.error(
+            "Nenhum asset SUBFORM_ASSET_* encontrado. "
+            "Adicione as entradas `SUBFORM_ASSET_<slug> = <uid>` nos Secrets do Streamlit Cloud "
+            "(ou em deployed_forms.env localmente)."
+        )
         st.stop()
     
     # Compute statistics
@@ -1142,6 +1164,10 @@ def main():
     if data["n_submissions"] == 0:
         st.warning("⚠️ Nenhuma submissão encontrada ainda.")
         st.info("O painel será actualizado automaticamente quando houver dados disponíveis.")
+        fetch_log = data.get("fetch_log", "")
+        if fetch_log:
+            with st.expander("🔍 Log de fetch (diagnóstico)"):
+                st.code(fetch_log, language=None)
         st.stop()
 
     # Overview cards (includes team completion)
