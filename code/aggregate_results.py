@@ -410,7 +410,7 @@ def fetch_all(asset_filter=None):
         print(f"❌  No assets found.")
         print(f"    Either add SUBFORM_ASSET_<slug> = <uid> entries to deployed_forms.env")
         print(f"    (run deploy_kobo_forms.py first), or check KOBO_TOKEN is valid.")
-        sys.exit(1)
+        return pd.DataFrame()
 
     print(f"  Found {len(assets)} matching asset(s):")
     for a in assets:
@@ -424,12 +424,11 @@ def fetch_all(asset_filter=None):
         has_deployment = a.get("has_deployment", False)
         active         = a.get("deployment__active")  # True=live, False=archived, None=never deployed
 
-        if active is False:
-            print(f"  Skipping {a['name']} (archived — deployment__active=false)")
-            continue
         if not has_deployment or active is None:
             print(f"  Skipping {a['name']} (never deployed — no active deployment)")
             continue
+        if active is False:
+            print(f"  Note: {a['name']} is archived — fetching submissions anyway")
         df = fetch_submissions(a["uid"], a["name"], program_label=a.get("_program_label", ""))
         if not df.empty:
             frames.append(df)
